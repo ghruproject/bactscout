@@ -1,7 +1,7 @@
-# cgps-discovery/ghrureadqc
+# ghruproject/GHRU-readqc
 
-[![GitHub Actions CI Status](https://github.com/cgps-discovery/ghrureadqc/actions/workflows/nf-test.yml/badge.svg)](https://github.com/cgps-discovery/ghrureadqc/actions/workflows/nf-test.yml)
-[![GitHub Actions Linting Status](https://github.com/cgps-discovery/ghrureadqc/actions/workflows/linting.yml/badge.svg)](https://github.com/cgps-discovery/ghrureadqc/actions/workflows/linting.yml)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![GitHub Actions CI Status](https://github.com/ghruproject/GHRU-readqc/actions/workflows/nf-test.yml/badge.svg)](https://github.com/ghruproject/GHRU-readqc/actions/workflows/nf-test.yml)
+[![GitHub Actions Linting Status](https://github.com/ghruproject/GHRU-readqc/actions/workflows/linting.yml/badge.svg)](https://github.com/ghruproject/GHRU-readqc/actions/workflows/linting.yml)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 
 [![Nextflow](https://img.shields.io/badge/version-%E2%89%A524.10.5-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
@@ -9,11 +9,11 @@
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/cgps-discovery/ghrureadqc)
+[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/ghruproject/GHRU-readqc)
 
 ## Introduction
 
-**cgps-discovery/ghrureadqc** is a bioinformatics pipeline for rapid read quality assessment, taxonomic profiling, and antimicrobial resistance gene detection. The pipeline takes paired-end FASTQ files from a directory and performs optional taxonomic profiling using Sylph and AMR profiling using ARIBA when databases are provided.
+**ghruproject/GHRU-readqc** is a bioinformatics pipeline for rapid read quality assessment, taxonomic profiling, and antimicrobial resistance gene detection. The pipeline takes paired-end FASTQ files from a directory and performs optional taxonomic profiling using Sylph and AMR profiling using ARIBA when databases are provided.
 
 The pipeline performs the following steps:
 
@@ -48,7 +48,7 @@ Now, you can run the pipeline using:
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
 ```bash
-nextflow run cgps-discovery/ghrureadqc \
+nextflow run ghruproject/GHRU-readqc \
    -profile <docker/singularity/.../institute> \
    --input /path/to/fastq/directory \
    --outdir <OUTDIR>
@@ -63,7 +63,7 @@ The pipeline includes automatic Sylph database management:
 
 ### Basic Usage (Read Trimming Only)
 ```bash
-nextflow run cgps-discovery/ghrureadqc \
+nextflow run ghruproject/GHRU-readqc \
    -profile docker \
    --input /path/to/fastq/directory \
    --outdir results

@@ -1,0 +1,7 @@
+name: ariba_run
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - ariba=2.14.6
