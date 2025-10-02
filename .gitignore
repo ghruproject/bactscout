@@ -15,6 +15,12 @@ bactscout_output
 # C extensions
 *.so
 environment.sh
+environment.ps1
+environment.bat
+environment.tar
+activate.sh
+env/
+.pixi/
 
 # Distribution / packaging
 .Python
