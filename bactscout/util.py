@@ -16,7 +16,6 @@ def print_message(message: str, msg_type: str = "info", emoji: bool = True) -> N
     
     Examples:
         print_message("Database check passed!", "success")
-        print_message("Docker daemon not running", "error") 
         print_message("Using default configuration", "warning")
         print_message("Checking system resources...", "info")
     """

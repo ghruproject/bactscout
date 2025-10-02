@@ -5,31 +5,12 @@ GHRU Read QC Pipeline - Preflight Checks Module
 This module contains runtime validation methods that verify all required components
 are available and properly configured before pipeline execution begins.
 
-The preflight checks are platform-aware and will validate the appropriate execution
-environment (Docker, Singularity, or Conda) based on the specified profile.
-
 Key Validation Areas:
     - Database Availability: Checks for required Sylph and ARIBA databases
     - Tool Accessibility: Verifies containerization platform or conda environment tools
     - System Resources: Validates sufficient compute resources are available
     - Input Validation: Ensures input data formats and structures are correct
     - Output Permissions: Confirms write access to output directories
-
-Platform-Specific Checks:
-    Docker Profile:
-        - Docker daemon running and accessible
-        - Required container images available or pullable
-        - Docker container execution permissions
-
-    Singularity Profile:
-        - Singularity/Apptainer installation
-        - Container image accessibility
-        - Bind mount permissions for data directories
-
-    Conda Profile:
-        - Conda/Mamba environment activation
-        - Required bioinformatics tools (fastp, sylph, ariba) availability
-        - Package version compatibility
 
 Author: Nabil-Fareed Alikhan
 License: See repository LICENSE file
@@ -40,14 +21,15 @@ import os
 import platform
 from typing import Dict
 import psutil
-import yaml  # Ensure PyYAML is installed in the environment
-from bactscout.util import print_message, print_header
 import shutil
 import urllib.request
 import platform
 import shutil
 import subprocess
 from pathlib import Path
+import yaml  # Ensure PyYAML is installed in the environment
+from bactscout.util import print_message, print_header
+from bactscout.software.run_ariba import get_command as get_ariba_command
 
 
 def load_config(config_path) -> Dict[str, str]:
@@ -92,12 +74,6 @@ def check_databases(config_dict) -> bool:
     sylph_db_file = os.path.join(db_path, config_dict.get('sylph_db', "gtdb-r226-c1000-dbv1.syldb"))
     get_sylph_db(sylph_db_file, sylph_db_url)
     # For each species in ariba_species, check database availability. Otherwise download and format for ariba.
-    docker_cmd = ""
-    if platform.machine() == 'arm64':
-        docker_cmd += "--platform linux/amd64"
-    ariba_img = config_dict.get("docker_img", {}).get(
-        "ariba_img", "quay.io/biocontainers/ariba:2.14.7--py312hdcc493e_0"
-    )
     for species_name, species_db_name in config_dict.get("ariba_species", {}).items():
         if not db_path:
             print_message(
@@ -116,27 +92,19 @@ def check_databases(config_dict) -> bool:
                 f"ARIBA files for species '{species_name}' not found in {db_path}. Trying to download...",
                 "warning",
             )
-            # If the database is not found download via, docker run quay.io/biocontainers/ariba:2.14.7--py312hdcc493e_0 ariba pubmlstget 'Escherichia coli#1' ecoli
-            # use docker for this step. (for now)
-            abs_db_path = os.path.abspath(db_path)
-            species_db_path = os.path.join(db_path, species_name)
+            species_db_path = os.path.join(os.path.abspath(db_path), species_name)
             # remove existing partial db if any
             if os.path.exists(species_db_path):
                 shutil.rmtree(species_db_path, ignore_errors=True)
             try:
+                ariba_cmd = get_ariba_command()[0]
                 subprocess.run(
                     [
-                        "docker",
-                        "run",
-                        "--rm",
-                        "-v",
-                        f"{abs_db_path}:/db",  # Bind mount db_path to /db in container
-                        ariba_img,
-                        "ariba",
+                        ariba_cmd,
                         "pubmlstget",
                         species_db_name,
-                        os.path.join("/db", species_name),
-                    ] + docker_cmd.split(),
+                        species_db_path,
+                    ],
                     check=True,
                     cwd=db_path,
                 )
