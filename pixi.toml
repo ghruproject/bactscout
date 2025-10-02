@@ -1,0 +1,21 @@
+[workspace]
+authors = ["Nabil-Fareed Alikhan <nabil@happykhan.com>"]
+channels = ["conda-forge", "bioconda"]
+name = "bactscout"
+platforms = ["osx-64"]
+version = "0.1.0"
+
+[tasks]
+bactscout="python bactscout.py"
+
+[dependencies]
+fastp = ">=1.0.1,<2"
+sylph = ">=0.8.1,<0.9"
+ariba = ">=2.14.7,<3"
+pixi-pack = ">=0.7.3,<0.8"
+
+[pypi-dependencies]
+typer = ">=0.19.2, <0.20"
+rich = ">=14.1.0, <15"
+pyaml = ">=25.7.0, <26"
+psutil = ">=7.1.0, <8"

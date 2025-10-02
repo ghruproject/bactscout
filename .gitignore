@@ -1,14 +1,126 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+readqc_results
+readqc_dbs
+readqc_output
+bactscout_results
+bactscout_dbs
+bactscout_output
+.pixi
+# C extensions
+*.so
+environment.sh
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+test-results/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule files
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyderworkspace
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype
+.pytype/
+
+# profiling
+.prof
+
+# VS Code settings
+.vscode/
+
+# macOS
+.DS_Store
+
+# Others from your original list
 .nextflow*
 work/
 data/
 results/
-.DS_Store
 testing/
 testing*
-*.pyc
 null/
-.venv/
-.vscode/
 sylph_db/
 ariba_db/
 readqc_results/
