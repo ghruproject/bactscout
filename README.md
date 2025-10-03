@@ -41,7 +41,7 @@ For **cultured bacterial isolates** intended for genome assembly, BactScout eval
 
 ### ⚠️ **WARNING/FAIL Indicators:**
 
-- **Low coverage** (< 30x): May result in fragmented assemblies
+- **Low coverage** (< 30x): May result in fragmented assemblies. If you are only consider read mapping, you might get away with lower coverage (>5x)
 - **Multiple species**: Indicates contamination requiring sample cleanup
 - **Truncated reads**: Suggests sequencing quality issues
 - **Invalid/Missing ST**: May indicate mixed cultures or novel strains. Some organisms are not well characterized by MLST, so I would not fail a sample just because it has no ST, but I would be cautious.
