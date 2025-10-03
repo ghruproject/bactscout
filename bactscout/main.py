@@ -4,6 +4,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from bactscout.thread import run_one_sample
+from bactscout.summary import summary_dir
 
 def main(input_dir, output_dir, max_threads, config_file: str = "bactscout_config.yml"):
     config = load_config(config_file)
@@ -67,7 +68,7 @@ def main(input_dir, output_dir, max_threads, config_file: str = "bactscout_confi
         
         if failed_samples:
             print_message(f"Failed samples: {', '.join(failed_samples)}", "warning")
-
+        summary_dir(output_dir, os.path.join(output_dir, "final_summary.csv"))
 
 def locate_read_file_pairs(directory):
     """

@@ -54,24 +54,22 @@ def run_command(r1, r2, species_db, output_dir, config, message=False):
             print(f"Command: {' '.join(mlst_cmd)}")
             
         subprocess.run(mlst_cmd, check=True, capture_output=not message)
-        
-        # Store results paths
-        stringmlst_results = {
-            'output_dir': output_dir,
-            'report': os.path.join(output_dir, "report.tsv"),
-            'assembled_genes': os.path.join(output_dir, "assembled_genes.fa.gz"),
-            'assembled_seqs': os.path.join(output_dir, "assembled_seqs.fa.gz"),
-            'log': os.path.join(output_dir, "log.txt")
-        }
+        # Open mlst.tsv add to results
+        with open(output_file, 'r') as f:
+            lines = f.readlines()
+            if len(lines) > 1:
+                header = lines[0].strip().split('\t')
+                values = lines[1].strip().split('\t')
+                mlst_data = dict(zip(header, values))
+                stringmlst_results = mlst_data
+            else:
+                stringmlst_results = {"error": "No MLST results found in output file."}
         
         if message:
-            print(f"ARIBA completed successfully for {species_db}")
-            print(f"  - Report: {stringmlst_results['report']}")
-            
+            print(f"ARIBA completed successfully for {species_db}")            
     except subprocess.CalledProcessError as e:
         if message:
-            print(f"Error running ARIBA for {species_db}: {e}")
-        stringmlst_results[species_db] = {"error": str(e)}
+            print(f"Error running MLST for {species_db}: {e}")
 
     return {
         'sample_name': sample_name,
