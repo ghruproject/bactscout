@@ -6,7 +6,7 @@ This module contains runtime validation methods that verify all required compone
 are available and properly configured before pipeline execution begins.
 
 Key Validation Areas:
-    - Database Availability: Checks for required Sylph and ARIBA databases
+    - Database Availability: Checks for required Sylph and MLST databases
     - Tool Accessibility: Verifies containerization platform or conda environment tools
     - System Resources: Validates sufficient compute resources are available
     - Input Validation: Ensures input data formats and structures are correct
@@ -29,7 +29,7 @@ import subprocess
 from pathlib import Path
 import yaml  # Ensure PyYAML is installed in the environment
 from bactscout.util import print_message, print_header
-from bactscout.software.run_ariba import get_command as get_ariba_command
+from bactscout.software.run_stringmlst import get_command as get_mlst_command
 
 
 def load_config(config_path) -> Dict[str, str]:
@@ -73,50 +73,53 @@ def check_databases(config_dict) -> bool:
     sylph_db_url = config_dict.get("sylph_db_url", "http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb")
     sylph_db_file = os.path.join(db_path, config_dict.get('sylph_db', "gtdb-r226-c1000-dbv1.syldb"))
     get_sylph_db(sylph_db_file, sylph_db_url)
-    # For each species in ariba_species, check database availability. Otherwise download and format for ariba.
-    for species_name, species_db_name in config_dict.get("ariba_species", {}).items():
+    # For each species in mlst_species, check database availability. Otherwise download and format for mlst.
+    for species_name, species_db_name in config_dict.get("mlst_species", {}).items():
         if not db_path:
             print_message(
-                "ARIBA database path not specified in configuration.", "error"
+                "MLST database path not specified in configuration.", "error"
             )
             return False
-        ariba_files = ["ref_db/00.auto_metadata.tsv", "clusters.tsv"]
+        mlst_files = [f"{species_name}_config.txt", f"{species_name}_profile.txt"]
         files_found = True
-        for ariba_file in ariba_files:
+        for mlst_file in mlst_files:
             # check if file exists
-            full_file_path = os.path.join(db_path, species_name, ariba_file)
+            full_file_path = os.path.join(db_path, species_name, mlst_file)
             if not os.path.exists(full_file_path):
                 files_found = False
         if not files_found:
             print_message(
-                f"ARIBA files for species '{species_name}' not found in {db_path}. Trying to download...",
+                f"MLST files for species '{species_name}' not found in {db_path}. Trying to download...",
                 "warning",
             )
             species_db_path = os.path.join(os.path.abspath(db_path), species_name)
+            species_prefix = os.path.join(os.path.abspath(db_path), species_name, species_name)
             # remove existing partial db if any
             if os.path.exists(species_db_path):
                 shutil.rmtree(species_db_path, ignore_errors=True)
             try:
-                ariba_cmd = get_ariba_command()[0]
-                subprocess.run(
+                mlst_cmd = get_mlst_command()
+                subprocess.run(mlst_cmd + 
                     [
-                        ariba_cmd,
-                        "pubmlstget",
+                         # pixi run stringmlst.py --getMLST --species 'Klebsiella pneumoniae' -P bactscout_dbs/kleb/kleb         
+                        "--getMLST",
+                        "--species",
                         species_db_name,
-                        species_db_path,
+                        "-P",
+                        species_prefix ,
                     ],
                     check=True,
                     cwd=db_path,
                 )
             except subprocess.CalledProcessError as e:
                 print_message(
-                    f"Failed to download ARIBA database for species '{species_name}': {e}",
+                    f"Failed to download MLST database for species '{species_name}': {e}",
                     "error",
                 )
                 return False
         else:
             print_message(
-                f"ARIBA database for species '{species_name}' found in {db_path}.",
+                f"MLST database for species '{species_name}' found in {db_path}.",
                 "info",
             )
     print_message("All required databases are validated successfully.", "info")
@@ -176,14 +179,13 @@ def check_software(config_dict) -> bool:
     cmds = {
         "fastp": [shutil.which("fastp"), "--version"],
         "sylph": [shutil.which("sylph"), "--version"],
-        "ariba": [shutil.which("ariba"), "version"],
+        "stringmlst.py": [shutil.which("stringmlst.py"), "-v"],
     }
     # If commands are not found, shutil.which returns None, try with pixi run. 
     for tool, cmd in cmds.items():
         if cmd[0] is None:
             cmds[tool] = ["pixi", "run", "--"] + [tool] + cmd[1:]
 
-    # On Apple silicon, ARIBA may require x86_64 (Rosetta)
     passed = True
     for tool, cmd in cmds.items():
         try:

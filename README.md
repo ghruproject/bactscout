@@ -13,7 +13,7 @@ BactScout is a high-performance Python pipeline for rapid quality assessment, ta
 
 - 🔬 **Taxonomic Profiling**: Ultra-fast metagenomic profiling with Sylph
 
-- 🛡️ **MLST Quality Control**: Multi-locus sequence typing with ARIBA for genome quality assessment. A valid ST is a good sign.
+- 🛡️ **MLST Quality Control**: Multi-locus sequence typing with StringMLST for genome quality assessment. A valid ST is a good sign.
 
 ## 📦 Installation
 

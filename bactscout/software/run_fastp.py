@@ -24,7 +24,6 @@ def run_command(r1, r2, output_dir, config, message=False):
     
     # Define output files
     json_report = os.path.join(output_dir, f"{sample_name}.fastp.json")
-    html_report = os.path.join(output_dir, f"{sample_name}.fastp.html")
     log_file = os.path.join(output_dir, f"{sample_name}.fastp.log")
     
     # Get FastP command
@@ -35,7 +34,6 @@ def run_command(r1, r2, output_dir, config, message=False):
         "--in1", r1,
         "--in2", r2,
         "--json", json_report,
-        "--html", html_report,
         "--thread", str(config.get("threads", 4)),
         "--detect_adapter_for_pe",  # Auto-detect adapters for paired-end reads
     ]
@@ -85,14 +83,12 @@ def run_command(r1, r2, output_dir, config, message=False):
             print(f"FastP completed successfully for {sample_name}")
         if message:
             print(f"  - JSON report: {json_report}")
-            print(f"  - HTML report: {html_report}")
             print(f"  - Log file: {log_file}")
         
         return {
             "sample": sample_name,
             "status": "success",
             "json_report": json_report,
-            "html_report": html_report,
             "log_file": log_file
         }
         

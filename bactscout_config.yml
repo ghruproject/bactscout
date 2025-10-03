@@ -1,8 +1,8 @@
 bactscout_dbs_path: 'bactscout_dbs'
 sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
 sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb'
-ariba_species:
-  ecoli: 'Escherichia coli#1'
+mlst_species:
+  escherichia_coli: 'Escherichia coli#1'
   salmonella_enterica: 'Salmonella enterica'
   klebsiella_pneumoniae: 'Klebsiella pneumoniae'
   acinetobacter_baumannii: 'Acinetobacter baumannii#1'
