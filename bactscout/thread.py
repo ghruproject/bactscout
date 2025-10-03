@@ -24,7 +24,7 @@ def run_one_sample(sample_id, read1_file, read2_file, output_dir, config, messag
         final_results.update(fastp_stats)
         coverage_cutoff = config.get('coverage_threshold', 30)
         
-        final_results['species'] = ','.join(species)
+        final_results['species'] = ';'.join(species)
         if len(species) == 1: 
             species = species[0]
             final_results['species_status'] = 'PASSED'
