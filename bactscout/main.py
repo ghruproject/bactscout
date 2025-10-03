@@ -80,13 +80,24 @@ def locate_read_file_pairs(directory):
     read_pairs = {}
     for filename in os.listdir(directory):
         if filename.endswith((".fastq", ".fq", ".fastq.gz", ".fq.gz")):
-            base_name = filename.split("_R1")[0] if "_R1" in filename else filename.split("_R2")[0]
+            # Support both _R1/_R2 and _1/_2 naming conventions
+            if "_R1" in filename:
+                base_name = filename.split("_R1")[0]
+                read_type = 'R1'
+            elif "_R2" in filename:
+                base_name = filename.split("_R2")[0]
+                read_type = 'R2'
+            elif "_1" in filename:
+                base_name = filename.split("_1")[0]
+                read_type = 'R1'
+            elif "_2" in filename:
+                base_name = filename.split("_2")[0]
+                read_type = 'R2'
+            else:
+                continue
             if base_name not in read_pairs:
                 read_pairs[base_name] = {}
-            if "_R1" in filename:
-                read_pairs[base_name]['R1'] = os.path.join(directory, filename)
-            elif "_R2" in filename:
-                read_pairs[base_name]['R2'] = os.path.join(directory, filename)
+            read_pairs[base_name][read_type] = os.path.join(directory, filename)
     # Filter out incomplete pairs
     complete_pairs = {k: v for k, v in read_pairs.items() if 'R1' in v and 'R2' in v}
     return complete_pairs
