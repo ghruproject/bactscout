@@ -4,7 +4,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-BactScout is a high-performance Python pipeline for rapid quality assessment, taxonomic profiling, and MLST-based quality control of bacterial sequencing data. Built with modern Python tooling and designed for speed, it processes paired-end FASTQ files in parallel with beautiful progress reporting. 
+BactScout is a high-performance Python pipeline for rapid quality assessment, taxonomic profiling, and MLST-based quality control of bacterial sequencing data.
 
 
 ## ✨ Features
@@ -14,6 +14,38 @@ BactScout is a high-performance Python pipeline for rapid quality assessment, ta
 - 🔬 **Taxonomic Profiling**: Ultra-fast metagenomic profiling with Sylph
 
 - 🛡️ **MLST Quality Control**: Multi-locus sequence typing with StringMLST for genome quality assessment. A valid ST is a good sign.
+
+## 🎯 Quality Control Criteria
+
+For **cultured bacterial isolates** intended for genome assembly, BactScout evaluates several key quality metrics to ensure your data is suitable for downstream analysis:
+
+### ✅ **PASS Criteria:**
+
+- **📈 Coverage Depth**: Post-trimming read coverage **> Some number (default 30x)**
+  - Ensures sufficient depth for high-quality genome assembly
+  - Reduces assembly gaps and improves base calling accuracy
+
+- **🧬 Species Purity**: **Single species detected** by taxonomic profiling
+  - Confirms sample contains only the expected organism
+  - Rules out contamination from other bacterial species
+  - Critical for accurate genome reconstruction
+
+- **📏 Read Length**: Reads of **expected length** (typically 150bp for Illumina)
+  - Indicates proper sequencing run completion
+  - Ensures optimal assembly performance
+
+- **🎯 MLST Validation**: **Valid ST (Sequence Type) called** for species with available schemes
+  - Confirms species identification through multi-locus sequence typing
+  - Provides epidemiological context and strain characterization
+  - Available for major pathogens (E. coli, Klebsiella, Salmonella, etc.)
+
+### ⚠️ **WARNING/FAIL Indicators:**
+
+- **Low coverage** (< 30x): May result in fragmented assemblies
+- **Multiple species**: Indicates contamination requiring sample cleanup
+- **Truncated reads**: Suggests sequencing quality issues
+- **Invalid/Missing ST**: May indicate mixed cultures or novel strains. Some organisms are not well characterized by MLST, so I would not fail a sample just because it has no ST, but I would be cautious.
+
 
 ## 📦 Installation
 
@@ -80,3 +112,43 @@ The pixi environment includes all necessary dependencies:
 │ --help                      Show this message and exit.                                                                                                                                                                                                 │
 ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
+
+# Outputs
+
+Using the regular `qc` command will generate an output directory with the following structure:
+
+```
+bactscout_output/
+├── sample1/
+│   ├── sylph_report.txt
+│   ├── mlst.tsv
+│   ├── sample1_summary.csv
+│   └── sample1.fastp.json
+├── sample2/ ...
+└── final_summary.csv
+```
+
+### 📊 **final_summary.csv**
+
+The `final_summary.csv` file is a comprehensive report that consolidates all quality control metrics for every sample in your batch. This single file provides:
+
+**Key Columns Include:**
+- **sample_id**: Sample identifier
+- **total_reads/total_bases**: Sequencing depth metrics
+- **q20_rate/q30_rate**: Base quality scores (higher is better)
+- **gc_content**: Genomic GC percentage
+- **species**: Taxonomic identification from Sylph
+- **species_status**: PASSED/FAILED based on single species detection
+- **mlst_st**: Sequence Type from MLST analysis
+- **mlst_status**: PASSED/FAILED for valid ST assignment
+- **estimated_coverage**: Calculated genome coverage depth
+- **coverage_status**: PASSED (≥30x) / FAILED (<30x)
+- **gc_content_status**: PASSED/FAILED based on expected species range
+
+**Overall Assessment:**
+Each sample receives individual PASS/FAIL status for each quality metric, allowing you to quickly identify:
+- ✅ **Assembly-ready samples** (all metrics PASSED)
+- ⚠️ **Marginal samples** (some metrics FAILED) 
+- ❌ **Poor quality samples** (multiple failures requiring re-sequencing)
+
+Use this file to prioritize samples for genome assembly, identify problematic samples requiring attention, and generate summary statistics for your sequencing run quality.
