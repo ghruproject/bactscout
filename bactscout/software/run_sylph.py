@@ -37,24 +37,29 @@ def run_command(r1, r2, output_dir, config, message=False):
 
 
 def extract_species_from_report(sylph_report):
-    species_list = []
+    species_abundance = []
     try:
         with open(sylph_report, encoding="utf-8") as f:
-            header = next(f)
+            header = next(f)  # Skip header
             for line in f:
                 if line.startswith("#") or not line.strip():
                     continue
                 parts = line.strip().split("\t")
                 if len(parts) > 14:
                     contig_info = parts[14]
-                    # Extract genus and species (first two words)
                     words = contig_info.split()
                     if len(words) >= 3:
                         genus_species = f"{words[1]} {words[2]}"
-                        species_list.append(genus_species)
+                        try:
+                            abundance = float(parts[3])  # Sequence_abundance column
+                        except (ValueError, IndexError):
+                            abundance = 0.0
+                        species_abundance.append((genus_species, abundance))
     except FileNotFoundError:
         print(f"Report file {sylph_report} not found.")
-    return list(set(species_list))
+    # Sort by abundance descending
+    species_abundance.sort(key=lambda x: x[1], reverse=True)
+    return species_abundance
 
 
 def get_command():

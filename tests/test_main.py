@@ -3,6 +3,7 @@
 import subprocess
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -55,9 +56,9 @@ class TestBactScoutMain:
 
                 for pattern in expected_files:
                     files = list(sample_dir.glob(pattern))
-                    assert len(files) > 0, (
-                        f"Expected file pattern {pattern} not found in {sample_dir}"
-                    )
+                    assert (
+                        len(files) > 0
+                    ), f"Expected file pattern {pattern} not found in {sample_dir}"
 
                 print(f"✅ Test passed! Output created in {output_dir}")
                 print(f"   Found {len(sample_dirs)} sample(s) processed")
@@ -81,11 +82,84 @@ class TestBactScoutMain:
         actual_params = list(sig.parameters.keys())
 
         for param in expected_params:
-            assert param in actual_params, (
-                f"Parameter '{param}' not found in main function signature"
-            )
+            assert (
+                param in actual_params
+            ), f"Parameter '{param}' not found in main function signature"
 
         print(f"✅ Main function has expected parameters: {actual_params}")
+
+    def test_main_no_fastq_files_found(self):
+        """Test main function when no FASTQ file pairs are found."""
+        # Create temporary directories
+        with tempfile.TemporaryDirectory() as temp_input, tempfile.TemporaryDirectory() as temp_output:
+            # Get config file path
+            project_root = Path(__file__).parent.parent
+            config_file = project_root / "bactscout_config.yml"
+
+            # Create some non-FASTQ files in input directory
+            non_fastq_files = ["file1.txt", "file2.log", "data.csv"]
+            for filename in non_fastq_files:
+                Path(temp_input, filename).touch()
+
+            # Verify config file exists
+            assert config_file.exists(), f"Config file not found: {config_file}"
+
+            # Mock print_message to capture the error message
+            with patch("bactscout.main.print_message") as mock_print:
+                # Run main function
+                result = main(
+                    input_dir=temp_input,
+                    output_dir=temp_output,
+                    max_threads=2,
+                    config_file=str(config_file),
+                )
+
+                # Verify that the function returned early (result should be None)
+                assert result is None
+
+                # Verify that print_message was called with the expected error
+                mock_print.assert_called_with(
+                    "No FASTQ file pairs found in input directory", "error"
+                )
+
+                print(
+                    "✅ Test passed! Main function correctly handles empty input directory"
+                )
+
+    def test_main_empty_directory(self):
+        """Test main function with completely empty input directory."""
+        # Create temporary directories
+        with tempfile.TemporaryDirectory() as temp_input, tempfile.TemporaryDirectory() as temp_output:
+            # Get config file path
+            project_root = Path(__file__).parent.parent
+            config_file = project_root / "bactscout_config.yml"
+
+            # Leave input directory completely empty
+
+            # Verify config file exists
+            assert config_file.exists(), f"Config file not found: {config_file}"
+
+            # Mock print_message to capture the error message
+            with patch("bactscout.main.print_message") as mock_print:
+                # Run main function
+                result = main(
+                    input_dir=temp_input,
+                    output_dir=temp_output,
+                    max_threads=2,
+                    config_file=str(config_file),
+                )
+
+                # Verify that the function returned early (result should be None)
+                assert result is None
+
+                # Verify that print_message was called with the expected error
+                mock_print.assert_called_with(
+                    "No FASTQ file pairs found in input directory", "error"
+                )
+
+                print(
+                    "✅ Test passed! Main function correctly handles empty input directory"
+                )
 
 
 if __name__ == "__main__":

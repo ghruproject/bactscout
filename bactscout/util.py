@@ -1,6 +1,4 @@
-from rich import print as rprint
 from rich.console import Console
-from rich.text import Text
 
 # Initialize Rich console
 console = Console()
@@ -64,6 +62,6 @@ def print_message(message: str, msg_type: str = "info", emoji: bool = True) -> N
 
 def print_header(title: str) -> None:
     """Print a formatted header with Rich styling."""
-    console.print(f"\n[bold magenta]{'='*60}[/]")
+    console.print(f"\n[bold magenta]{'=' * 60}[/]")
     console.print(f"[bold magenta]{title.center(60)}[/]")
-    console.print(f"[bold magenta]{'='*60}[/]\n")
+    console.print(f"[bold magenta]{'=' * 60}[/]\n")

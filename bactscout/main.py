@@ -21,15 +21,24 @@ from bactscout.thread import run_one_sample
 from bactscout.util import print_header, print_message
 
 
-def main(input_dir, output_dir, max_threads, config_file: str = "bactscout_config.yml"):
+def main(
+    input_dir,
+    output_dir,
+    max_threads,
+    skip_preflight: bool = False,
+    config_file: str = "bactscout_config.yml",
+):
     config = load_config(config_file)
-    print_header("Preflight Checks")
-    all_ok = (
-        check_system_resources(config)
-        and check_software(config)
-        and check_databases(config)
-    )
-
+    if skip_preflight:
+        print_header("Preflight Checks")
+        all_ok = (
+            check_system_resources(config)
+            and check_software(config)
+            and check_databases(config)
+        )
+    else:
+        all_ok = True
+        print_message("Skipping preflight checks", "warning")
     # Get all sample pairs
     sample_pairs = locate_read_file_pairs(input_dir)
     total_samples = len(sample_pairs)

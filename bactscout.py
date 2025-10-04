@@ -16,13 +16,22 @@ def qc(
     output_dir: str = typer.Option(
         "bactscout_output", "--output", "-o", help="Path to the output directory"
     ),
+    skip_preflight: bool = typer.Option(
+        False, "--skip-preflight", help="Skip the preflight checks"
+    ),
     threads: int = typer.Option(4, "--threads", "-t", help="Number of threads to use"),
     config: str = typer.Option(
         "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
     ),
 ):
     """Main QC command"""
-    main(input_dir, output_dir, threads, config_file=config)
+    main(
+        input_dir,
+        output_dir,
+        threads,
+        config_file=config,
+        skip_preflight=skip_preflight,
+    )
 
 
 @app.command()
@@ -36,6 +45,9 @@ def collect(
     threads: int = typer.Option(4, "--threads", "-t", help="Number of threads to use"),
     config: str = typer.Option(
         "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
+    ),
+    skip_preflight: bool = typer.Option(
+        False, "--skip-preflight", help="Skip the preflight checks"
     ),
 ):
     """Run on a single sample"""
