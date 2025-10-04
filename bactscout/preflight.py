@@ -17,18 +17,15 @@ License: See repository LICENSE file
 """
 
 import os
-import platform
 import shutil
 import subprocess
 import urllib.request
-from pathlib import Path
-from typing import Dict
 
 import psutil
 import yaml  # Ensure PyYAML is installed in the environment
 
 from bactscout.software.run_stringmlst import get_command as get_mlst_command
-from bactscout.util import print_header, print_message
+from bactscout.util import print_message
 
 
 def load_config(config_path) -> dict[str, str]:
@@ -184,7 +181,7 @@ def check_software(config_dict) -> bool:
     cmds = {
         "fastp": [shutil.which("fastp"), "--version"],
         "sylph": [shutil.which("sylph"), "--version"],
-        "stringmlst.py": [shutil.which("stringmlst.py"), "-v"],
+        "stringMLST.py": [shutil.which("stringMLST.py"), "-v"],
     }
     # If commands are not found, shutil.which returns None, try with pixi run.
     for tool, cmd in cmds.items():

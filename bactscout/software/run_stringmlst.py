@@ -88,10 +88,10 @@ def get_command():
     Returns:
         list: Command as a list of strings for subprocess
     """
-    cmd = shutil.which("stringmlst.py")
+    cmd = shutil.which("stringMLST.py")
     # If command is not found, shutil.which returns None, try with pixi run
     if cmd is None:
-        cmd = ["pixi", "run", "--", "stringmlst.py"]
+        cmd = ["pixi", "run", "--", "stringMLST.py"]
     else:
         # Convert string path to list for consistent handling
         cmd = [cmd]
