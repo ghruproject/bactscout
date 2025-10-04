@@ -7,8 +7,14 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    
     steps:
       - uses: actions/checkout@v3
       
@@ -16,26 +22,76 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.34.0
+          cache: true
           
-      - name: Install dependencies
-        run: pixi install
+      - name: Update Python version in pixi.toml
+        shell: bash
+        run: |
+          # Create a backup and update Python version
+          cp pixi.toml pixi.toml.original
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' 's/python = ">=3\.11,<3\.12"/python = "${{ matrix.python-version }}.*"/' pixi.toml
+          else
+            sed -i 's/python = ">=3\.11,<3\.12"/python = "${{ matrix.python-version }}.*"/' pixi.toml
+          fi
+          echo "Updated pixi.toml for Python ${{ matrix.python-version }}"
+          cat pixi.toml | grep python
+          
+      - name: Clean and install dependencies
+        run: |
+          # Remove lock file to allow version changes
+          rm -f pixi.lock
+          pixi install
+        
+      - name: Verify Python version
+        run: pixi run python --version
         
       - name: Run ruff linting
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
         run: pixi run ruff check .
         
       - name: Run ruff formatting check
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
         run: pixi run ruff format --check .
         
+      - name: Run tests
+        run: pixi run python -m pytest tests/ -v
+          
       - name: Run tests with coverage
-        run: |
-          if [ -d "tests" ]; then
-            pixi run python -m pytest tests/ --cov=bactscout --cov-report=xml --cov-report=term
-          else
-            echo "No tests directory found. Skipping tests."
-          fi
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
+        run: pixi run python -m pytest tests/ --cov=bactscout --cov-report=xml --cov-report=term
           
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
+
+  # Lightweight compatibility test using pip
+  compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install core dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install typer rich pyaml psutil pytest
+          
+      - name: Test imports
+        run: |
+          python -c "import bactscout; print('✅ BactScout imports on Python ${{ matrix.python-version }}')"
+          python -c "from bactscout.main import main; print('✅ Main function available')"
+          
+      - name: Run basic test
+        run: python -m pytest tests/test_main.py::TestBactScoutMain::test_main_function_parameters -v
