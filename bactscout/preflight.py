@@ -16,30 +16,29 @@ Author: Nabil-Fareed Alikhan
 License: See repository LICENSE file
 """
 
-import subprocess
 import os
 import platform
-from typing import Dict
-import psutil
-import shutil
-import urllib.request
-import platform
 import shutil
 import subprocess
+import urllib.request
 from pathlib import Path
+from typing import Dict
+
+import psutil
 import yaml  # Ensure PyYAML is installed in the environment
-from bactscout.util import print_message, print_header
+
 from bactscout.software.run_stringmlst import get_command as get_mlst_command
+from bactscout.util import print_header, print_message
 
 
-def load_config(config_path) -> Dict[str, str]:
+def load_config(config_path) -> dict[str, str]:
     """
     Load configuration from YAML file.
 
     """
     # Load yaml and parse configurations
 
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         config_dict = yaml.safe_load(f)
     return config_dict
 
@@ -70,15 +69,18 @@ def check_databases(config_dict) -> bool:
     db_path = config_dict.get("bactscout_dbs_path", "")
     os.makedirs(db_path, exist_ok=True)
     print_message("Checking Sylph...", "info")
-    sylph_db_url = config_dict.get("sylph_db_url", "http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb")
-    sylph_db_file = os.path.join(db_path, config_dict.get('sylph_db', "gtdb-r226-c1000-dbv1.syldb"))
+    sylph_db_url = config_dict.get(
+        "sylph_db_url",
+        "http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb",
+    )
+    sylph_db_file = os.path.join(
+        db_path, config_dict.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb")
+    )
     get_sylph_db(sylph_db_file, sylph_db_url)
     # For each species in mlst_species, check database availability. Otherwise download and format for mlst.
     for species_name, species_db_name in config_dict.get("mlst_species", {}).items():
         if not db_path:
-            print_message(
-                "MLST database path not specified in configuration.", "error"
-            )
+            print_message("MLST database path not specified in configuration.", "error")
             return False
         mlst_files = [f"{species_name}_config.txt", f"{species_name}_profile.txt"]
         files_found = True
@@ -93,20 +95,23 @@ def check_databases(config_dict) -> bool:
                 "warning",
             )
             species_db_path = os.path.join(os.path.abspath(db_path), species_name)
-            species_prefix = os.path.join(os.path.abspath(db_path), species_name, species_name)
+            species_prefix = os.path.join(
+                os.path.abspath(db_path), species_name, species_name
+            )
             # remove existing partial db if any
             if os.path.exists(species_db_path):
                 shutil.rmtree(species_db_path, ignore_errors=True)
             try:
                 mlst_cmd = get_mlst_command()
-                subprocess.run(mlst_cmd + 
-                    [
-                         # pixi run stringmlst.py --getMLST --species 'Klebsiella pneumoniae' -P bactscout_dbs/kleb/kleb         
+                subprocess.run(
+                    mlst_cmd
+                    + [
+                        # pixi run stringmlst.py --getMLST --species 'Klebsiella pneumoniae' -P bactscout_dbs/kleb/kleb
                         "--getMLST",
                         "--species",
                         species_db_name,
                         "-P",
-                        species_prefix ,
+                        species_prefix,
                     ],
                     check=True,
                     cwd=db_path,
@@ -174,14 +179,14 @@ def check_system_resources(config_dict) -> bool:
     print_message("System resources validated successfully.", "info")
     return True
 
-def check_software(config_dict) -> bool:
 
+def check_software(config_dict) -> bool:
     cmds = {
         "fastp": [shutil.which("fastp"), "--version"],
         "sylph": [shutil.which("sylph"), "--version"],
         "stringmlst.py": [shutil.which("stringmlst.py"), "-v"],
     }
-    # If commands are not found, shutil.which returns None, try with pixi run. 
+    # If commands are not found, shutil.which returns None, try with pixi run.
     for tool, cmd in cmds.items():
         if cmd[0] is None:
             cmds[tool] = ["pixi", "run", "--"] + [tool] + cmd[1:]
@@ -200,12 +205,11 @@ def check_software(config_dict) -> bool:
                 print_message(f"{tool} check failed:\n{result.stdout.strip()}", "error")
                 passed = False
             # Some tools print version on first line; fall back to entire output
-            line = result.stdout.strip().splitlines()[0] if result.stdout.strip() else "ok"
+            line = (
+                result.stdout.strip().splitlines()[0] if result.stdout.strip() else "ok"
+            )
             print_message(f"{tool} is available: {line}", "info")
         except Exception as e:
             print_message(f"Error checking {tool}: {e}", "error")
             passed = False
     return passed
-
-
-

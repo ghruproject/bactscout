@@ -1,6 +1,7 @@
+import os
 import shutil
 import subprocess
-import os
+
 
 def run_command(r1, r2, output_dir, config, message=False):
     """
@@ -17,28 +18,28 @@ def run_command(r1, r2, output_dir, config, message=False):
 
     sylph_report = os.path.join(output_dir, "sylph_report.txt")
     cmd = get_command()
-    database_path = os.path.join(config.get("bactscout_dbs_path", ""), config.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb"))
-    cmd = cmd + [
-        "profile",
-        database_path,
-        "-1", r1,
-        "-2", r2
-    ]
-    
+    database_path = os.path.join(
+        config.get("bactscout_dbs_path", ""),
+        config.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb"),
+    )
+    cmd = cmd + ["profile", database_path, "-1", r1, "-2", r2]
+
     try:
         with open(sylph_report, "w", encoding="utf-8") as report_file:
-            subprocess.run(cmd, stdout=report_file, stderr=subprocess.DEVNULL, check=True)
+            subprocess.run(
+                cmd, stdout=report_file, stderr=subprocess.DEVNULL, check=True
+            )
         if message:
             print(f"Sylph completed successfully. Results are in {output_dir}")
     except subprocess.CalledProcessError as e:
         print(f"Error running Sylph: {e}")
-    return {'sylph_report': sylph_report}
+    return {"sylph_report": sylph_report}
 
 
 def extract_species_from_report(sylph_report):
     species_list = []
     try:
-        with open(sylph_report, "r", encoding="utf-8") as f:
+        with open(sylph_report, encoding="utf-8") as f:
             header = next(f)
             for line in f:
                 if line.startswith("#") or not line.strip():
@@ -55,9 +56,10 @@ def extract_species_from_report(sylph_report):
         print(f"Report file {sylph_report} not found.")
     return list(set(species_list))
 
+
 def get_command():
     cmd = shutil.which("sylph")
-    # If commands are not found, shutil.which returns None, try with pixi run. 
+    # If commands are not found, shutil.which returns None, try with pixi run.
     if cmd is None:
         cmd = ["pixi", "run", "--", "sylph"]
     else:

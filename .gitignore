@@ -22,6 +22,7 @@ activate.sh
 env/
 bactscout_output*
 .pixi/
+output_sample_report/
 
 # Distribution / packaging
 .Python

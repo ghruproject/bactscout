@@ -1,7 +1,8 @@
+import os
 import shutil
 import subprocess
-import os
 from pathlib import Path
+
 
 def run_command(r1, r2, species_db, output_dir, config, message=False):
     """
@@ -13,7 +14,7 @@ def run_command(r1, r2, species_db, output_dir, config, message=False):
         output_dir (str): Path to the output directory where results will be saved.
         config (dict): Configuration dictionary containing ARIBA settings.
         message (bool): Whether to print success/error messages.
-    
+
     Returns:
         dict: Dictionary containing paths to StringMLST output files.
     """
@@ -25,8 +26,10 @@ def run_command(r1, r2, species_db, output_dir, config, message=False):
 
     # Extract sample name from R1 file
     r1_path = Path(r1)
-    sample_name = r1_path.stem.replace('_R1', '').replace('.fastq', '').replace('.fq', '')
-    
+    sample_name = (
+        r1_path.stem.replace("_R1", "").replace(".fastq", "").replace(".fq", "")
+    )
+
     # Get StringMLST command
     cmd = get_command()
     stringmlst_results = {}
@@ -39,49 +42,49 @@ def run_command(r1, r2, species_db, output_dir, config, message=False):
         "--predict",
         "-P",
         os.path.abspath(species_db),
-        '-1',
+        "-1",
         os.path.abspath(r1),
-        '-2',
+        "-2",
         os.path.abspath(r2),
-        '--output',
-        output_file
+        "--output",
+        output_file,
     ]
-    
+
     try:
         # Run StringMLST
         if message:
             print(f"Running StringMLST for {species_db}...")
             print(f"Command: {' '.join(mlst_cmd)}")
-            
+
         subprocess.run(mlst_cmd, check=True, capture_output=not message)
         # Open mlst.tsv add to results
-        with open(output_file, 'r') as f:
+        with open(output_file) as f:
             lines = f.readlines()
             if len(lines) > 1:
-                header = lines[0].strip().split('\t')
-                values = lines[1].strip().split('\t')
-                mlst_data = dict(zip(header, values))
+                header = lines[0].strip().split("\t")
+                values = lines[1].strip().split("\t")
+                mlst_data = dict(zip(header, values, strict=False))
                 stringmlst_results = mlst_data
             else:
                 stringmlst_results = {"error": "No MLST results found in output file."}
-        
+
         if message:
-            print(f"ARIBA completed successfully for {species_db}")            
+            print(f"ARIBA completed successfully for {species_db}")
     except subprocess.CalledProcessError as e:
         if message:
             print(f"Error running MLST for {species_db}: {e}")
 
     return {
-        'sample_name': sample_name,
-        'stringmlst_results': stringmlst_results,
-        'output_dir': output_dir
+        "sample_name": sample_name,
+        "stringmlst_results": stringmlst_results,
+        "output_dir": output_dir,
     }
 
 
 def get_command():
     """
     Get the StringMLST command, checking system PATH first, then falling back to pixi/conda.
-    
+
     Returns:
         list: Command as a list of strings for subprocess
     """
@@ -93,4 +96,3 @@ def get_command():
         # Convert string path to list for consistent handling
         cmd = [cmd]
     return cmd
-

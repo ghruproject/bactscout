@@ -1,0 +1,1 @@
+"""BactScout test package."""

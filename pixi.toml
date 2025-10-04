@@ -7,6 +7,10 @@ version = "0.1.0"
 
 [tasks]
 bactscout="python bactscout.py"
+lint="ruff check ."
+format="ruff format ."
+check="ruff check --fix . && ruff format ."
+test="python -m pytest tests/ -v"
 
 [dependencies]
 fastp = ">=1.0.1,<2"
@@ -20,3 +24,5 @@ rich = ">=14.1.0, <15"
 pyaml = ">=25.7.0, <26"
 psutil = ">=7.1.0, <8"
 stringmlst = ">=0.6.3, <0.7"
+ruff = ">=0.6.0, <0.7"
+pytest = ">=8.0.0, <9.0"
