@@ -2,6 +2,15 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.pytest_cache/
+
 # pixi environments
 .pixi/*
 !.pixi/config.toml
