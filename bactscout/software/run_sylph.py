@@ -22,7 +22,7 @@ def run_command(r1, r2, output_dir, config, message=False):
         config.get("bactscout_dbs_path", ""),
         config.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb"),
     )
-    cmd = cmd + ["profile", database_path, "-1", r1, "-2", r2]
+    cmd = cmd + ["profile", database_path, "-u", "-1", r1, "-2", r2]
 
     try:
         with open(sylph_report, "w", encoding="utf-8") as report_file:
@@ -54,7 +54,11 @@ def extract_species_from_report(sylph_report):
                             abundance = float(parts[3])  # Sequence_abundance column
                         except (ValueError, IndexError):
                             abundance = 0.0
-                        species_abundance.append((genus_species, abundance))
+                        try:
+                            coverage = float(parts[5])  # Coverage column
+                        except (ValueError, IndexError):
+                            coverage = 0.0
+                        species_abundance.append((genus_species, abundance, coverage))
     except FileNotFoundError:
         print(f"Report file {sylph_report} not found.")
     # Sort by abundance descending

@@ -1,6 +1,8 @@
 import csv
 from pathlib import Path
 
+from bactscout.util import print_message
+
 
 def summary_dir(data_dir, output_file):
     """
@@ -27,10 +29,10 @@ def summary_dir(data_dir, output_file):
                 summary_files.append(csv_file)
 
     if not summary_files:
-        print(f"No summary CSV files found in {data_dir}")
+        print_message(f"No summary CSV files found in {data_dir}", "error")
         return
 
-    print(f"Found {len(summary_files)} summary files to merge")
+    print_message(f"Found {len(summary_files)} summary files to merge", "info")
 
     # Read the first file to get the header
     header = None
@@ -54,7 +56,6 @@ def summary_dir(data_dir, output_file):
                 # Add data rows (skip header)
                 if len(rows) > 1:
                     all_rows.extend(rows[1:])
-                    print(f"Added {len(rows)-1} rows from {csv_file}")
                 else:
                     print(f"Warning: No data rows in {csv_file}")
 
