@@ -457,7 +457,7 @@ def get_expected_genome_size(species, config):
             parts = line.strip().split(",")
             # Line should be line Streptococcus_agalactiae,Genome_Size,<lower>,<upper>
             if line.startswith(safe_species_name) and "Genome_Size" in line:
-                genome_size = (int(parts[2]) + int(parts[2])) / 2
+                genome_size = (int(parts[2]) + int(parts[3])) / 2
             # Also return GC Content, from Streptococcus_agalactiae,GC_Content,35,37
             if line.startswith(safe_species_name) and "GC_Content" in line:
                 gc_lower = int(parts[2])
