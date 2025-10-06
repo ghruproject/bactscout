@@ -129,6 +129,8 @@ def locate_read_file_pairs(directory):
             match = pattern.match(filename)
             if match:
                 base_name = match.group(1)
+                if base_name.endswith("_"):
+                    base_name = base_name[:-1]  # Remove trailing underscore
                 read_type = "R1" if match.group(2) == "1" else "R2"
                 if base_name not in read_pairs:
                     read_pairs[base_name] = {}

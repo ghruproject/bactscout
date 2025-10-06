@@ -138,6 +138,12 @@ def write_summary_file(final_results, sample_id, sample_output_dir):
     with open(final_output_file, "w", encoding="utf-8") as f:
         # Write header
         headers = list(final_results.keys())
+        # Sort: sample_id first, then *_status, then alphabetical
+        headers = sorted(
+            final_results.keys(),
+            key=lambda x: (x != "sample_id", not x.endswith("_status"), x),
+            # or: (0 if x == "sample_id" else 1, 0 if x.endswith("_status") else 1, x)
+        )
         f.write(",".join(headers) + "\n")
         # Write values
         values = [
