@@ -90,8 +90,6 @@ After installation, restart your terminal or refresh your shell configuration.
 
 ### Installation Steps
 
-** I am working on a better way to do this **
-
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/ghruproject/bactscout.git
