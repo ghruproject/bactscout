@@ -92,7 +92,6 @@ def run_one_sample(
     # If other species > 10% abundance, skip MLST
     not_contaminated = True
     if len(species) > 1:
-        # species_abundance = [('Klebsiella pneumoniae', 98.7772, 43.506)] Example
         # Sum up abundance of non-top species
         non_top_abundance = sum([s[1] for s in species_abundance[1:]])
         if non_top_abundance > config.get("contamination_threshold", 10):
@@ -291,10 +290,18 @@ def handle_mlst_results(
     # Run ARIBA if a single species is identified
     # Need to determine the species_db path
     species_key = None
+    # This locates the  correct fodler name for the mlst Db in cases where species exactly matches.
+    # e.g klebsiella_pneumoniae: 'Klebsiella pneumoniae'
     for key, value in config["mlst_species"].items():
         if value == species:
             species_key = key
             break
+    # In case the species name has a number at the end e.g Escherichia coli#1 or Neisseria spp.
+    # In this case species dir will be species.replace(" ", "_").lower()
+    if not species_key:
+        species_simple = species[0].replace(" ", "_").lower()
+        if species_simple in config["mlst_species"]:
+            species_key = species_simple
 
     if species_key:
         species_db_path = os.path.join(
