@@ -29,7 +29,7 @@ def main(
     config_file: str = "bactscout_config.yml",
 ):
     config = load_config(config_file)
-    if skip_preflight:
+    if not skip_preflight:
         print_header("Preflight Checks")
         all_ok = (
             check_system_resources(config)

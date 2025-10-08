@@ -61,17 +61,17 @@ class TestLocateReadFilePairs:
             assert len(pairs) == 3, f"Expected 3 pairs, got {len(pairs)}"
 
             # Check NIHR sample specifically
-            assert "NIHR_KGMU_KPN_2061_" in pairs
-            assert pairs["NIHR_KGMU_KPN_2061_"]["R1"].endswith(
+            assert "NIHR_KGMU_KPN_2061" in pairs
+            assert pairs["NIHR_KGMU_KPN_2061"]["R1"].endswith(
                 "NIHR_KGMU_KPN_2061_1.fastq.gz"
             )
-            assert pairs["NIHR_KGMU_KPN_2061_"]["R2"].endswith(
+            assert pairs["NIHR_KGMU_KPN_2061"]["R2"].endswith(
                 "NIHR_KGMU_KPN_2061_2.fastq.gz"
             )
 
             # Check other samples
-            assert "Sample_ABC123_XYZ_" in pairs
-            assert "Simple_Sample_" in pairs
+            assert "Sample_ABC123_XYZ" in pairs
+            assert "Simple_Sample" in pairs
 
     def test_locate_read_file_pairs_with_R_prefix(self):
         """Test with R1/R2 prefix in filename."""
@@ -119,7 +119,7 @@ class TestLocateReadFilePairs:
             # Verify all extensions work
             assert len(pairs) == 4
             for i in range(1, 5):
-                assert f"sample{i}_" in pairs
+                assert f"sample{i}" in pairs
 
     def test_locate_read_file_pairs_incomplete_pairs(self):
         """Test that incomplete pairs are filtered out."""
@@ -140,7 +140,7 @@ class TestLocateReadFilePairs:
 
             # Should only return complete pairs
             assert len(pairs) == 1
-            assert "complete_sample_" in pairs
+            assert "complete_sample" in pairs
 
     def test_locate_read_file_pairs_empty_directory(self):
         """Test with empty directory."""
@@ -224,17 +224,17 @@ class TestLocateReadFilePairs:
 
             # Should detect all pairs (sample_ creates 2 pairs: sample_ and sampleR)
             expected_pairs = (
-                6  # 6 complete pairs due to sample_ having both _1/_2 and _R1/_R2
+                5  # 5 complete pairs due to sample_ having both _1/_2 and _R1/_R2
             )
             assert len(pairs) == expected_pairs
 
             # Verify the NIHR pattern specifically
-            assert "NIHR_KGMU_KPN_2061_" in pairs
-            assert "R1" in pairs["NIHR_KGMU_KPN_2061_"]
-            assert "R2" in pairs["NIHR_KGMU_KPN_2061_"]  # Verify specific samples
+            assert "NIHR_KGMU_KPN_2061" in pairs
+            assert "R1" in pairs["NIHR_KGMU_KPN_2061"]
+            assert "R2" in pairs["NIHR_KGMU_KPN_2061"]  # Verify specific samples
             sample_names = list(pairs.keys())
-            assert any("NIHR_KGMU_KPN_2061_" in name for name in sample_names)
-            assert any("Sample_ABC-123_XYZ_" in name for name in sample_names)
+            assert any("NIHR_KGMU_KPN_2061" in name for name in sample_names)
+            assert any("Sample_ABC-123_XYZ" in name for name in sample_names)
 
 
 if __name__ == "__main__":
