@@ -48,6 +48,16 @@ Most thresholds can be adjusted in the `bactscout_config.yml` file.
   - Available for major pathogens (E. coli, Klebsiella, Salmonella, etc.)
   - See column `mlst_status`.
 
+The same information as a table: 
+
+| Metric                 | Default Threshold                                                        | Purpose / Rationale                                                                                                                                                                               | Key Columns                                                   |
+| :--------------------- | :----------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------ |
+| 📈 **Coverage Depth**  | > 30×                                                                    | • Ensures sufficient depth for high-quality genome assembly<br>• Reduces assembly gaps and improves base-calling accuracy                                                                         | `coverage_status`, `coverage_alt_status`                      |
+| 🧬 **Species Purity**  | < 10 % of reads assigned to other taxa; GC content within expected range | • Confirms sample contains only the expected organism<br>• Rules out contamination from other species<br>• Critical for accurate genome reconstruction                                            | `contamination_status`, `species_status`, `gc_content_status` |
+| 📏 **Read Length**     | > 100 bp                                                                 | • Indicates proper sequencing run completion<br>• Ensures optimal assembly performance                                                                                                            | `read_length_status`, `read_q30_status`                       |
+| 🎯 **MLST Validation** | Valid ST (Sequence Type) for species with available scheme               | • Confirms species identification through MLST<br>• Provides epidemiological context and strain characterization<br>• Available for major pathogens (*E. coli*, *Klebsiella*, *Salmonella*, etc.) | `mlst_status`                                                 |
+
+
 ### ⚠️ **WARNING/FAIL Indicators:**
 
 - **Low coverage** (< 30x): May result in fragmented assemblies. If you are only considering read mapping, you might get away with lower coverage (>5x)
