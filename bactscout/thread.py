@@ -299,7 +299,7 @@ def handle_mlst_results(
     # In case the species name has a number at the end e.g Escherichia coli#1 or Neisseria spp.
     # In this case species dir will be species.replace(" ", "_").lower()
     if not species_key:
-        species_simple = species[0].replace(" ", "_").lower()
+        species_simple = species.replace(" ", "_").lower()
         if species_simple in config["mlst_species"]:
             species_key = species_simple
 
