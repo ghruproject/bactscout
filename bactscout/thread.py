@@ -89,11 +89,28 @@ def run_one_sample(
     )
     if species:
         final_results = handle_genome_size(species, fastp_stats, final_results, config)
-
-    if len(species) == 1:
+    # If other species > 10% abundance, skip MLST
+    not_contaminated = True
+    if len(species) > 1:
+        # species_abundance = [('Klebsiella pneumoniae', 98.7772, 43.506)] Example
+        # Sum up abundance of non-top species
+        non_top_abundance = sum([s[1] for s in species_abundance[1:]])
+        if non_top_abundance > config.get("contamination_threshold", 10):
+            final_results["species_status"] = "FAILED"
+            final_results["species_message"] = (
+                f"Multiple species detected with significant abundance ({non_top_abundance:.2f}%). Skipping MLST."
+            )
+            not_contaminated = False
+    if not_contaminated:
         species = species[0]
         final_results["species_status"] = "PASSED"
-        final_results["species_message"] = "Single species detected."
+        if len(species) == 1:
+            final_results["species_message"] = "Single species detected."
+        else:
+            final_results["species_message"] = (
+                "Multiple species detected. Using the top species for MLST."
+            )
+            final_results["species_status"] = "WARNING"
         final_results = handle_mlst_results(
             final_results=final_results,
             config=config,
@@ -105,9 +122,7 @@ def run_one_sample(
         )
 
     else:
-        final_results["species_message"] = (
-            "Multiple or no species detected. Skipping MLST."
-        )
+        final_results["species_status"] = "FAILED"
     write_summary_file(final_results, sample_id, sample_output_dir)
 
     return {

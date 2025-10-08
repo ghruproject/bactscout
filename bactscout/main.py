@@ -29,16 +29,17 @@ def main(
     config_file: str = "bactscout_config.yml",
 ):
     config = load_config(config_file)
-    if not skip_preflight:
+    if skip_preflight:
+        all_ok = True
+        print_message("Skipping preflight checks", "warning")
+    else:
         print_header("Preflight Checks")
         all_ok = (
             check_system_resources(config)
             and check_software(config)
             and check_databases(config)
         )
-    else:
-        all_ok = True
-        print_message("Skipping preflight checks", "warning")
+
     # Get all sample pairs
     sample_pairs = locate_read_file_pairs(input_dir)
     total_samples = len(sample_pairs)
