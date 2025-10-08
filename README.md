@@ -1,8 +1,7 @@
 # 🧬 BactScout
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Tests](https://github.com/ghruproject/bactscout/workflows/CI/badge.svg)](https://github.com/ghruproject/bactscout/actions)
 [![Coverage](https://img.shields.io/badge/coverage-67%25-yellow.svg)](https://github.com/ghruproject/bactscout)
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://github.com/ghruproject/bactscout/blob/main/README.md)
 [![Release](https://img.shields.io/github/v/release/ghruproject/bactscout?include_prereleases)](https://github.com/ghruproject/bactscout/releases)
@@ -25,27 +24,33 @@ For **cultured bacterial isolates** intended for genome assembly, BactScout eval
 
 ### ✅ **PASS Criteria:**
 
-- **📈 Coverage Depth**: Post-trimming read coverage **> Some number (default 30x)**
+Most thresholds can be adjusted in the `bactscout_config.yml` file.
+
+- **📈 Coverage Depth**: Good post-trimming read coverage (> 30x default)
   - Ensures sufficient depth for high-quality genome assembly
   - Reduces assembly gaps and improves base calling accuracy
+  - See columns `coverage_status` and `coverage_alt_status`.
 
-- **🧬 Species Purity**: **Single species detected** by taxonomic profiling
+- **🧬 Species Purity**: There should be no significant of reads assigned to other taxa (< 10% default) and GC content is within expected range for the species. 
   - Confirms sample contains only the expected organism
   - Rules out contamination from other bacterial species
   - Critical for accurate genome reconstruction
+  - See columns `contamination_status`, `species_status` and `gc_content_status`.
 
-- **📏 Read Length**: Reads of **expected length** (typically 150bp for Illumina)
+- **📏 Read Length**: Reads of **good length** (> 100bp; can be changed in `bactscout_config.yml`)
   - Indicates proper sequencing run completion
   - Ensures optimal assembly performance
+  - See column `read_length_status` and `read_q30_status`.
 
 - **🎯 MLST Validation**: **Valid ST (Sequence Type) called** for species with available schemes
   - Confirms species identification through multi-locus sequence typing
   - Provides epidemiological context and strain characterization
   - Available for major pathogens (E. coli, Klebsiella, Salmonella, etc.)
+  - See column `mlst_status`.
 
 ### ⚠️ **WARNING/FAIL Indicators:**
 
-- **Low coverage** (< 30x): May result in fragmented assemblies. If you are only consider read mapping, you might get away with lower coverage (>5x)
+- **Low coverage** (< 30x): May result in fragmented assemblies. If you are only considering read mapping, you might get away with lower coverage (>5x)
 - **Multiple species**: Indicates contamination requiring sample cleanup
 - **Truncated reads**: Suggests sequencing quality issues
 - **Invalid/Missing ST**: May indicate mixed cultures or novel strains. Some organisms are not well characterized by MLST, so I would not fail a sample just because it has no ST, but I would be cautious.
@@ -138,6 +143,7 @@ The `final_summary.csv` file is a comprehensive report that consolidates all qua
 
 **Key Columns Include:**
 - **sample_id**: Sample identifier
+- **a_final_status**: Overall PASS/FAIL based on all criteria
 - **total_reads/total_bases**: Sequencing depth metrics
 - **q20_rate/q30_rate**: Base quality scores (higher is better)
 - **gc_content**: Genomic GC percentage
@@ -149,10 +155,5 @@ The `final_summary.csv` file is a comprehensive report that consolidates all qua
 - **coverage_status**: PASSED (≥30x) / FAILED (<30x)
 - **gc_content_status**: PASSED/FAILED based on expected species range
 
-**Overall Assessment:**
-Each sample receives individual PASS/FAIL status for each quality metric, allowing you to quickly identify:
-- ✅ **Assembly-ready samples** (all metrics PASSED)
-- ⚠️ **Marginal samples** (some metrics FAILED) 
-- ❌ **Poor quality samples** (multiple failures requiring re-sequencing)
 
 Use this file to prioritize samples for genome assembly, identify problematic samples requiring attention, and generate summary statistics for your sequencing run quality.
