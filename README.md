@@ -46,6 +46,7 @@ Most thresholds can be adjusted in the `bactscout_config.yml` file.
   - Confirms species identification through multi-locus sequence typing
   - Provides epidemiological context and strain characterization
   - Available for major pathogens (E. coli, Klebsiella, Salmonella, etc.)
+  - A novel ST is acceptable, but no ST or multiple STs is a warning sign.
   - See column `mlst_status`.
 
 The same information as a table: 
