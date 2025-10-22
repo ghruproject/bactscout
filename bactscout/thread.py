@@ -23,16 +23,17 @@ def blank_sample_results(sample_id):
     Returns:
         dict: A dictionary with default values for all expected sample result fields.
     """
-    return {
+    return {  # sample_id,alt_coverage_status,contamination_status,coverage_status,gc_content_status,mlst_status,q30_status,read_length_status,species_status,alt_coverage_message,contamination_message,coverage_message,estimated_alt_coverage,estimated_coverage,expected_genome_size,gc_content,gc_content_lower,gc_content_message,gc_content_upper,mlst_message,mlst_st,q20_bases,q20_rate,q30_bases,q30_message,q30_rate,read1_mean_length,read2_mean_length,read_length_message,species,species_abundance,species_coverage,species_message,total_bases,total_reads
         "sample_id": sample_id,
-        "total_reads": 0,
-        "total_bases": 0,
-        "q20_bases": 0,
-        "q30_bases": 0,
-        "q20_rate": 0.0,
-        "q30_rate": 0.0,
-        "q30_status": "FAILED",
-        "q30_message": "No reads processed. Cannot determine quality metrics.",
+        "a_final_status": "FAILED",
+        "read_total_reads": 0,
+        "read_total_bases": 0,
+        "read_q20_bases": 0,
+        "read_q30_bases": 0,
+        "read_q20_rate": 0.0,
+        "read_q30_rate": 0.0,
+        "read_q30_status": "FAILED",
+        "read_q30_message": "No reads processed. Cannot determine quality metrics.",
         "read1_mean_length": 0,
         "read2_mean_length": 0,
         "read_length_status": "FAILED",
@@ -41,8 +42,8 @@ def blank_sample_results(sample_id):
         "species": "",
         "species_abundance": "",
         "species_coverage": "",
-        "estimated_coverage": 0,
-        "expected_genome_size": 0,
+        "coverage_estimate": 0,
+        "genome_size_expected": 0,
         "coverage_status": "FAILED",
         "coverage_message": "No reads processed. Cannot estimate genome size or coverage.",
         "gc_content_lower": 0,
@@ -53,12 +54,12 @@ def blank_sample_results(sample_id):
         "species_message": "No reads processed. Cannot determine species.",
         "mlst_st": None,
         "mlst_status": "FAILED",
-        "mlst_message": "No reads processed. Cannot determine MLST.",
+        "mlst_message": "Cannot determine MLST.",
         "contamination_status": "FAILED",
         "contamination_message": "No reads processed. Cannot determine contamination.",
-        "estimated_alt_coverage": 0,
-        "alt_coverage_message": "No reads processed. Cannot estimate alternative coverage.",
-        "alt_coverage_status": "FAILED",
+        "coverage_alt_estimate": 0,
+        "coverage_alt_message": "No reads processed. Cannot estimate alternative coverage.",
+        "coverage_alt_status": "FAILED",
     }
 
 
@@ -122,6 +123,7 @@ def run_one_sample(
 
     else:
         final_results["species_status"] = "FAILED"
+    final_results["a_final_status"] = final_status_pass(final_results)
     write_summary_file(final_results, sample_id, sample_output_dir)
 
     return {
@@ -152,6 +154,12 @@ def write_summary_file(final_results, sample_id, sample_output_dir):
     with open(final_output_file, "w", encoding="utf-8") as f:
         # Write header
         headers = list(final_results.keys())
+        # Warn if headers are not the same as blank_sample_results()
+        if headers != list(blank_sample_results(sample_id).keys()):
+            print_message(
+                f"Warning: Headers in final results do not match expected headers for sample {sample_id}",
+                "warning",
+            )
         # Sort: sample_id first, then *_status, then alphabetical
         headers = sorted(
             final_results.keys(),
@@ -187,18 +195,18 @@ def handle_fastp_results(fastp_results, config):
 
     # Q30 status and message
     if fastp_results.get("total_reads", 0) == 0:
-        fastp_results["q30_status"] = "FAILED"
-        fastp_results["q30_message"] = (
+        fastp_results["read_q30_status"] = "FAILED"
+        fastp_results["read_q30_message"] = (
             "No reads processed. Cannot determine quality metrics."
         )
     elif fastp_results.get("q30_rate", 0.0) >= q30_threshold:
-        fastp_results["q30_status"] = "PASSED"
-        fastp_results["q30_message"] = (
+        fastp_results["read_q30_status"] = "PASSED"
+        fastp_results["read_q30_message"] = (
             f"Q30 rate {fastp_results['q30_rate']:.2f} meets threshold ({q30_threshold})."
         )
     else:
-        fastp_results["q30_status"] = "FAILED"
-        fastp_results["q30_message"] = (
+        fastp_results["read_q30_status"] = "FAILED"
+        fastp_results["read_q30_message"] = (
             f"Q30 rate {fastp_results['q30_rate']:.2f} below threshold ({q30_threshold})."
         )
 
@@ -319,16 +327,17 @@ def handle_mlst_results(
                     f"Valid ST found: {mlst_result['stringmlst_results']['ST']}"
                 )
             else:
-                final_results["mlst_status"] = "FAILED"
+                final_results["mlst_status"] = "WARNING"
                 final_results["mlst_message"] = "No valid ST found."
         else:
             final_results["mlst_st"] = None
-            final_results["mlst_status"] = "FAILED"
+            final_results["mlst_status"] = "WARNING"
             final_results["mlst_message"] = "No valid ST found."
     else:
         final_results["mlst_message"] = (
             "No MLST database found for species. Install via config.yml."
         )
+        final_results["mlst_status"] = "WARNING"
         if message:
             print_message(
                 f"No MLST database found for species: {species}. Skipping MLST.",
@@ -368,17 +377,17 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
         estimated_coverage = fastp_stats["total_bases"] / expected_genome_size
     else:
         estimated_coverage = 0
-    final_results["estimated_alt_coverage"] = round(estimated_coverage, 2)
-    final_results["expected_genome_size"] = expected_genome_size
+    final_results["coverage_alt_estimate"] = round(estimated_coverage, 2)
+    final_results["genome_size_expected"] = expected_genome_size
     if estimated_coverage >= coverage_cutoff:
-        final_results["alt_coverage_status"] = "PASSED"
-        final_results["alt_coverage_message"] = (
+        final_results["coverage_alt_status"] = "PASSED"
+        final_results["coverage_alt_message"] = (
             f"Estimated coverage {estimated_coverage:.2f}x meets the threshold of {coverage_cutoff}x."
             + warning
         )
     else:
-        final_results["alt_coverage_status"] = "FAILED"
-        final_results["alt_coverage_message"] = (
+        final_results["coverage_alt_status"] = "FAILED"
+        final_results["coverage_alt_message"] = (
             f"Estimated coverage {estimated_coverage:.2f}x below the threshold of {coverage_cutoff}x."
             + warning
         )
@@ -424,12 +433,12 @@ def get_fastp_results(fastp_results):
     If the fastp run was unsuccessful or the report file is missing, returns a dictionary with zeroed/default values for all metrics.
     """
     failed = {
-        "total_reads": 0,
-        "total_bases": 0,
-        "q20_bases": 0,
-        "q30_bases": 0,
-        "q20_rate": 0.0,
-        "q30_rate": 0.0,
+        "read_total_reads": 0,
+        "read_total_bases": 0,
+        "read_q20_bases": 0,
+        "read_q30_bases": 0,
+        "read_q20_rate": 0.0,
+        "read_q30_rate": 0.0,
         "read1_mean_length": 0,
         "read2_mean_length": 0,
         "gc_content": 0.0,
@@ -444,8 +453,19 @@ def get_fastp_results(fastp_results):
         data = json.load(f)
 
     after_filtering = data.get("summary").get("after_filtering", failed)
-    after_filtering["gc_content"] = round(float(after_filtering["gc_content"] * 100), 4)
-    return after_filtering
+    # Rename keys to match expected output
+    after_filtering_rename = {
+        "read_total_reads": after_filtering.get("total_reads", 0),
+        "read_total_bases": after_filtering.get("total_bases", 0),
+        "read_q20_bases": after_filtering.get("q20_bases", 0),
+        "read_q30_bases": after_filtering.get("q30_bases", 0),
+        "read_q20_rate": after_filtering.get("q20_rate", 0.0),
+        "read_q30_rate": after_filtering.get("q30_rate", 0.0),
+    }
+    after_filtering_rename["gc_content"] = round(
+        float(after_filtering["gc_content"] * 100), 4
+    )
+    return after_filtering_rename
 
 
 def get_expected_genome_size(species, config):
@@ -485,3 +505,38 @@ def get_expected_genome_size(species, config):
                 gc_lower = int(parts[2])
                 gc_upper = int(parts[3])
     return genome_size, gc_lower, gc_upper
+
+
+def final_status_pass(final_results):
+    """
+    Look at statuses from all other status columns and determine final status.
+    """
+    # get all keys that end with _status
+    final_status = "PASSED"
+    statuses = {k: v for k, v in final_results.items() if k.endswith("_status")}
+    # If read length failed, final status is failed
+    # A pass has to be no obvious contamination, good coverage, good read quality
+    if (
+        statuses.get("read_length_status") == "FAILED"
+        or statuses.get("read_q30_status") == "FAILED"
+        or statuses.get("contamination_status") == "FAILED"
+        or statuses.get("gc_content_status") == "FAILED"
+    ):
+        final_status = "FAILED"
+    # If both coverage and alt coverage failed, final status is failed, but if one passed, it's a warning
+    if (
+        statuses.get("coverage_status") == "FAILED"
+        and statuses.get("coverage_alt_status") == "FAILED"
+    ):
+        final_status = "FAILED"
+    elif (
+        statuses.get("coverage_status") == "FAILED"
+        or statuses.get("coverage_alt_status") == "FAILED"
+    ):
+        final_status = "WARNING"
+    # If MLST failed, final status is warning
+    if statuses.get("mlst_status") == "FAILED":
+        if final_status != "FAILED":
+            final_status = "WARNING"
+
+    return final_status
