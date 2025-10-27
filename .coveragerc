@@ -6,6 +6,7 @@ omit =
     */__pycache__/*
     */venv/*
     */.venv/*
+    */.pixi/*
     */build/*
     */dist/*
 

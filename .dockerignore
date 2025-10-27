@@ -1,0 +1,64 @@
+# Git files
+.git/
+.gitignore
+.github/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Documentation
+docs/_build/
+
+# Output directories (may contain large files)
+bactscout_output/
+bactscout_output_test/
+
+# Test data (can be large)
+test_data/
+sample_data/
+
+# Pixi environment
+.pixi/
+
+# Logs
+*.log
+
+# Other
+.DS_Store
+*.bak
+*.tmp
+
+# Keep these
+!pixi.toml
+!pixi.lock

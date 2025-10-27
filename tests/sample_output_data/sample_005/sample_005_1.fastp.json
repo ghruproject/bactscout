@@ -404,5 +404,5 @@
 		"overrepresented_sequences": {
 		}
 	},
-	"command": "/arsp/ghru2/bactscout/.pixi/envs/default/bin/fastp --in1 /arsp/ghru2/kpn_survey/fastqs/24ARS-BRH0180-20250117P_1.fastq.gz --in2 /arsp/ghru2/kpn_survey/fastqs/24ARS-BRH0180-20250117P_2.fastq.gz --json /arsp/ghru2/kpn_survey/bactscout_output_20251024_110826/24ARS-BRH0180-20250117P/24ARS-BRH0180-20250117P_1.fastp.json --html /arsp/ghru2/kpn_survey/bactscout_output_20251024_110826/24ARS-BRH0180-20250117P/24ARS-BRH0180-20250117P_1.fastp.html --thread 4 --detect_adapter_for_pe --disable_adapter_trimming --disable_quality_filtering --disable_length_filtering "
+	"command": "/test/anonymous_path/fastp --in1 /test/anonymous_path/sample_5_1.fastq.gz --in2 /test/anonymous_path/sample_5_2.fastq.gz --json /test/anonymous_path/sample_5/sample_5_1.fastp.json --html /test/anonymous_path/sample_5/sample_5_1.fastp.html --thread 4 --detect_adapter_for_pe --disable_adapter_trimming --disable_quality_filtering --disable_length_filtering "
 }
