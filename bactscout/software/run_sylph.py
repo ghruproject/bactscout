@@ -40,7 +40,7 @@ def extract_species_from_report(sylph_report):
     species_abundance = []
     try:
         with open(sylph_report, encoding="utf-8") as f:
-            header = next(f)  # Skip header
+            next(f)  # Skip header
             for line in f:
                 if line.startswith("#") or not line.strip():
                     continue

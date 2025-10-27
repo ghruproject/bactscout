@@ -194,26 +194,29 @@ def handle_fastp_results(fastp_results, config):
     read_length_threshold = config.get("read_length_pass_threshold", 100)
 
     # Q30 status and message
-    if fastp_results.get("total_reads", 0) == 0:
+    total_reads = fastp_results.get("read_total_reads", 0)
+    q30_rate = fastp_results.get("read_q30_rate", 0.0)
+
+    if total_reads == 0:
         fastp_results["read_q30_status"] = "FAILED"
         fastp_results["read_q30_message"] = (
             "No reads processed. Cannot determine quality metrics."
         )
-    elif fastp_results.get("q30_rate", 0.0) >= q30_threshold:
+    elif q30_rate >= q30_threshold:
         fastp_results["read_q30_status"] = "PASSED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {fastp_results['q30_rate']:.2f} meets threshold ({q30_threshold})."
+            f"Q30 rate {q30_rate:.2f} meets threshold ({q30_threshold})."
         )
     else:
         fastp_results["read_q30_status"] = "FAILED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {fastp_results['q30_rate']:.2f} below threshold ({q30_threshold})."
+            f"Q30 rate {q30_rate:.2f} below threshold ({q30_threshold})."
         )
 
     # Read length status and message
     read1_len = fastp_results.get("read1_mean_length", 0)
     read2_len = fastp_results.get("read2_mean_length", 0)
-    if fastp_results.get("total_reads", 0) == 0:
+    if total_reads == 0:
         fastp_results["read_length_status"] = "FAILED"
         fastp_results["read_length_message"] = (
             "No reads processed. Cannot determine read lengths."
@@ -461,6 +464,8 @@ def get_fastp_results(fastp_results):
         "read_q30_bases": after_filtering.get("q30_bases", 0),
         "read_q20_rate": after_filtering.get("q20_rate", 0.0),
         "read_q30_rate": after_filtering.get("q30_rate", 0.0),
+        "read1_mean_length": after_filtering.get("read1_mean_length", 0),
+        "read2_mean_length": after_filtering.get("read2_mean_length", 0),
     }
     after_filtering_rename["gc_content"] = round(
         float(after_filtering["gc_content"] * 100), 4
