@@ -4,7 +4,12 @@ from pathlib import Path
 import typer
 
 from bactscout.main import main
-from bactscout.preflight import check_databases, check_software, check_system_resources, load_config
+from bactscout.preflight import (
+    check_databases,
+    check_software,
+    check_system_resources,
+    load_config,
+)
 from bactscout.summary import summary_dir
 from bactscout.thread import run_one_sample
 from bactscout.util import extract_sample_name, print_header, print_message
@@ -40,16 +45,14 @@ def qc(
 
 @app.command()
 def collect(
-    read1_file: str = typer.Argument(
-        ..., help="Path to the R1 FASTQ file"
-    ),
-    read2_file: str = typer.Argument(
-        ..., help="Path to the R2 FASTQ file"
-    ),
+    read1_file: str = typer.Argument(..., help="Path to the R1 FASTQ file"),
+    read2_file: str = typer.Argument(..., help="Path to the R2 FASTQ file"),
     output_dir: str = typer.Option(
         "bactscout_output", "--output", "-o", help="Path to the output directory"
     ),
-    threads: int = typer.Option(4, "--threads", "-t", help="Number of threads to pass to tools"),
+    threads: int = typer.Option(
+        4, "--threads", "-t", help="Number of threads to pass to tools"
+    ),
     config: str = typer.Option(
         "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
     ),
@@ -59,7 +62,7 @@ def collect(
 ):
     """Process a single sample with paired-end reads"""
     config_dict = load_config(config)
-    
+
     if skip_preflight:
         all_ok = True
         print_message("Skipping preflight checks", "warning")
@@ -70,24 +73,24 @@ def collect(
             and check_software(config_dict)
             and check_databases(config_dict)
         )
-    
+
     if not all_ok:
         print_message("Preflight checks failed", "error")
         return
-    
+
     # Extract sample name from R1 filename
     sample_id = extract_sample_name(read1_file)
-    
+
     if not sample_id:
         print_message(f"Could not extract sample name from {read1_file}", "error")
         return
-    
+
     print_header("Processing Single Sample")
     print_message(f"Sample ID: {sample_id}", "info")
     print_message(f"R1: {read1_file}", "info")
     print_message(f"R2: {read2_file}", "info")
     print_message(f"Using {threads} threads", "info")
-    
+
     # Process the sample
     try:
         result = run_one_sample(
@@ -98,14 +101,14 @@ def collect(
             config_dict,
             message=True,
         )
-        
+
         if result and result.get("status") == "success":
             print_header("Sample Processing Complete")
             print_message(f"✅ Sample {sample_id} processed successfully", "success")
             print_message(f"Results saved to {output_dir}/{sample_id}/", "info")
         else:
             print_message(f"❌ Sample {sample_id} processing failed", "error")
-            
+
     except (RuntimeError, OSError, ValueError) as exc:
         print_message(f"❌ Error processing sample {sample_id}: {exc}", "error")
 
@@ -117,9 +120,6 @@ def summary(
     ),
     output_dir: str = typer.Option(
         "bactscout_output", "--output", "-o", help="Path to the output directory"
-    ),
-    config: str = typer.Option(
-        "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
     ),
 ):
     """Generate a consolidated summary of all samples"""
