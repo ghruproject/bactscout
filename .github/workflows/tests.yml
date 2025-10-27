@@ -44,8 +44,16 @@ jobs:
       - name: Install dependencies
         run: pixi install
       
-      - name: Run tests with coverage
-        run: pixi run test-cov
+      - name: Cache test data
+        uses: actions/cache@v4
+        with:
+          path: bactscout_dbs
+          key: bactscout-dbs-${{ hashFiles('bactscout_dbs/**') }}
+          restore-keys: |
+            bactscout-dbs-
+      
+      - name: Run tests with coverage (parallel)
+        run: pixi run pytest tests/ --cov=bactscout --cov-report=xml -n auto
       
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
@@ -75,5 +83,13 @@ jobs:
       - name: Install dependencies
         run: pixi install
       
-      - name: Run tests with coverage
-        run: pixi run test-cov
+      - name: Cache test data
+        uses: actions/cache@v4
+        with:
+          path: bactscout_dbs
+          key: bactscout-dbs-${{ hashFiles('bactscout_dbs/**') }}
+          restore-keys: |
+            bactscout-dbs-
+      
+      - name: Run tests (parallel)
+        run: pixi run pytest tests/ -n auto --tb=short
