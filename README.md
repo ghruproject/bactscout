@@ -1,6 +1,6 @@
 # 🧬 BactScout
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![codecov](https://codecov.io/github/ghruproject/bactscout/graph/badge.svg?token=NH4TFLH9X4)](https://codecov.io/github/ghruproject/bactscout)
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://github.com/ghruproject/bactscout/blob/main/README.md)
@@ -102,48 +102,81 @@ After installation, restart your terminal or refresh your shell configuration.
    pixi install
    ```
 
-4. **Run BactScout:**
+3. **Run BactScout:**
    ```bash
    pixi run bactscout --help
    ```
 
+   Or use the `qc` command:
+   ```bash
+   pixi run bactscout qc /path/to/fastq/files
+   ```
+
+**Note:** BactScout automatically downloads required databases (Sylph GTDB, MLST schemes) on first run if they don't exist locally.
+
 The pixi environment includes all necessary dependencies:
-- **fastp** - for read quality control
-- **sylph** - for taxonomic profiling  
-- **ariba** - for MLST analysis
-- **Python packages** - typer, rich, pyaml, psutil 
+- **fastp** - Read quality control and trimming
+- **sylph** - Ultra-fast taxonomic profiling
+- **ariba** - MLST analysis framework
+- **Python 3.11+** - Core runtime
+- **typer** - CLI framework with Rich formatting
+- **rich** - Beautiful terminal output
+- **pyaml** - YAML configuration parsing
+- **psutil** - System resource monitoring
+- **stringmlst** - MLST caller
 
 # 🚀 Usage
 
-```                                                                                                                                                                                                                                                           
- Usage: bactscout.py qc [OPTIONS] INPUT_DIR                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                           
- Main QC command                                                                                                                                                                                                                                           
-                                                                                                                                                                                                                                                           
-╭─ Arguments ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *    input_dir      TEXT  Path to the input directory containing FASTQ files [required]                                                                                                                                                                 │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --output   -o      TEXT     Path to the output directory [default: bactscout_output]                                                                                                                                                                    │
-│ --threads  -t      INTEGER  Number of threads to use [default: 4]                                                                                                                                                                                       │
-│ --config   -c      TEXT     Path to the configuration file [default: bactscout_config.yml]                                                                                                                                                              │
-│ --help                      Show this message and exit.                                                                                                                                                                                                 │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+BactScout provides three main commands:
+
+### `qc` - Quality Control (Main Command)
+
+Run quality control analysis on FASTQ files:
+
+```bash
+pixi run bactscout qc /path/to/fastq/files [OPTIONS]
+```
+
+**Options:**
+- `--output, -o` - Output directory (default: `bactscout_output`)
+- `--threads, -t` - Number of threads (default: 4)
+- `--config, -c` - Config file path (default: `bactscout_config.yml`)
+- `--skip-preflight` - Skip preflight checks (not recommended)
+
+**Example:**
+```bash
+pixi run bactscout qc ./test_data -o results -t 8
+```
+
+### `collect` - Collect Results
+
+Collect and organize results from a previous run:
+
+```bash
+pixi run bactscout collect /path/to/results [OPTIONS]
+```
+
+### `summary` - Generate Summary Report
+
+Generate a consolidated summary of all samples:
+
+```bash
+pixi run bactscout summary /path/to/results [OPTIONS]
 ```
 
 # Outputs
 
-Using the regular `qc` command will generate an output directory with the following structure:
+Using the `qc` command will generate an output directory with the following structure:
 
 ```
 bactscout_output/
 ├── sample1/
-│   ├── sylph_report.txt
-│   ├── mlst.tsv
-│   ├── sample1_summary.csv
-│   └── sample1.fastp.json
+│   ├── sylph_report.txt          # Species identification results
+│   ├── mlst.tsv                  # MLST sequence typing results
+│   ├── sample1_summary.csv       # Per-sample quality summary
+│   └── sample1_1.fastp.json      # Fastp quality control metrics (R1)
 ├── sample2/ ...
-└── final_summary.csv
+└── final_summary.csv             # Merged summary of all samples
 ```
 
 ### 📊 **final_summary.csv**
@@ -152,17 +185,22 @@ The `final_summary.csv` file is a comprehensive report that consolidates all qua
 
 **Key Columns Include:**
 - **sample_id**: Sample identifier
-- **a_final_status**: Overall PASS/FAIL based on all criteria
+- **a_final_status**: Overall PASS/FAIL/WARNING based on all criteria
 - **total_reads/total_bases**: Sequencing depth metrics
-- **q20_rate/q30_rate**: Base quality scores (higher is better)
+- **read_q20_rate/read_q30_rate**: Base quality scores (Q20/Q30 higher is better)
+- **read1_mean_length/read2_mean_length**: Average read length (R1 and R2)
 - **gc_content**: Genomic GC percentage
 - **species**: Taxonomic identification from Sylph
-- **species_status**: PASSED/FAILED based on single species detection
+- **species_status**: PASSED/FAILED/WARNING based on single species detection
+- **species_abundance**: Percentage of reads assigned to detected species
+- **species_coverage**: Estimated coverage from species identification
 - **mlst_st**: Sequence Type from MLST analysis
-- **mlst_status**: PASSED/FAILED for valid ST assignment
-- **estimated_coverage**: Calculated genome coverage depth
-- **coverage_status**: PASSED (≥30x) / FAILED (<30x)
+- **mlst_status**: PASSED/FAILED/WARNING for valid ST assignment
+- **coverage_estimate**: Calculated genome coverage depth
+- **coverage_alt_estimate**: Alternative coverage calculation
+- **coverage_status**: PASSED (≥30x) / FAILED (<30x) / WARNING
 - **gc_content_status**: PASSED/FAILED based on expected species range
-
+- **contamination_status**: PASSED/FAILED based on species purity threshold
+- **read_length_status**: PASSED/FAILED based on minimum read length (default >100bp)
 
 Use this file to prioritize samples for genome assembly, identify problematic samples requiring attention, and generate summary statistics for your sequencing run quality.
