@@ -94,7 +94,7 @@ pixi run pytest tests/ --cov=bactscout --cov-report=html
 open htmlcov/index.html
 ```
 
-See [Testing Guide](./development/testing.md) for details.
+See [Testing Guide](development/testing.md) for details.
 
 #### 6. Update Documentation
 
