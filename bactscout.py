@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
+from pathlib import Path
+
 import typer
-from rich.console import Console
 
 from bactscout.main import main
+from bactscout.summary import summary_dir
+from bactscout.util import print_header, print_message
 
 app = typer.Typer(rich_markup_mode="rich")
-console = Console()
 
 
 @app.command()
@@ -66,8 +68,18 @@ def summary(
         "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
     ),
 ):
-    """Run on a single sample"""
-    print("hello")
+    """Generate a consolidated summary of all samples"""
+    print_header("BactScout Summary Generator")
+
+    # Create output directory if needed
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    # Generate the merged summary file
+    output_file = output_path / "final_summary.csv"
+    summary_dir(input_dir, str(output_file))
+
+    print_message(f"Summary report generated: {output_file}", "success")
 
 
 if __name__ == "__main__":
