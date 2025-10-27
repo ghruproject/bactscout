@@ -77,7 +77,8 @@ def main(
                         reads["R2"],
                         output_dir,
                         config,
-                        False,
+                        threads=1,
+                        message=False,
                     ): sample
                     for sample, reads in sample_pairs.items()
                 }

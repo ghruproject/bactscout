@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 
-def run_command(r1, r2, species_db, output_dir, config, message=False):
+def run_command(r1, r2, species_db, output_dir, config, message=False, threads=1):
     """
     Run StringMLSt on paired-end FASTQ files for antimicrobial resistance gene detection.
 
@@ -48,8 +48,9 @@ def run_command(r1, r2, species_db, output_dir, config, message=False):
         os.path.abspath(r2),
         "--output",
         output_file,
+        "--threads",
+        str(threads),
     ]
-
     try:
         # Run StringMLST
         if message:

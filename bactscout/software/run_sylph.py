@@ -3,7 +3,7 @@ import shutil
 import subprocess
 
 
-def run_command(r1, r2, output_dir, config, message=False):
+def run_command(r1, r2, output_dir, config, message=False, threads=1):
     """
     Run Sylph on the input directory and save results to the output directory.
 
@@ -22,7 +22,17 @@ def run_command(r1, r2, output_dir, config, message=False):
         config.get("bactscout_dbs_path", ""),
         config.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb"),
     )
-    cmd = cmd + ["profile", database_path, "-u", "-1", r1, "-2", r2]
+    cmd = cmd + [
+        "profile",
+        database_path,
+        "-u",
+        "-1",
+        r1,
+        "-2",
+        r2,
+        "-t",
+        str(threads),
+    ]
 
     try:
         with open(sylph_report, "w", encoding="utf-8") as report_file:

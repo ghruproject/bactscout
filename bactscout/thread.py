@@ -64,7 +64,7 @@ def blank_sample_results(sample_id):
 
 
 def run_one_sample(
-    sample_id, read1_file, read2_file, output_dir, config, message=False
+    sample_id, read1_file, read2_file, output_dir, config, threads=1, message=False
 ):
     """Run analysis for a single sample."""
     if message:
@@ -77,10 +77,14 @@ def run_one_sample(
 
     # Initialize final results with blank values
     final_results = blank_sample_results(sample_id)
-    sylph_result = run_sylph(read1_file, read2_file, sample_output_dir, config)
+    sylph_result = run_sylph(
+        read1_file, read2_file, sample_output_dir, config, threads=threads
+    )
     species_abundance = extract_species_from_report(sylph_result.get("sylph_report"))
 
-    fastp_result = run_fastp(read1_file, read2_file, sample_output_dir, config)
+    fastp_result = run_fastp(
+        read1_file, read2_file, sample_output_dir, config, threads=threads
+    )
     fastp_stats = get_fastp_results(fastp_result)
     fastp_stats = handle_fastp_results(fastp_stats, config)
     final_results.update(fastp_stats)
@@ -92,7 +96,8 @@ def run_one_sample(
         final_results = handle_genome_size(species, fastp_stats, final_results, config)
     # If other species > 10% abundance, skip MLST
     not_contaminated = True
-    if len(species) > 1:
+    has_multiple_species = len(species) > 1
+    if has_multiple_species:
         # Sum up abundance of non-top species
         non_top_abundance = sum([s[1] for s in species_abundance[1:]])
         if non_top_abundance > config.get("contamination_threshold", 10):
@@ -104,7 +109,7 @@ def run_one_sample(
     if not_contaminated:
         species = species[0]
         final_results["species_status"] = "PASSED"
-        if len(species) == 1:
+        if not has_multiple_species:
             final_results["species_message"] = "Single species detected."
         else:
             final_results["species_message"] = (
@@ -119,6 +124,7 @@ def run_one_sample(
             read2_file=read2_file,
             sample_output_dir=sample_output_dir,
             message=message,
+            threads=threads,
         )
 
     else:
@@ -297,6 +303,7 @@ def handle_mlst_results(
     read2_file,
     sample_output_dir,
     message,
+    threads=1,
 ):
     # Run ARIBA if a single species is identified
     # Need to determine the species_db path
@@ -319,7 +326,12 @@ def handle_mlst_results(
             config["bactscout_dbs_path"], species_key, species_key
         )
         mlst_result = run_mlst(
-            read1_file, read2_file, species_db_path, sample_output_dir, config
+            read1_file,
+            read2_file,
+            species_db_path,
+            sample_output_dir,
+            config,
+            threads=threads,
         )
         # Check MLST results
         if mlst_result.get("stringmlst_results", {}).get("ST"):
@@ -376,8 +388,8 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
         warning = "Warning: Multiple species detected. Using the top species."
     expected_genome_size, gc_lower, gc_upper = get_expected_genome_size(species, config)
     # Get estimated coverage and eval fastp results
-    if expected_genome_size > 0 and fastp_stats.get("total_bases", 0) > 0:
-        estimated_coverage = fastp_stats["total_bases"] / expected_genome_size
+    if expected_genome_size > 0 and fastp_stats.get("read_total_bases", 0) > 0:
+        estimated_coverage = fastp_stats["read_total_bases"] / expected_genome_size
     else:
         estimated_coverage = 0
     final_results["coverage_alt_estimate"] = round(estimated_coverage, 2)

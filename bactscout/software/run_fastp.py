@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 
-def run_command(r1, r2, output_dir, config, message=False):
+def run_command(r1, r2, output_dir, config, message=False, threads=1):
     """
     Run FastP on paired-end FASTQ files for quality control and generate reports.
 
@@ -44,7 +44,7 @@ def run_command(r1, r2, output_dir, config, message=False):
         "--html",
         html_report,  # Write HTML output to the output directory
         "--thread",
-        str(config.get("threads", 4)),
+        str(threads),
         "--detect_adapter_for_pe",  # Auto-detect adapters for paired-end reads
     ]
 
