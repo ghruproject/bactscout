@@ -11,8 +11,9 @@ lint="ruff check ."
 format="ruff format ."
 check="ruff check --fix . && ruff format ."
 test="python -m pytest tests/ -v"
-test-cov="python -m pytest tests/ --cov=bactscout --cov-report=term-missing --cov-report=html"
+test-cov="python -m pytest tests/ --cov=bactscout --cov-report=term-missing --cov-report=html --cov-report=xml"
 cov-report="python -m coverage html && python -m coverage report"
+ci="pixi run check && pixi run test-cov"
 
 [dependencies]
 fastp = ">=1.0.1,<2"
