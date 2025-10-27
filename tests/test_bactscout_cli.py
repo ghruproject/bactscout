@@ -1,6 +1,7 @@
 """Tests for bactscout.py CLI module."""
 
 import importlib.util
+import re
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,11 @@ if spec and spec.loader:
     app = bactscout_module.app
 
 runner = CliRunner()
+
+
+def strip_ansi(text: str) -> str:
+    """Remove ANSI color codes from text."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 class TestCLI:
@@ -32,22 +38,25 @@ class TestCLI:
         """Test qc command help text."""
         result = runner.invoke(app, ["qc", "--help"])
         assert result.exit_code == 0
-        assert "--skip-preflight" in result.stdout
-        assert "--threads" in result.stdout
-        assert "--output" in result.stdout or "-o" in result.stdout
+        clean_output = strip_ansi(result.stdout)
+        assert "--skip-preflight" in clean_output
+        assert "--threads" in clean_output
+        assert "--output" in clean_output or "-o" in clean_output
 
     def test_collect_command_help(self):
         """Test collect command help text."""
         result = runner.invoke(app, ["collect", "--help"])
         assert result.exit_code == 0
-        assert "--threads" in result.stdout
-        assert "--output" in result.stdout or "-o" in result.stdout
+        clean_output = strip_ansi(result.stdout)
+        assert "--threads" in clean_output
+        assert "--output" in clean_output or "-o" in clean_output
 
     def test_summary_command_help(self):
         """Test summary command help text."""
         result = runner.invoke(app, ["summary", "--help"])
         assert result.exit_code == 0
-        assert "--output" in result.stdout or "-o" in result.stdout
+        clean_output = strip_ansi(result.stdout)
+        assert "--output" in clean_output or "-o" in clean_output
 
     def test_invalid_command(self):
         """Test that invalid command returns error."""
