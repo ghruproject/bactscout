@@ -276,10 +276,14 @@ def handle_species_coverage(species_abundance, final_results, config):
     top_species = species_abundance[0] if species_abundance else None
     if top_species and top_species[2] >= coverage_cutoff:
         final_results["coverage_status"] = "PASSED"
+        final_results["coverage_estimate"] = round(top_species[2], 2)
         final_results["coverage_message"] = (
             f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x meets the threshold of {coverage_cutoff}x."
         )
     else:
+        final_results["coverage_estimate"] = (
+            round(top_species[2], 2) if top_species else 0
+        )
         final_results["coverage_message"] = (
             f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls below the threshold of {coverage_cutoff}x."
         )
