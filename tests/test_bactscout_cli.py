@@ -76,7 +76,7 @@ class TestCLI:
 
     def test_invalid_thread_count_collect(self):
         """Test that invalid thread count returns error for collect."""
-        result = runner.invoke(app, ["collect", "/input", "--threads", "invalid"])
+        result = runner.invoke(app, ["collect", "/input_R1.fastq.gz", "/input_R2.fastq.gz", "--threads", "invalid"])
         assert result.exit_code != 0
 
     def test_qc_accepts_output_option(self):
@@ -86,10 +86,10 @@ class TestCLI:
         assert "--output" in result.stdout or result.exit_code in (0, 1)
 
     def test_collect_accepts_output_option(self):
-        """Test collect accepts output option."""
-        result = runner.invoke(app, ["collect", "/input", "--output", "/output"])
-        # Should succeed or fail gracefully, not due to arg parsing
-        assert "--output" in result.stdout or result.exit_code in (0, 1)
+        """Test collect accepts output option with R1 and R2 files."""
+        result = runner.invoke(app, ["collect", "/input_R1.fastq.gz", "/input_R2.fastq.gz", "--output", "/output"])
+        # Should succeed or fail gracefully, not due to arg parsing (exit code 1 is file not found, which is ok)
+        assert result.exit_code in (0, 1)
 
     def test_qc_accepts_threads_option(self):
         """Test qc accepts threads option."""
@@ -104,9 +104,9 @@ class TestCLI:
         assert result.exit_code in (0, 1)
 
     def test_collect_accepts_short_flags(self):
-        """Test collect accepts short flags."""
-        result = runner.invoke(app, ["collect", "/input", "-t", "4"])
-        # Should succeed or fail gracefully, not due to arg parsing
+        """Test collect accepts short flags with R1 and R2 files."""
+        result = runner.invoke(app, ["collect", "/input_R1.fastq.gz", "/input_R2.fastq.gz", "-t", "4"])
+        # Should succeed or fail gracefully, not due to arg parsing (exit code 1 is file not found, which is ok)
         assert result.exit_code in (0, 1)
 
     def test_summary_runs_and_produces_output(self):
