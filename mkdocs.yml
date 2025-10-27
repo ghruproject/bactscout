@@ -1,0 +1,71 @@
+site_name: BactScout
+site_description: High-performance bacterial genome quality control and MLST analysis pipeline
+site_url: https://github.com/ghruproject/bactscout
+repo_url: https://github.com/ghruproject/bactscout
+repo_name: ghruproject/bactscout
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+      primary: teal
+      accent: lime
+    - scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+      primary: teal
+      accent: lime
+  features:
+    - navigation.tabs
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.view
+    - content.action.edit
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.emoji
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      use_pygments: true
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - tables
+  - footnotes
+  - attr_list
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+      - Configuration: getting-started/configuration.md
+  - Usage:
+      - QC Command: usage/qc-command.md
+      - Collect Command: usage/collect-command.md
+      - Summary Command: usage/summary-command.md
+      - Output Format: usage/output-format.md
+  - Guide:
+      - Quality Control Criteria: guide/quality-control.md
+      - Working with Results: guide/results-analysis.md
+      - Troubleshooting: guide/troubleshooting.md
+  - Reference:
+      - API Reference: reference/api.md
+      - Configuration Reference: reference/configuration.md
+      - FAQ: reference/faq.md
+  - Development:
+      - Contributing: contributing.md
+      - Architecture: development/architecture.md
+      - Testing: development/testing.md
