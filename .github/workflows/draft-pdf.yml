@@ -14,11 +14,11 @@ jobs:
           journal: joss
           # This should be the path to the paper within your repo.
           paper-path: joss/paper.md
+      - name: List generated files
+        run: ls -la *.pdf joss/*.pdf 2>/dev/null || echo "No PDFs found yet"
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: paper
-          # This is the output path where Pandoc will write the compiled
-          # PDF. Note, this should be the same directory as the input
-          # paper.md
-          path: joss/josspaper.pdf
+          # The PDF is generated in the workspace root by openjournals-draft-action
+          path: josspaper.pdf
