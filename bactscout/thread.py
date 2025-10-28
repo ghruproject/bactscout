@@ -1,3 +1,47 @@
+"""
+Core processing module for individual sample analysis and QC evaluation.
+
+This module handles the orchestration of quality control (QC) analysis for individual bacterial
+samples. It coordinates calls to external tools (fastp for read QC, Sylph for species detection,
+stringMLST for typing), aggregates results, and evaluates samples against configurable thresholds.
+
+Key Responsibilities:
+    - Sample processing orchestration (run_one_sample)
+    - Quality metrics evaluation (handle_fastp_results, handle_species_coverage, etc.)
+    - Species and coverage analysis
+    - MLST typing integration
+    - Result aggregation and final status determination
+
+Workflow for Each Sample:
+    1. Initialize blank result dictionary
+    2. Run Sylph for species detection
+    3. Run fastp for read quality and statistics
+    4. Process fastp results with thresholds
+    5. Handle species coverage estimation
+    6. Evaluate genome size and coverage
+    7. Run MLST if single species identified
+    8. Determine final QC pass/fail status
+    9. Write results to summary CSV
+
+Key Classes:
+    - None (functional module)
+
+Key Functions:
+    - run_one_sample(): Main orchestrator for processing a single sample
+    - blank_sample_results(): Initialize result dictionary
+    - handle_fastp_results(): Evaluate read quality metrics
+    - handle_species_coverage(): Process species detection and abundance
+    - handle_genome_size(): Calculate coverage and GC content metrics
+    - handle_mlst_results(): Run and process MLST typing
+    - final_status_pass(): Determine overall sample QC status
+
+Dependencies:
+    - bactscout.software.run_fastp: Read quality control
+    - bactscout.software.run_sylph: Species detection
+    - bactscout.software.run_stringmlst: MLST typing
+    - bactscout.util: Formatting and output utilities
+"""
+
 import json
 import os
 
@@ -23,7 +67,7 @@ def blank_sample_results(sample_id):
     Returns:
         dict: A dictionary with default values for all expected sample result fields.
     """
-    return {  # sample_id,alt_coverage_status,contamination_status,coverage_status,gc_content_status,mlst_status,q30_status,read_length_status,species_status,alt_coverage_message,contamination_message,coverage_message,estimated_alt_coverage,estimated_coverage,expected_genome_size,gc_content,gc_content_lower,gc_content_message,gc_content_upper,mlst_message,mlst_st,q20_bases,q20_rate,q30_bases,q30_message,q30_rate,read1_mean_length,read2_mean_length,read_length_message,species,species_abundance,species_coverage,species_message,total_bases,total_reads
+    return {
         "sample_id": sample_id,
         "a_final_status": "FAILED",
         "read_total_reads": 0,
@@ -66,7 +110,40 @@ def blank_sample_results(sample_id):
 def run_one_sample(
     sample_id, read1_file, read2_file, output_dir, config, threads=1, message=False
 ):
-    """Run analysis for a single sample."""
+    """
+    Execute comprehensive QC analysis pipeline for a single bacterial sample.
+
+    Orchestrates the complete analysis workflow including species detection, read quality
+    evaluation, genome coverage estimation, and MLST typing. Integrates results from
+    multiple external tools and evaluates samples against configurable quality thresholds.
+
+    Args:
+        sample_id (str): Unique identifier for the sample.
+        read1_file (str): Path to the forward reads FASTQ file (R1).
+        read2_file (str): Path to the reverse reads FASTQ file (R2).
+        output_dir (str): Directory where sample output files and results will be saved.
+        config (dict): Configuration dictionary containing thresholds, database paths, and tool settings.
+        threads (int, optional): Number of threads for parallel execution. Defaults to 1.
+        message (bool, optional): If True, print status messages. Defaults to False.
+
+    Returns:
+        dict: Comprehensive results dictionary containing:
+            - Sample identification and input metrics
+            - Read quality scores (Q30, Q20 rates)
+            - Species identification and abundance
+            - Coverage estimates (both sylph-based and calculated)
+            - MLST typing results (if applicable)
+            - GC content evaluation
+            - Contamination assessment
+            - Overall QC pass/fail status with descriptive messages
+
+    Notes:
+        - Creates sample output directory if it doesn't exist
+        - Calls external tools: Sylph (species), fastp (QC), stringMLST (typing)
+        - MLST analysis only performed for single-species samples
+        - Coverage evaluation uses both direct sylph output and computed estimates
+        - Final status determined by pass/fail evaluation of all QC metrics
+    """
     if message:
         print_message(f"Running analysis for {sample_id}", "info")
     # Create output directory if it doesn't exist #
@@ -242,6 +319,34 @@ def handle_fastp_results(fastp_results, config):
 
 
 def handle_species_coverage(species_abundance, final_results, config):
+    """
+    Process Sylph species detection results and evaluate contamination and coverage.
+
+    Integrates species abundance data from Sylph into the results, evaluates sample
+    contamination based on the dominant species percentage, and assesses coverage against
+    thresholds. Handles cases with no species detected, single species, or multiple species.
+
+    Args:
+        species_abundance (list): List of tuples from Sylph containing:
+            - species_abundance[i][0]: Species scientific name
+            - species_abundance[i][1]: Percentage abundance of species (0-100)
+            - species_abundance[i][2]: Estimated coverage from Sylph
+        final_results (dict): Results dictionary to update with species and contamination data.
+        config (dict): Configuration dictionary containing:
+            - coverage_threshold (int): Minimum acceptable coverage in x (default: 30)
+            - contamination_threshold (int): Minimum acceptable top species percentage (default: 10)
+
+    Returns:
+        tuple: (updated_final_results, species_list)
+            - updated_final_results (dict): Results with species, coverage, and contamination status
+            - species_list (list): Names of detected species sorted by abundance (empty if no species)
+
+    Notes:
+        - Evaluates contamination as (100 - top_species_percentage) exceeding threshold
+        - Handles edge case where top_species is None (returns empty species list)
+        - Multiple species warning includes note about using top species only
+        - Coverage estimate set from Sylph's direct measurement (top_species[2])
+    """
     coverage_cutoff = config.get("coverage_threshold", 30)
     contamination_cutoff = config.get("contamination_threshold", 10)
     if not species_abundance:
@@ -309,6 +414,37 @@ def handle_mlst_results(
     message,
     threads=1,
 ):
+    """
+    Execute MLST typing analysis and update results with typing data.
+
+    Performs Multi-Locus Sequence Typing (stringMLST) on samples with a single identified
+    species. Maps the detected species to the appropriate MLST database directory and runs
+    the typing analysis. Updates results with sequence type (ST) information and status.
+
+    Args:
+        final_results (dict): Results dictionary to update with MLST findings.
+        config (dict): Configuration dictionary containing:
+            - mlst_species (dict): Mapping of species database names to scientific names
+            - bactscout_dbs_path (str): Path to the MLST database directory
+        species (str): Scientific name of the identified species (e.g., "Escherichia coli").
+        read1_file (str): Path to forward reads FASTQ file.
+        read2_file (str): Path to reverse reads FASTQ file.
+        sample_output_dir (str): Directory for MLST output files.
+        message (bool): If True, print warning messages.
+        threads (int, optional): Number of threads for stringMLST. Defaults to 1.
+
+    Returns:
+        dict: Updated final_results dictionary with:
+            - mlst_st: Sequence type number (or None if not found)
+            - mlst_status: "PASSED" (valid ST), "WARNING" (no ST found), or original status
+            - mlst_message: Descriptive message about MLST results
+
+    Notes:
+        - Only processes species with available MLST databases
+        - Species name mapping handles variations (e.g., with/without subspecies)
+        - Sets status to "WARNING" if database not found or ST not identified
+        - Invalid ST values (ST <= 0) marked as "WARNING"
+    """
     # Run ARIBA if a single species is identified
     # Need to determine the species_db path
     species_key = None
