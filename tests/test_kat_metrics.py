@@ -188,7 +188,9 @@ class TestParseKatGcp:
 
         assert result["kat_gcp_num_bins"] == 3
         assert result["kat_gcp_top_bin_prop"] == 500 / 700  # 500/(100+500+100)
-        assert result["kat_gcp_multi_modal"] == 1  # Multiple bins >= 10% threshold            os.unlink(f.name)
+        assert result["kat_gcp_multi_modal"] == 1  # Multiple bins >= 10% threshold
+
+        os.unlink(f.name)
 
     def test_parse_gcp_multimodal(self):
         """Test detection of multi-modal contamination."""
