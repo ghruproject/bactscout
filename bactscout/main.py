@@ -28,6 +28,40 @@ def main(
     skip_preflight: bool = False,
     config_file: str = "bactscout_config.yml",
 ):
+    """
+    Run the BactScout QC pipeline on multiple samples in batch mode.
+
+    This is the main entry point for batch processing multiple FASTQ file pairs.
+    It discovers all sample pairs in the input directory, performs preflight checks,
+    and processes each sample in parallel using the specified number of threads.
+
+    Args:
+        input_dir (str): Path to directory containing paired-end FASTQ files.
+            Files should follow naming pattern: <sample_id>_R1.fastq.gz and <sample_id>_R2.fastq.gz
+        output_dir (str): Path to output directory where results will be saved.
+            Each sample gets a subdirectory with its results.
+        max_threads (int): Maximum number of parallel threads for processing samples.
+            Each sample analysis will use 1 thread for internal operations.
+        skip_preflight (bool, optional): Skip preflight validation checks. Defaults to False.
+            When True, skips system resource, software availability, and database checks.
+        config_file (str, optional): Path to BactScout configuration file.
+            Defaults to "bactscout_config.yml".
+
+    Returns:
+        None: Results are written to output_dir and printed to console.
+
+    Raises:
+        ValueError: If config file is invalid or database paths are incorrect.
+        RuntimeError: If critical tools (fastp, sylph, stringMLST) are not available.
+        OSError: If input/output directories cannot be accessed.
+
+    Notes:
+        - Preflight checks validate system resources, installed tools, and database availability
+        - Sample processing runs in parallel threads for efficiency
+        - Each sample generates: fastp QC report, Sylph species ID, MLST typing (if applicable)
+        - Final summary merged across all samples and saved as final_summary.csv
+        - Progress shown with rich formatting and spinner
+    """
     config = load_config(config_file)
     if skip_preflight:
         all_ok = True
