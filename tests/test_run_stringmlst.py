@@ -316,4 +316,3 @@ class TestRunCommand:
 
         assert result["stringmlst_results"]["ST"] == "99999"
         assert "error" not in result["stringmlst_results"]
-

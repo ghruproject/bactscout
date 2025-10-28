@@ -1,9 +1,14 @@
 """Tests for bactscout.thread module - MLST and QC evaluation."""
 
-import pytest
 from unittest import mock
 
-from bactscout.thread import handle_mlst_results, final_status_pass, blank_sample_results
+import pytest
+
+from bactscout.thread import (
+    blank_sample_results,
+    final_status_pass,
+    handle_mlst_results,
+)
 
 
 class TestHandleMLSTResults:
@@ -201,7 +206,9 @@ class TestHandleMLSTResults:
             }
         }
 
-        with mock.patch("bactscout.thread.run_mlst", return_value=mlst_result) as mock_mlst:
+        with mock.patch(
+            "bactscout.thread.run_mlst", return_value=mlst_result
+        ) as mock_mlst:
             handle_mlst_results(
                 sample_final_results,
                 sample_config,
