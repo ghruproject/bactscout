@@ -47,7 +47,26 @@ def run_command(r1, r2, output_dir, config, message=False, threads=1):
 
 
 def extract_species_from_report(sylph_report):
+    """
+    Extract species abundance and reference genome information from Sylph report.
+
+    Parses the Sylph output file to extract:
+    - Species names (from contig info)
+    - Sequence abundance percentages
+    - Coverage estimates
+    - Genome file paths (from Genome_file column)
+
+    Args:
+        sylph_report (str): Path to Sylph report file
+
+    Returns:
+        tuple: (species_abundance, genome_file_path)
+            - species_abundance (list): List of tuples (species_name, abundance, coverage)
+            - genome_file_path (str): Path to reference genome file (top species), or empty string
+    """
     species_abundance = []
+    genome_file_path = ""
+
     try:
         with open(sylph_report, encoding="utf-8") as f:
             next(f)  # Skip header
@@ -55,6 +74,12 @@ def extract_species_from_report(sylph_report):
                 if line.startswith("#") or not line.strip():
                     continue
                 parts = line.strip().split("\t")
+
+                # Extract genome file path from column 1 (Genome_file)
+                # Only store for the first (top) species
+                if len(parts) > 1 and not genome_file_path:
+                    genome_file_path = parts[1]
+
                 if len(parts) > 14:
                     contig_info = parts[14]
                     words = contig_info.split()
@@ -71,9 +96,10 @@ def extract_species_from_report(sylph_report):
                         species_abundance.append((genus_species, abundance, coverage))
     except FileNotFoundError:
         print(f"Report file {sylph_report} not found.")
+
     # Sort by abundance descending
     species_abundance.sort(key=lambda x: x[1], reverse=True)
-    return species_abundance
+    return species_abundance, genome_file_path
 
 
 def get_command():

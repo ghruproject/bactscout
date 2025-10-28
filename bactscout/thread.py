@@ -58,8 +58,8 @@ def blank_sample_results(sample_id):
 
     This function returns a dictionary containing default values for various sample metrics,
     including read counts, base counts, quality scores, GC content, species identification,
-    coverage estimates, and MLST typing. All fields are initialized to indicate that no reads
-    have been processed and no analysis has been performed.
+    coverage estimates, MLST typing, and reference genome information. All fields are
+    initialized to indicate that no reads have been processed and no analysis has been performed.
 
     Args:
         sample_id (str or int): Unique identifier for the sample.
@@ -104,6 +104,8 @@ def blank_sample_results(sample_id):
         "coverage_alt_estimate": 0,
         "coverage_alt_message": "No reads processed. Cannot estimate alternative coverage.",
         "coverage_alt_status": "FAILED",
+        "genome_file_path": "",
+        "genome_file": "",
     }
 
 
@@ -157,7 +159,8 @@ def run_one_sample(
     sylph_result = run_sylph(
         read1_file, read2_file, sample_output_dir, config, threads=threads
     )
-    species_abundance = extract_species_from_report(sylph_result.get("sylph_report"))
+    species_abundance, genome_file_path = extract_species_from_report(sylph_result.get("sylph_report"))
+    final_results["genome_file_path"] = genome_file_path
 
     fastp_result = run_fastp(
         read1_file, read2_file, sample_output_dir, config, threads=threads
