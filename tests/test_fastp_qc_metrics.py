@@ -9,12 +9,12 @@ Tests cover:
 from bactscout.thread import (
     blank_sample_results,
     get_fastp_results,
+    handle_adapter_detection,
     handle_duplication_results,
-    handle_insert_size_results,
     handle_filtering_results,
+    handle_insert_size_results,
     handle_n_content_results,
     handle_quality_trends,
-    handle_adapter_detection,
 )
 
 
@@ -27,7 +27,10 @@ class TestDuplicationResults:
         results["read_total_reads"] = 1000000
         results["duplication_rate"] = 0.15  # 15%, below 20% warn threshold
 
-        config = {"duplication_warn_threshold": 0.20, "duplication_fail_threshold": 0.30}
+        config = {
+            "duplication_warn_threshold": 0.20,
+            "duplication_fail_threshold": 0.30,
+        }
         results = handle_duplication_results(results, config)
 
         assert results["duplication_status"] == "PASSED"
@@ -39,7 +42,10 @@ class TestDuplicationResults:
         results["read_total_reads"] = 1000000
         results["duplication_rate"] = 0.25  # 25%, between 20% and 30%
 
-        config = {"duplication_warn_threshold": 0.20, "duplication_fail_threshold": 0.30}
+        config = {
+            "duplication_warn_threshold": 0.20,
+            "duplication_fail_threshold": 0.30,
+        }
         results = handle_duplication_results(results, config)
 
         assert results["duplication_status"] == "WARNING"
@@ -51,7 +57,10 @@ class TestDuplicationResults:
         results["read_total_reads"] = 1000000
         results["duplication_rate"] = 0.35  # 35%, above 30% fail threshold
 
-        config = {"duplication_warn_threshold": 0.20, "duplication_fail_threshold": 0.30}
+        config = {
+            "duplication_warn_threshold": 0.20,
+            "duplication_fail_threshold": 0.30,
+        }
         results = handle_duplication_results(results, config)
 
         assert results["duplication_status"] == "FAILED"
@@ -63,7 +72,10 @@ class TestDuplicationResults:
         results["read_total_reads"] = 0
         results["duplication_rate"] = 0.0
 
-        config = {"duplication_warn_threshold": 0.20, "duplication_fail_threshold": 0.30}
+        config = {
+            "duplication_warn_threshold": 0.20,
+            "duplication_fail_threshold": 0.30,
+        }
         results = handle_duplication_results(results, config)
 
         assert results["duplication_status"] == "FAILED"
@@ -211,7 +223,28 @@ class TestQualityTrends:
         results["read_total_reads"] = 1000000
         # Simulate 151-cycle quality curve with small drop in last 20 cycles
         # Quality stays at 35 for most of curve, then drops 3 points in last 20 cycles (35 -> 32)
-        results["quality_curves_mean"] = [35] * 141 + [35, 34, 34, 33, 33, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
+        results["quality_curves_mean"] = [35] * 141 + [
+            35,
+            34,
+            34,
+            33,
+            33,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+        ]
 
         config = {"quality_end_drop_threshold": 5}
         results = handle_quality_trends(results, config)
@@ -224,7 +257,28 @@ class TestQualityTrends:
         results = blank_sample_results("sample_001")
         results["read_total_reads"] = 1000000
         # Simulate 151-cycle quality curve with large drop in last 20 cycles
-        results["quality_curves_mean"] = [35] * 131 + [35, 34, 33, 32, 31, 30, 25, 20, 15, 10, 8, 6, 4, 2, 0, -2, -4, -6, -8, -10]
+        results["quality_curves_mean"] = [35] * 131 + [
+            35,
+            34,
+            33,
+            32,
+            31,
+            30,
+            25,
+            20,
+            15,
+            10,
+            8,
+            6,
+            4,
+            2,
+            0,
+            -2,
+            -4,
+            -6,
+            -8,
+            -10,
+        ]
 
         config = {"quality_end_drop_threshold": 5}
         results = handle_quality_trends(results, config)
@@ -303,16 +357,13 @@ class TestFastpResultsExtraction:
 
     def test_extraction_sets_all_new_fields(self):
         """Test that get_fastp_results extracts all new metric fields."""
-        fastp_result = {
-            "status": "success",
-            "json_report": "/tmp/test_fastp.json"
-        }
-        
+        fastp_result = {"status": "success", "json_report": "/tmp/test_fastp.json"}
+
         # Mock JSON content
         import json
-        import tempfile
         import os
-        
+        import tempfile
+
         fastp_data = {
             "summary": {
                 "before_filtering": {"total_reads": 1000000},
@@ -326,7 +377,7 @@ class TestFastpResultsExtraction:
                     "read1_mean_length": 150,
                     "read2_mean_length": 150,
                     "gc_content": 0.50,
-                }
+                },
             },
             "duplication": {"rate": 0.15},
             "insert_size": {"peak": 400},
@@ -336,17 +387,22 @@ class TestFastpResultsExtraction:
             },
             "quality_curves": {"mean": [35] * 151},
             "command": "fastp --detect_adapter_for_pe ...",
-            "content_curves": {"A": [0.25] * 151, "T": [0.25] * 151, "G": [0.25] * 151, "C": [0.25] * 151},
+            "content_curves": {
+                "A": [0.25] * 151,
+                "T": [0.25] * 151,
+                "G": [0.25] * 151,
+                "C": [0.25] * 151,
+            },
         }
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(fastp_data, f)
             temp_file = f.name
-        
+
         try:
             fastp_result["json_report"] = temp_file
             results = get_fastp_results(fastp_result)
-            
+
             # Check all new fields are present
             assert "duplication_rate" in results
             assert "insert_size_peak" in results
@@ -355,7 +411,7 @@ class TestFastpResultsExtraction:
             assert "quality_curves_mean" in results
             assert "adapter_detection_flag" in results
             assert "composition_data" in results
-            
+
             # Check values
             assert results["duplication_rate"] == 0.15
             assert results["insert_size_peak"] == 400
@@ -369,16 +425,13 @@ class TestFastpResultsExtraction:
 
     def test_extraction_handles_missing_fields(self):
         """Test that extraction handles missing fields gracefully."""
-        fastp_result = {
-            "status": "success",
-            "json_report": "/tmp/test_fastp.json"
-        }
-        
+        fastp_result = {"status": "success", "json_report": "/tmp/test_fastp.json"}
+
         # Minimal JSON with missing optional fields
         import json
-        import tempfile
         import os
-        
+        import tempfile
+
         fastp_data = {
             "summary": {
                 "before_filtering": {"total_reads": 1000000},
@@ -392,19 +445,19 @@ class TestFastpResultsExtraction:
                     "read1_mean_length": 150,
                     "read2_mean_length": 150,
                     "gc_content": 0.50,
-                }
+                },
             },
             # Missing duplication, insert_size, filtering_result, quality_curves, command, content_curves
         }
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(fastp_data, f)
             temp_file = f.name
-        
+
         try:
             fastp_result["json_report"] = temp_file
             results = get_fastp_results(fastp_result)
-            
+
             # Check defaults for missing fields
             assert results["duplication_rate"] == 0.0
             assert results["insert_size_peak"] == 0

@@ -99,11 +99,11 @@ class TestParseKatHist:
 
             assert result["kat_total_kmers"] == 1100  # 100+200+500+300
             assert (
-                result["kat_total_kmer_instances"] == 12400
+                result["kat_total_kmer_instances"] == 20500
             )  # 1*100+2*200+10*500+50*300
             assert result["kat_error_peak_cov"] == 2  # Max in error region (cov<=4)
-            assert result["kat_main_peak_cov"] == 50  # Max in main region (cov>4)
-            assert result["kat_main_peak_height"] == 300
+            assert result["kat_main_peak_cov"] == 10  # Max by count in main region (cov>4)
+            assert result["kat_main_peak_height"] == 500
 
             os.unlink(f.name)
 
@@ -186,11 +186,9 @@ class TestParseKatGcp:
             }
             result = parse_kat_gcp(f.name, config)
 
-            assert result["kat_gcp_num_bins"] == 3
-            assert result["kat_gcp_top_bin_prop"] == 500 / 700  # 500/(100+500+100)
-            assert result["kat_gcp_multi_modal"] == 0  # Single modal bin
-
-            os.unlink(f.name)
+        assert result["kat_gcp_num_bins"] == 3
+        assert result["kat_gcp_top_bin_prop"] == 500 / 700  # 500/(100+500+100)
+        assert result["kat_gcp_multi_modal"] == 1  # Multiple bins >= 10% threshold            os.unlink(f.name)
 
     def test_parse_gcp_multimodal(self):
         """Test detection of multi-modal contamination."""

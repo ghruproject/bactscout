@@ -45,12 +45,12 @@ Dependencies:
 import json
 import os
 
+from bactscout.qc.kat_metrics import run_kat_analysis
 from bactscout.resource_monitor import ResourceMonitor
 from bactscout.software.run_fastp import run_command as run_fastp
 from bactscout.software.run_stringmlst import run_command as run_mlst
 from bactscout.software.run_sylph import extract_species_from_report
 from bactscout.software.run_sylph import run_command as run_sylph
-from bactscout.qc.kat_metrics import run_kat_analysis
 from bactscout.util import print_message
 
 
@@ -470,27 +470,29 @@ def handle_fastp_results(fastp_results, config):
 def handle_duplication_results(fastp_results, config):
     """
     Updates fastp_results with duplication rate status and messages.
-    
+
     High duplication rates indicate PCR bias or library complexity issues.
-    
+
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with duplication_rate.
         config (dict): Configuration dictionary with thresholds:
             - duplication_warn_threshold (float): Fraction (default: 0.20 = 20%)
             - duplication_fail_threshold (float): Fraction (default: 0.30 = 30%)
-    
+
     Returns:
         dict: Updated fastp_results with duplication_status and duplication_message.
     """
     duplication_warn_threshold = config.get("duplication_warn_threshold", 0.20)
     duplication_fail_threshold = config.get("duplication_fail_threshold", 0.30)
-    
+
     duplication_rate = fastp_results.get("duplication_rate", 0.0)
     total_reads = fastp_results.get("read_total_reads", 0)
-    
+
     if total_reads == 0:
         fastp_results["duplication_status"] = "FAILED"
-        fastp_results["duplication_message"] = "No reads processed. Cannot determine duplication rate."
+        fastp_results["duplication_message"] = (
+            "No reads processed. Cannot determine duplication rate."
+        )
     elif duplication_rate <= duplication_warn_threshold:
         fastp_results["duplication_status"] = "PASSED"
         fastp_results["duplication_message"] = (
@@ -511,34 +513,36 @@ def handle_duplication_results(fastp_results, config):
             f"exceeds fail threshold ({duplication_fail_threshold*100:.1f}%). "
             f"High PCR bias detected."
         )
-    
+
     return fastp_results
 
 
 def handle_insert_size_results(fastp_results, config):
     """
     Updates fastp_results with insert size status and messages.
-    
+
     Insert size outside expected range may indicate library quality issues.
-    
+
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with insert_size_peak.
         config (dict): Configuration dictionary with thresholds:
             - insert_size_min_threshold (int): Minimum expected insert size in bp (default: 200)
             - insert_size_max_threshold (int): Maximum expected insert size in bp (default: 600)
-    
+
     Returns:
         dict: Updated fastp_results with insert_size_status and insert_size_message.
     """
     insert_size_min = config.get("insert_size_min_threshold", 200)
     insert_size_max = config.get("insert_size_max_threshold", 600)
-    
+
     insert_size_peak = fastp_results.get("insert_size_peak", 0)
     total_reads = fastp_results.get("read_total_reads", 0)
-    
+
     if total_reads == 0 or insert_size_peak == 0:
         fastp_results["insert_size_status"] = "FAILED"
-        fastp_results["insert_size_message"] = "No reads processed. Cannot determine insert size."
+        fastp_results["insert_size_message"] = (
+            "No reads processed. Cannot determine insert size."
+        )
     elif insert_size_min <= insert_size_peak <= insert_size_max:
         fastp_results["insert_size_status"] = "PASSED"
         fastp_results["insert_size_message"] = (
@@ -555,32 +559,34 @@ def handle_insert_size_results(fastp_results, config):
             f"Insert size peak {insert_size_peak}bp is {out_of_range_msg}. "
             f"May indicate library fragmentation issues."
         )
-    
+
     return fastp_results
 
 
 def handle_filtering_results(fastp_results, config):
     """
     Updates fastp_results with filtering pass rate status and messages.
-    
+
     Low pass rates indicate many reads were removed due to quality issues.
-    
+
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with filtering_pass_rate.
         config (dict): Configuration dictionary with thresholds:
             - filtering_pass_rate_threshold (float): Minimum pass rate fraction (default: 0.95 = 95%)
-    
+
     Returns:
         dict: Updated fastp_results with filtering_status and filtering_message.
     """
     filtering_pass_threshold = config.get("filtering_pass_rate_threshold", 0.95)
-    
+
     filtering_pass_rate = fastp_results.get("filtering_pass_rate", 0.0)
     total_reads = fastp_results.get("read_total_reads", 0)
-    
+
     if total_reads == 0:
         fastp_results["filtering_status"] = "FAILED"
-        fastp_results["filtering_message"] = "No reads processed. Cannot determine filtering pass rate."
+        fastp_results["filtering_message"] = (
+            "No reads processed. Cannot determine filtering pass rate."
+        )
     elif filtering_pass_rate >= (filtering_pass_threshold * 100):
         fastp_results["filtering_status"] = "PASSED"
         fastp_results["filtering_message"] = (
@@ -592,32 +598,34 @@ def handle_filtering_results(fastp_results, config):
             f"Filtering pass rate {filtering_pass_rate:.2f}% falls below threshold ({filtering_pass_threshold*100:.1f}%). "
             f"{100 - filtering_pass_rate:.2f}% of reads were filtered out."
         )
-    
+
     return fastp_results
 
 
 def handle_n_content_results(fastp_results, config):
     """
     Updates fastp_results with N-content (ambiguous bases) status and messages.
-    
+
     High N-content indicates base-calling confidence issues or low coverage regions.
-    
+
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with n_content_rate.
         config (dict): Configuration dictionary with thresholds:
             - n_content_threshold (float): Maximum acceptable N-content fraction (default: 0.001 = 0.1%)
-    
+
     Returns:
         dict: Updated fastp_results with n_content_status and n_content_message.
     """
     n_content_threshold = config.get("n_content_threshold", 0.001)
-    
+
     n_content_rate = fastp_results.get("n_content_rate", 0.0)
     total_reads = fastp_results.get("read_total_reads", 0)
-    
+
     if total_reads == 0:
         fastp_results["n_content_status"] = "FAILED"
-        fastp_results["n_content_message"] = "No reads processed. Cannot determine N-content."
+        fastp_results["n_content_message"] = (
+            "No reads processed. Cannot determine N-content."
+        )
     elif n_content_rate <= (n_content_threshold * 100):
         fastp_results["n_content_status"] = "PASSED"
         fastp_results["n_content_message"] = (
@@ -629,43 +637,45 @@ def handle_n_content_results(fastp_results, config):
             f"N-content {n_content_rate:.4f}% exceeds threshold ({n_content_threshold*100:.2f}%). "
             f"Indicates base-calling uncertainty."
         )
-    
+
     return fastp_results
 
 
 def handle_quality_trends(fastp_results, config):
     """
     Updates fastp_results with quality trend status and messages.
-    
+
     Quality end-drop (decreasing quality towards read ends) indicates
     sequencing machine degradation or phasing issues.
-    
+
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with quality_curves_mean.
         config (dict): Configuration dictionary with thresholds:
             - quality_end_drop_threshold (int): Maximum acceptable drop in last 20 cycles (default: 5 points)
-    
+
     Returns:
         dict: Updated fastp_results with quality_trend_status and quality_trend_message.
     """
     quality_end_drop_threshold = config.get("quality_end_drop_threshold", 5)
-    
+
     quality_curves = fastp_results.get("quality_curves_mean", [])
     total_reads = fastp_results.get("read_total_reads", 0)
-    
+
     if total_reads == 0 or len(quality_curves) < 20:
         fastp_results["quality_trend_status"] = "FAILED"
-        fastp_results["quality_trend_message"] = "No reads processed. Cannot analyze quality trends."
+        fastp_results["quality_trend_message"] = (
+            "No reads processed. Cannot analyze quality trends."
+        )
     else:
         # Analyze last 20 cycles
         last_20_start = max(0, len(quality_curves) - 20)
         last_20_cycles = quality_curves[last_20_start:]
-        
+
         if len(last_20_cycles) > 0:
             quality_start = last_20_cycles[0]
             quality_end = last_20_cycles[-1]
             quality_drop = quality_start - quality_end
-            
+
             if quality_drop <= quality_end_drop_threshold:
                 fastp_results["quality_trend_status"] = "PASSED"
                 fastp_results["quality_trend_message"] = (
@@ -682,29 +692,31 @@ def handle_quality_trends(fastp_results, config):
         else:
             fastp_results["quality_trend_status"] = "FAILED"
             fastp_results["quality_trend_message"] = "Insufficient quality curve data."
-    
+
     return fastp_results
 
 
 def handle_adapter_detection(fastp_results, config):  # pylint: disable=unused-argument
     """
     Updates fastp_results with adapter detection status and messages.
-    
+
     Proper adapter detection ensures contaminants are identified and removed.
-    
+
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with adapter_detection_flag.
         config (dict): Configuration dictionary (for future extensibility).
-    
+
     Returns:
         dict: Updated fastp_results with adapter_detection_status and adapter_detection_message.
     """
     adapter_flag_present = fastp_results.get("adapter_detection_flag", False)
     total_reads = fastp_results.get("read_total_reads", 0)
-    
+
     if total_reads == 0:
         fastp_results["adapter_detection_status"] = "FAILED"
-        fastp_results["adapter_detection_message"] = "No reads processed. Cannot verify adapter detection."
+        fastp_results["adapter_detection_message"] = (
+            "No reads processed. Cannot verify adapter detection."
+        )
     elif adapter_flag_present:
         fastp_results["adapter_detection_status"] = "PASSED"
         fastp_results["adapter_detection_message"] = (
@@ -717,28 +729,28 @@ def handle_adapter_detection(fastp_results, config):  # pylint: disable=unused-a
             "Adapter detection flag (--detect_adapter_for_pe) is not enabled. "
             "Adapters may not be properly identified. Recommend re-running with adapter detection."
         )
-    
+
     return fastp_results
 
 
 def handle_kat_results(kat_results, config):  # pylint: disable=unused-argument
     """
     Evaluate KAT (K-mer Analysis Toolkit) results and derive QC status.
-    
+
     Interprets k-mer analysis metrics including histogram distribution, GC×coverage
     patterns, and boolean flags from KAT to assess sequencing quality. Handles missing
     KAT data gracefully (when KAT not installed or disabled).
-    
+
     Args:
         kat_results (dict): Dictionary containing KAT metrics and flags from run_kat_analysis().
         config (dict): Configuration dictionary with KAT thresholds and settings.
-    
+
     Returns:
         dict: Updated kat_results with kat_status and kat_message fields.
     """
     # Check if KAT was actually run (if any KAT metrics are present)
     has_kat_data = bool(kat_results.get("kat_total_kmers", 0) > 0)
-    
+
     if not has_kat_data:
         # KAT analysis was skipped or not available
         kat_results["kat_status"] = "SKIPPED"
@@ -746,15 +758,15 @@ def handle_kat_results(kat_results, config):  # pylint: disable=unused-argument
             "KAT analysis was not performed (KAT not available, disabled, or no reads processed)."
         )
         return kat_results
-    
+
     # Evaluate KAT flags
     low_coverage_flag = kat_results.get("kat_flag_low_coverage", 0)
     high_error_flag = kat_results.get("kat_flag_high_error", 0)
     contamination_flag = kat_results.get("kat_flag_contamination", 0)
-    
+
     # Determine status based on flags
     flags_raised = sum([low_coverage_flag, high_error_flag, contamination_flag])
-    
+
     if flags_raised == 0:
         kat_results["kat_status"] = "PASSED"
         kat_results["kat_message"] = (
@@ -794,16 +806,18 @@ def handle_kat_results(kat_results, config):  # pylint: disable=unused-argument
             )
         if high_error_flag:
             messages.append(
-                "high error rate ({:.2%})".format(kat_results.get("kat_error_peak_prop", 0))
+                "high error rate ({:.2%})".format(
+                    kat_results.get("kat_error_peak_prop", 0)
+                )
             )
         if contamination_flag:
             messages.append("possible contamination")
-        
+
         kat_results["kat_message"] = (
             "K-mer analysis detected multiple QC issues: " + ", ".join(messages) + ". "
             "Sample requires investigation before use."
         )
-    
+
     return kat_results
 
 
@@ -1156,20 +1170,20 @@ def get_fastp_results(fastp_results):
     after_filtering_rename["gc_content"] = round(
         float(after_filtering["gc_content"] * 100), 4
     )
-    
+
     # Extract additional fastp QC metrics (TIER 1 & TIER 2)
     # TIER 1: Duplication rate
     duplication_rate = 0.0
     if "duplication" in data:
         duplication_rate = data["duplication"].get("rate", 0.0)
     after_filtering_rename["duplication_rate"] = duplication_rate
-    
+
     # TIER 1: Insert size peak
     insert_size_peak = 0
     if "insert_size" in data:
         insert_size_peak = data["insert_size"].get("peak", 0)
     after_filtering_rename["insert_size_peak"] = insert_size_peak
-    
+
     # TIER 1: Filtering pass rate
     # Calculate: reads passing / total reads before filtering * 100
     filtering_pass_rate = 0.0
@@ -1179,7 +1193,7 @@ def get_fastp_results(fastp_results):
         total_after = after_filtering.get("total_reads", 0)
         filtering_pass_rate = (total_after / total_before) * 100.0
     after_filtering_rename["filtering_pass_rate"] = filtering_pass_rate
-    
+
     # TIER 1: N-content rate
     n_content_rate = 0.0
     filtering_result = data.get("filtering_result", {})
@@ -1188,26 +1202,26 @@ def get_fastp_results(fastp_results):
         total_reads = filtering_result.get("total_reads", 0)
         n_content_rate = (too_many_n / total_reads) * 100.0
     after_filtering_rename["n_content_rate"] = n_content_rate
-    
+
     # TIER 2: Quality curves for trend analysis
     quality_curves = []
     if "quality_curves" in data:
         quality_curves = data["quality_curves"].get("mean", [])
     after_filtering_rename["quality_curves_mean"] = quality_curves
-    
+
     # TIER 2: Adapter detection (check fastp command for flag)
     adapter_flag_present = False
     if "command" in data:
         command_str = data["command"]
         adapter_flag_present = "--detect_adapter_for_pe" in command_str
     after_filtering_rename["adapter_detection_flag"] = adapter_flag_present
-    
+
     # TIER 2: Per-cycle composition data
     composition_data = {}
     if "content_curves" in data:
         composition_data = data["content_curves"]
     after_filtering_rename["composition_data"] = composition_data
-    
+
     return after_filtering_rename
 
 
@@ -1253,25 +1267,25 @@ def get_expected_genome_size(species, config):
 def final_status_pass(final_results):
     """
     Look at statuses from all other status columns and determine final status.
-    
+
     Determines final QC pass/fail/warning status based on all individual metric statuses.
-    
+
     Critical failures (read quality, contamination, GC content, critical fastp metrics)
     result in FAILED status. Any individual FAILED status in critical metrics causes FAILED.
     WARNINGs accumulate to overall WARNING status if no critical failures.
-    
+
     Note: MLST status is informational only and does not affect final QC pass/fail determination.
     Species WARNING status can contribute to overall WARNING but not FAILED.
-    
+
     Metrics are only evaluated if data is available (i.e., read_total_reads > 0).
     """
     # get all keys that end with _status
     final_status = "PASSED"
     statuses = {k: v for k, v in final_results.items() if k.endswith("_status")}
-    
+
     # Critical metrics - failure in any of these means FAILED final status
     total_reads = final_results.get("read_total_reads", 0)
-    
+
     # Always-critical metrics (even if no reads)
     critical_metrics = [
         "read_length_status",
@@ -1279,20 +1293,22 @@ def final_status_pass(final_results):
         "contamination_status",
         "gc_content_status",
     ]
-    
+
     # New TIER metrics - only critical if reads were actually processed
     if total_reads > 0:
-        critical_metrics.extend([
-            "duplication_status",   # TIER 1: High duplication is critical
-            "filtering_status",     # TIER 1: Low pass rate indicates poor sample
-            "n_content_status",     # TIER 1: High N-content is concerning
-        ])
-    
+        critical_metrics.extend(
+            [
+                "duplication_status",  # TIER 1: High duplication is critical
+                "filtering_status",  # TIER 1: Low pass rate indicates poor sample
+                "n_content_status",  # TIER 1: High N-content is concerning
+            ]
+        )
+
     for metric in critical_metrics:
         if statuses.get(metric) == "FAILED":
             final_status = "FAILED"
             break
-    
+
     # If final status not already FAILED, check coverage
     if final_status != "FAILED":
         # If both coverage metrics failed, final status is failed
@@ -1307,23 +1323,25 @@ def final_status_pass(final_results):
             or statuses.get("coverage_alt_status") == "FAILED"
         ):
             final_status = "WARNING"
-    
+
     # Check for warnings in non-critical metrics if not already FAILED
     if final_status != "FAILED":
         # Always-evaluable warning metrics
         warning_metrics = [
-            "species_status",          # Species identification issues
+            "species_status",  # Species identification issues
         ]
-        
+
         # Only check new TIER metrics for warnings if reads were processed
         if total_reads > 0:
-            warning_metrics.extend([
-                "insert_size_status",      # TIER 1: Insert size out of range
-                "quality_trend_status",    # TIER 2: Quality end-drop
-                "adapter_detection_status",# TIER 2: Adapter flag not enabled
-                "kat_status",              # KAT: K-mer analysis (if available)
-            ])
-        
+            warning_metrics.extend(
+                [
+                    "insert_size_status",  # TIER 1: Insert size out of range
+                    "quality_trend_status",  # TIER 2: Quality end-drop
+                    "adapter_detection_status",  # TIER 2: Adapter flag not enabled
+                    "kat_status",  # KAT: K-mer analysis (if available)
+                ]
+            )
+
         for metric in warning_metrics:
             if statuses.get(metric) == "FAILED":
                 if final_status != "FAILED":
@@ -1331,10 +1349,9 @@ def final_status_pass(final_results):
             elif statuses.get(metric) == "WARNING":
                 if final_status == "PASSED":
                     final_status = "WARNING"
-        
+
         # MLST status is informational only - doesn't affect QC pass/fail
         # KAT SKIPPED status doesn't affect overall status (tool not available)
         # (handled separately for logging purposes)
 
     return final_status
-

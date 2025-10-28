@@ -41,13 +41,13 @@ def collect_sample(
         None
     """
     config_dict = load_config(config)
-    
+
     # Override KAT settings from CLI if provided
     if kat_enabled is not None:
         kat_config = config_dict.get("kat", {})  # type: ignore
         kat_config["enabled"] = kat_enabled  # type: ignore
         config_dict["kat"] = kat_config  # type: ignore
-    
+
     if k_mer_size is not None:
         kat_config = config_dict.get("kat", {})  # type: ignore
         kat_config["k"] = k_mer_size  # type: ignore

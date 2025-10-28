@@ -2,7 +2,7 @@
 authors = ["Nabil-Fareed Alikhan <nabil@happykhan.com>"]
 channels = ["conda-forge", "bioconda"]
 name = "bactscout"
-platforms = ["osx-64", "linux-64", "linux-aarch64"]
+platforms = ["osx-64", "linux-64"]
 version = "0.1.0"
 
 [tasks]
@@ -21,7 +21,7 @@ docs-build="mkdocs build --strict"
 fastp = ">=1.0.1,<2"
 sylph = ">=0.8.1,<0.9"
 pixi-pack = ">=0.7.3,<0.8"
-python = ">=3.11,<3.12"
+python = ">=3.9,<3.12"
 
 [pypi-dependencies]
 typer = ">=0.19.2, <0.20"

@@ -27,24 +27,25 @@ class TestKatIntegrationWithPipeline:
         # Check all KAT-related columns are present
         kat_columns = [
             "kat_status",
-            "kat_run_time",
             "kat_version",
+            "kat_k",
             "kat_total_kmers",
-            "kat_main_peak_pos",
-            "kat_main_peak_cov",
-            "kat_error_peak_pos",
+            "kat_total_kmer_instances",
             "kat_error_peak_cov",
-            "kat_error_region_start",
-            "kat_error_region_end",
-            "kat_error_prop",
+            "kat_error_peak_prop",
+            "kat_main_peak_cov",
+            "kat_main_peak_height",
+            "kat_unique_kmers_prop",
+            "kat_median_kmer_cov",
+            "kat_mean_kmer_cov",
             "kat_gcp_num_bins",
-            "kat_gcp_kmer_freq",
+            "kat_gcp_top_bin_prop",
             "kat_gcp_multi_modal",
-            "kat_gcp_extreme_gc",
+            "kat_gcp_lowcov_gc_prop",
             "kat_flag_low_coverage",
             "kat_flag_high_error",
             "kat_flag_contamination",
-            "kat_qc_message",
+            "kat_message",
         ]
 
         for col in kat_columns:
@@ -57,33 +58,31 @@ class TestKatIntegrationWithPipeline:
         # Status should be SKIPPED (KAT not run by default)
         assert results["kat_status"] == "SKIPPED"
 
-        # Flags should be False
-        assert results["kat_flag_low_coverage"] is False
-        assert results["kat_flag_high_error"] is False
-        assert results["kat_flag_contamination"] is False
+        # Flags should be 0 (integer, not boolean False)
+        assert results["kat_flag_low_coverage"] == 0
+        assert results["kat_flag_high_error"] == 0
+        assert results["kat_flag_contamination"] == 0
 
-        # Metrics should be None/0
-        assert results["kat_total_kmers"] is None
-        assert results["kat_main_peak_pos"] is None
-        assert results["kat_main_peak_cov"] is None
-        assert results["kat_error_peak_pos"] is None
+        # Metrics should be 0
+        assert results["kat_total_kmers"] == 0
+        assert results["kat_main_peak_cov"] == 0.0
+        assert results["kat_error_peak_cov"] == 0.0
+        assert results["kat_gcp_num_bins"] == 0
 
     def test_handle_kat_results_passed_sample(self):
         """Test handle_kat_results with metrics indicating passed sample."""
-        # Simulate healthy KAT metrics
+        # Simulate healthy KAT metrics with no flags raised
         kat_metrics = {
             "kat_total_kmers": 50000000,
-            "kat_main_peak_pos": 25,
             "kat_main_peak_cov": 100,
-            "kat_error_peak_pos": 2,
             "kat_error_peak_cov": 10,
-            "kat_error_region_start": 1,
-            "kat_error_region_end": 5,
-            "kat_error_prop": 0.02,
+            "kat_error_peak_prop": 0.02,
             "kat_gcp_num_bins": 8,
-            "kat_gcp_kmer_freq": 0.75,
-            "kat_gcp_multi_modal": False,
-            "kat_gcp_extreme_gc": False,
+            "kat_gcp_multi_modal": 0,
+            "kat_gcp_lowcov_gc_prop": 0.01,
+            "kat_flag_low_coverage": 0,
+            "kat_flag_high_error": 0,
+            "kat_flag_contamination": 0,
         }
 
         config = {
@@ -103,26 +102,24 @@ class TestKatIntegrationWithPipeline:
 
         # Should pass (no flags)
         assert result["kat_status"] == "PASSED"
-        assert result["kat_flag_low_coverage"] is False
-        assert result["kat_flag_high_error"] is False
-        assert result["kat_flag_contamination"] is False
+        assert result["kat_flag_low_coverage"] == 0
+        assert result["kat_flag_high_error"] == 0
+        assert result["kat_flag_contamination"] == 0
 
     def test_handle_kat_results_warning_low_coverage(self):
         """Test handle_kat_results with low coverage warning."""
         # Simulate low coverage metrics
         kat_metrics = {
-            "kat_total_kmers": 5000000,  # Low total
-            "kat_main_peak_pos": 15,
+            "kat_total_kmers": 5000000,
             "kat_main_peak_cov": 5,  # Below threshold of 10
-            "kat_error_peak_pos": 2,
             "kat_error_peak_cov": 10,
-            "kat_error_region_start": 1,
-            "kat_error_region_end": 5,
-            "kat_error_prop": 0.02,
+            "kat_error_peak_prop": 0.02,
             "kat_gcp_num_bins": 6,
-            "kat_gcp_kmer_freq": 0.60,
-            "kat_gcp_multi_modal": False,
-            "kat_gcp_extreme_gc": False,
+            "kat_gcp_multi_modal": 0,
+            "kat_gcp_lowcov_gc_prop": 0.01,
+            "kat_flag_low_coverage": 1,  # Flag should be set
+            "kat_flag_high_error": 0,
+            "kat_flag_contamination": 0,
         }
 
         config = {
@@ -139,25 +136,24 @@ class TestKatIntegrationWithPipeline:
 
         result = handle_kat_results(kat_metrics, config)
 
-        # Should have low coverage flag
-        assert result["kat_flag_low_coverage"] is True
+        # Should have low coverage flag and WARNING status
+        assert result["kat_flag_low_coverage"] == 1
+        assert result["kat_status"] == "WARNING"
 
     def test_handle_kat_results_warning_high_error(self):
         """Test handle_kat_results with high error warning."""
         # Simulate high error metrics
         kat_metrics = {
             "kat_total_kmers": 50000000,
-            "kat_main_peak_pos": 25,
             "kat_main_peak_cov": 100,
-            "kat_error_peak_pos": 2,
-            "kat_error_peak_cov": 15,  # Exceeds error_cov_cutoff of 4
-            "kat_error_region_start": 1,
-            "kat_error_region_end": 8,
-            "kat_error_prop": 0.08,  # Exceeds error_prop_warn of 0.05
+            "kat_error_peak_cov": 15,
+            "kat_error_peak_prop": 0.08,  # Exceeds error_prop_warn of 0.05
             "kat_gcp_num_bins": 8,
-            "kat_gcp_kmer_freq": 0.75,
-            "kat_gcp_multi_modal": False,
-            "kat_gcp_extreme_gc": False,
+            "kat_gcp_multi_modal": 0,
+            "kat_gcp_lowcov_gc_prop": 0.01,
+            "kat_flag_low_coverage": 0,
+            "kat_flag_high_error": 1,  # Flag should be set
+            "kat_flag_contamination": 0,
         }
 
         config = {
@@ -174,25 +170,24 @@ class TestKatIntegrationWithPipeline:
 
         result = handle_kat_results(kat_metrics, config)
 
-        # Should have high error flag
-        assert result["kat_flag_high_error"] is True
+        # Should have high error flag and WARNING status
+        assert result["kat_flag_high_error"] == 1
+        assert result["kat_status"] == "WARNING"
 
     def test_handle_kat_results_contamination_multimodal(self):
         """Test handle_kat_results detects contamination (multi-modal)."""
         # Simulate contamination metrics (multi-modal distribution)
         kat_metrics = {
             "kat_total_kmers": 50000000,
-            "kat_main_peak_pos": 25,
             "kat_main_peak_cov": 100,
-            "kat_error_peak_pos": 2,
             "kat_error_peak_cov": 10,
-            "kat_error_region_start": 1,
-            "kat_error_region_end": 5,
-            "kat_error_prop": 0.02,
+            "kat_error_peak_prop": 0.02,
             "kat_gcp_num_bins": 8,
-            "kat_gcp_kmer_freq": 0.75,
-            "kat_gcp_multi_modal": True,  # Multi-modal indicates contamination
-            "kat_gcp_extreme_gc": False,
+            "kat_gcp_multi_modal": 1,  # Multi-modal indicates contamination
+            "kat_gcp_lowcov_gc_prop": 0.01,
+            "kat_flag_low_coverage": 0,
+            "kat_flag_high_error": 0,
+            "kat_flag_contamination": 1,  # Flag should be set
         }
 
         config = {
@@ -209,25 +204,24 @@ class TestKatIntegrationWithPipeline:
 
         result = handle_kat_results(kat_metrics, config)
 
-        # Should detect contamination
-        assert result["kat_flag_contamination"] is True
+        # Should detect contamination with WARNING status
+        assert result["kat_flag_contamination"] == 1
+        assert result["kat_status"] == "WARNING"
 
     def test_handle_kat_results_failed_multiple_issues(self):
         """Test handle_kat_results with multiple issues (FAILED)."""
         # Simulate failed sample (multiple issues)
         kat_metrics = {
-            "kat_total_kmers": 2000000,  # Very low
-            "kat_main_peak_pos": 5,
-            "kat_main_peak_cov": 2,  # Very low coverage
-            "kat_error_peak_pos": 2,
-            "kat_error_peak_cov": 20,  # Very high error
-            "kat_error_region_start": 1,
-            "kat_error_region_end": 15,
-            "kat_error_prop": 0.15,  # High error proportion
+            "kat_total_kmers": 2000000,
+            "kat_main_peak_cov": 2,  # Very low coverage (below 10)
+            "kat_error_peak_cov": 20,
+            "kat_error_peak_prop": 0.15,  # High error proportion (above 0.05)
             "kat_gcp_num_bins": 4,
-            "kat_gcp_kmer_freq": 0.40,
-            "kat_gcp_multi_modal": True,  # Contamination
-            "kat_gcp_extreme_gc": True,  # Extreme GC
+            "kat_gcp_multi_modal": 1,  # Multi-modal
+            "kat_gcp_lowcov_gc_prop": 0.01,
+            "kat_flag_low_coverage": 1,  # All three flags set
+            "kat_flag_high_error": 1,
+            "kat_flag_contamination": 1,
         }
 
         config = {
@@ -246,9 +240,9 @@ class TestKatIntegrationWithPipeline:
 
         # Should fail with multiple issues
         assert result["kat_status"] == "FAILED"
-        assert result["kat_flag_low_coverage"] is True
-        assert result["kat_flag_high_error"] is True
-        assert result["kat_flag_contamination"] is True
+        assert result["kat_flag_low_coverage"] == 1
+        assert result["kat_flag_high_error"] == 1
+        assert result["kat_flag_contamination"] == 1
 
     def test_handle_kat_results_populates_metrics(self):
         """Test that handle_kat_results populates all metric fields."""
@@ -323,9 +317,9 @@ class TestKatDisabledBehavior:
 
         # Initially all KAT fields should be at defaults (SKIPPED status)
         assert results["kat_status"] == "SKIPPED"
-        assert results["kat_flag_low_coverage"] is False
-        assert results["kat_flag_high_error"] is False
-        assert results["kat_flag_contamination"] is False
+        assert results["kat_flag_low_coverage"] == 0
+        assert results["kat_flag_high_error"] == 0
+        assert results["kat_flag_contamination"] == 0
 
 
 class TestKatMetricRanges:
@@ -454,23 +448,23 @@ class TestKatEdgeCases:
         """Test handling of zero metrics (failed KAT run)."""
         sample_results = blank_sample_results("TEST_SAMPLE_005")
 
-        # All metrics are None/False
-        assert sample_results["kat_total_kmers"] is None
+        # All metrics are 0 (not None or False)
+        assert sample_results["kat_total_kmers"] == 0
         assert sample_results["kat_status"] == "SKIPPED"
 
     def test_kat_flag_independence(self):
         """Test that flags can be set independently."""
         sample_results = blank_sample_results("TEST_SAMPLE_006")
 
-        # Manually set flags
-        sample_results["kat_flag_low_coverage"] = True
-        sample_results["kat_flag_high_error"] = False
-        sample_results["kat_flag_contamination"] = False
+        # Manually set flags (use 1 for true, 0 for false)
+        sample_results["kat_flag_low_coverage"] = 1
+        sample_results["kat_flag_high_error"] = 0
+        sample_results["kat_flag_contamination"] = 0
 
         # Verify independence
-        assert sample_results["kat_flag_low_coverage"] is True
-        assert sample_results["kat_flag_high_error"] is False
-        assert sample_results["kat_flag_contamination"] is False
+        assert sample_results["kat_flag_low_coverage"] == 1
+        assert sample_results["kat_flag_high_error"] == 0
+        assert sample_results["kat_flag_contamination"] == 0
 
     def test_kat_message_field_types(self):
         """Test that message field handles various string types."""

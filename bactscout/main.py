@@ -105,18 +105,18 @@ def main(
         - Resource usage tracking includes peak thread count and memory consumption per sample
     """
     config = load_config(config_file)
-    
+
     # Override KAT settings from CLI if provided
     if kat_enabled is not None:
         kat_config = config.get("kat", {})  # type: ignore
         kat_config["enabled"] = kat_enabled  # type: ignore
         config["kat"] = kat_config  # type: ignore
-    
+
     if k_mer_size is not None:
         kat_config = config.get("kat", {})  # type: ignore
         kat_config["k"] = k_mer_size  # type: ignore
         config["kat"] = kat_config  # type: ignore
-    
+
     if skip_preflight:
         all_ok = True
         print_message("Skipping preflight checks", "warning")
