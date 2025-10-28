@@ -1,5 +1,7 @@
 """Single sample collection and processing module."""
 
+from typing import Optional
+
 from bactscout.preflight import (
     check_databases,
     check_software,
@@ -18,6 +20,8 @@ def collect_sample(
     config: str,
     skip_preflight: bool,
     report_resources: bool = False,
+    kat_enabled: Optional[bool] = None,
+    k_mer_size: Optional[int] = None,
 ) -> None:
     """
     Process a single sample with paired-end reads.
@@ -30,11 +34,24 @@ def collect_sample(
         config: Path to the configuration file
         skip_preflight: Skip preflight checks if True
         report_resources: Track and report thread and memory usage if True
+        kat_enabled: Enable/disable KAT analysis (overrides config)
+        k_mer_size: K-mer size for KAT analysis (overrides config)
 
     Returns:
         None
     """
     config_dict = load_config(config)
+    
+    # Override KAT settings from CLI if provided
+    if kat_enabled is not None:
+        kat_config = config_dict.get("kat", {})  # type: ignore
+        kat_config["enabled"] = kat_enabled  # type: ignore
+        config_dict["kat"] = kat_config  # type: ignore
+    
+    if k_mer_size is not None:
+        kat_config = config_dict.get("kat", {})  # type: ignore
+        kat_config["k"] = k_mer_size  # type: ignore
+        config_dict["kat"] = kat_config  # type: ignore
 
     if skip_preflight:
         all_ok = True

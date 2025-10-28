@@ -36,6 +36,7 @@ Example:
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional
 
 from rich.progress import (
     BarColumn,
@@ -63,6 +64,8 @@ def main(
     skip_preflight: bool = False,
     config_file: str = "bactscout_config.yml",
     report_resources: bool = False,
+    kat_enabled: Optional[bool] = None,
+    k_mer_size: Optional[int] = None,
 ):
     """
     Run the BactScout QC pipeline on multiple samples in batch mode.
@@ -102,6 +105,18 @@ def main(
         - Resource usage tracking includes peak thread count and memory consumption per sample
     """
     config = load_config(config_file)
+    
+    # Override KAT settings from CLI if provided
+    if kat_enabled is not None:
+        kat_config = config.get("kat", {})  # type: ignore
+        kat_config["enabled"] = kat_enabled  # type: ignore
+        config["kat"] = kat_config  # type: ignore
+    
+    if k_mer_size is not None:
+        kat_config = config.get("kat", {})  # type: ignore
+        kat_config["k"] = k_mer_size  # type: ignore
+        config["kat"] = kat_config  # type: ignore
+    
     if skip_preflight:
         all_ok = True
         print_message("Skipping preflight checks", "warning")
