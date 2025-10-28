@@ -26,6 +26,9 @@ def qc(
     config: str = typer.Option(
         "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
     ),
+    report_resources: bool = typer.Option(
+        False, "--report-resources", help="Track and report thread and memory usage per sample"
+    ),
 ):
     """Main QC command"""
     main(
@@ -34,6 +37,7 @@ def qc(
         threads,
         config_file=config,
         skip_preflight=skip_preflight,
+        report_resources=report_resources,
     )
 
 
@@ -53,9 +57,12 @@ def collect(
     skip_preflight: bool = typer.Option(
         False, "--skip-preflight", help="Skip the preflight checks"
     ),
+    report_resources: bool = typer.Option(
+        False, "--report-resources", help="Track and report thread and memory usage for the sample"
+    ),
 ):
     """Process a single sample with paired-end reads"""
-    collect_sample(read1_file, read2_file, output_dir, threads, config, skip_preflight)
+    collect_sample(read1_file, read2_file, output_dir, threads, config, skip_preflight, report_resources)
 
 
 @app.command()

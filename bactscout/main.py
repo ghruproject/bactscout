@@ -62,6 +62,7 @@ def main(
     max_threads,
     skip_preflight: bool = False,
     config_file: str = "bactscout_config.yml",
+    report_resources: bool = False,
 ):
     """
     Run the BactScout QC pipeline on multiple samples in batch mode.
@@ -81,6 +82,8 @@ def main(
             When True, skips system resource, software availability, and database checks.
         config_file (str, optional): Path to BactScout configuration file.
             Defaults to "bactscout_config.yml".
+        report_resources (bool, optional): Track and report thread and memory usage per sample.
+            Defaults to False.
 
     Returns:
         None: Results are written to output_dir and printed to console.
@@ -96,6 +99,7 @@ def main(
         - Each sample generates: fastp QC report, Sylph species ID, MLST typing (if applicable)
         - Final summary merged across all samples and saved as final_summary.csv
         - Progress shown with rich formatting and spinner
+        - Resource usage tracking includes peak thread count and memory consumption per sample
     """
     config = load_config(config_file)
     if skip_preflight:
@@ -148,6 +152,7 @@ def main(
                         config,
                         threads=1,
                         message=False,
+                        report_resources=report_resources,
                     ): sample
                     for sample, reads in sample_pairs.items()
                 }

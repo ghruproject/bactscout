@@ -17,6 +17,7 @@ def collect_sample(
     threads: int,
     config: str,
     skip_preflight: bool,
+    report_resources: bool = False,
 ) -> None:
     """
     Process a single sample with paired-end reads.
@@ -28,6 +29,7 @@ def collect_sample(
         threads: Number of threads to use
         config: Path to the configuration file
         skip_preflight: Skip preflight checks if True
+        report_resources: Track and report thread and memory usage if True
 
     Returns:
         None
@@ -72,6 +74,7 @@ def collect_sample(
             config_dict,
             threads=threads,
             message=True,
+            report_resources=report_resources,
         )
 
         if result and result.get("status") == "success":

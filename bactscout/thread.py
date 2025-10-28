@@ -45,6 +45,7 @@ Dependencies:
 import json
 import os
 
+from bactscout.resource_monitor import ResourceMonitor
 from bactscout.software.run_fastp import run_command as run_fastp
 from bactscout.software.run_stringmlst import run_command as run_mlst
 from bactscout.software.run_sylph import extract_species_from_report
@@ -106,11 +107,15 @@ def blank_sample_results(sample_id):
         "coverage_alt_status": "FAILED",
         "genome_file_path": "",
         "genome_file": "",
+        "resource_threads_peak": 0,
+        "resource_memory_peak_mb": 0.0,
+        "resource_memory_avg_mb": 0.0,
+        "resource_duration_sec": 0.0,
     }
 
 
 def run_one_sample(
-    sample_id, read1_file, read2_file, output_dir, config, threads=1, message=False
+    sample_id, read1_file, read2_file, output_dir, config, threads=1, message=False, report_resources=False
 ):
     """
     Execute comprehensive QC analysis pipeline for a single bacterial sample.
@@ -127,6 +132,7 @@ def run_one_sample(
         config (dict): Configuration dictionary containing thresholds, database paths, and tool settings.
         threads (int, optional): Number of threads for parallel execution. Defaults to 1.
         message (bool, optional): If True, print status messages. Defaults to False.
+        report_resources (bool, optional): If True, track and report resource usage. Defaults to False.
 
     Returns:
         dict: Comprehensive results dictionary containing:
@@ -138,6 +144,7 @@ def run_one_sample(
             - GC content evaluation
             - Contamination assessment
             - Overall QC pass/fail status with descriptive messages
+            - Resource usage metrics if report_resources=True (threads, memory, duration)
 
     Notes:
         - Creates sample output directory if it doesn't exist
@@ -146,6 +153,12 @@ def run_one_sample(
         - Coverage evaluation uses both direct sylph output and computed estimates
         - Final status determined by pass/fail evaluation of all QC metrics
     """
+    # Start resource monitoring if requested
+    resource_monitor = None
+    if report_resources:
+        resource_monitor = ResourceMonitor()
+        resource_monitor.start()
+    
     if message:
         print_message(f"Running analysis for {sample_id}", "info")
     # Create output directory if it doesn't exist #
@@ -159,7 +172,9 @@ def run_one_sample(
     sylph_result = run_sylph(
         read1_file, read2_file, sample_output_dir, config, threads=threads
     )
-    species_abundance, genome_file_path = extract_species_from_report(sylph_result.get("sylph_report"))
+    species_abundance, genome_file_path = extract_species_from_report(
+        sylph_result.get("sylph_report")
+    )
     final_results["genome_file_path"] = genome_file_path
 
     fastp_result = run_fastp(
@@ -210,6 +225,16 @@ def run_one_sample(
     else:
         final_results["species_status"] = "FAILED"
     final_results["a_final_status"] = final_status_pass(final_results)
+    
+    # Stop resource monitoring and add stats to results
+    if resource_monitor:
+        resource_monitor.end()
+        stats = resource_monitor.get_stats()
+        final_results["resource_threads_peak"] = stats.get("peak_threads", 0)
+        final_results["resource_memory_peak_mb"] = stats.get("peak_memory_mb", 0.0)
+        final_results["resource_memory_avg_mb"] = stats.get("avg_memory_mb", 0.0)
+        final_results["resource_duration_sec"] = stats.get("duration_sec", 0.0)
+    
     write_summary_file(final_results, sample_id, sample_output_dir)
 
     return {
