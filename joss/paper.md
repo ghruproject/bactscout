@@ -65,9 +65,9 @@ The software follows open-source best practices with comprehensive documentation
 
 BactScout evaluates bacterial sequencing data across four primary dimensions:
 
-1. **Read Quality**: Percentage of bases with Phred quality ≥30 (Q30) and mean read length using Fastp post-trimming metrics
+1. **Read Quality**: Percentage of bases with Phred quality >=30 (Q30) and mean read length using Fastp post-trimming metrics
 
-2. **Coverage Depth**: Estimated genome coverage calculated from read abundance using both Sylph's direct measurement and calculated estimates (total bases ÷ expected genome size)
+2. **Coverage Depth**: Estimated genome coverage calculated from read abundance using both Sylph's direct measurement and calculated estimates (total bases / expected genome size)
 
 3. **Species Purity and Identification**: Species detection via Sylph ANI-based profiling with contamination assessment (% reads assigned to non-dominant species)
 
