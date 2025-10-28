@@ -154,6 +154,9 @@ def blank_sample_results(sample_id):
         "kat_flag_contamination": 0,
         # KAT Version (for reproducibility)
         "kat_version": "unknown",
+        # KAT Status and Message
+        "kat_status": "SKIPPED",
+        "kat_message": "KAT analysis was not performed.",
         # Resource Monitoring
         "resource_threads_peak": 0,
         "resource_memory_peak_mb": 0.0,
@@ -254,6 +257,7 @@ def run_one_sample(
         config=config,
         threads=threads,
     )
+    kat_results = handle_kat_results(kat_results, config)
     final_results.update(kat_results)
 
     final_results, species = handle_species_coverage(
@@ -715,6 +719,92 @@ def handle_adapter_detection(fastp_results, config):  # pylint: disable=unused-a
         )
     
     return fastp_results
+
+
+def handle_kat_results(kat_results, config):  # pylint: disable=unused-argument
+    """
+    Evaluate KAT (K-mer Analysis Toolkit) results and derive QC status.
+    
+    Interprets k-mer analysis metrics including histogram distribution, GC×coverage
+    patterns, and boolean flags from KAT to assess sequencing quality. Handles missing
+    KAT data gracefully (when KAT not installed or disabled).
+    
+    Args:
+        kat_results (dict): Dictionary containing KAT metrics and flags from run_kat_analysis().
+        config (dict): Configuration dictionary with KAT thresholds and settings.
+    
+    Returns:
+        dict: Updated kat_results with kat_status and kat_message fields.
+    """
+    # Check if KAT was actually run (if any KAT metrics are present)
+    has_kat_data = bool(kat_results.get("kat_total_kmers", 0) > 0)
+    
+    if not has_kat_data:
+        # KAT analysis was skipped or not available
+        kat_results["kat_status"] = "SKIPPED"
+        kat_results["kat_message"] = (
+            "KAT analysis was not performed (KAT not available, disabled, or no reads processed)."
+        )
+        return kat_results
+    
+    # Evaluate KAT flags
+    low_coverage_flag = kat_results.get("kat_flag_low_coverage", 0)
+    high_error_flag = kat_results.get("kat_flag_high_error", 0)
+    contamination_flag = kat_results.get("kat_flag_contamination", 0)
+    
+    # Determine status based on flags
+    flags_raised = sum([low_coverage_flag, high_error_flag, contamination_flag])
+    
+    if flags_raised == 0:
+        kat_results["kat_status"] = "PASSED"
+        kat_results["kat_message"] = (
+            "K-mer analysis indicates good read quality. "
+            "No coverage, error, or contamination issues detected."
+        )
+    elif flags_raised == 1:
+        # Single flag - warning unless it's high error or contamination
+        if high_error_flag:
+            kat_results["kat_status"] = "WARNING"
+            kat_results["kat_message"] = (
+                "K-mer analysis detected elevated error rate. "
+                "Error peak contains {:.2%} of reads. "
+                "Consider investigating sequencing quality."
+            ).format(kat_results.get("kat_error_peak_prop", 0))
+        elif contamination_flag:
+            kat_results["kat_status"] = "WARNING"
+            kat_results["kat_message"] = (
+                "K-mer analysis suggests possible contamination. "
+                "Multi-modal distribution or extreme GC content detected. "
+                "Verify sample preparation and source."
+            )
+        else:  # low_coverage_flag
+            kat_results["kat_status"] = "WARNING"
+            kat_results["kat_message"] = (
+                "K-mer analysis indicates low genome coverage. "
+                "Main peak coverage: {:.1f}x. "
+                "Consider additional sequencing."
+            ).format(kat_results.get("kat_main_peak_cov", 0))
+    else:
+        # Multiple flags raised - higher severity
+        kat_results["kat_status"] = "FAILED"
+        messages = []
+        if low_coverage_flag:
+            messages.append(
+                "low coverage ({:.1f}x)".format(kat_results.get("kat_main_peak_cov", 0))
+            )
+        if high_error_flag:
+            messages.append(
+                "high error rate ({:.2%})".format(kat_results.get("kat_error_peak_prop", 0))
+            )
+        if contamination_flag:
+            messages.append("possible contamination")
+        
+        kat_results["kat_message"] = (
+            "K-mer analysis detected multiple QC issues: " + ", ".join(messages) + ". "
+            "Sample requires investigation before use."
+        )
+    
+    return kat_results
 
 
 def handle_species_coverage(species_abundance, final_results, config):
@@ -1231,6 +1321,7 @@ def final_status_pass(final_results):
                 "insert_size_status",      # TIER 1: Insert size out of range
                 "quality_trend_status",    # TIER 2: Quality end-drop
                 "adapter_detection_status",# TIER 2: Adapter flag not enabled
+                "kat_status",              # KAT: K-mer analysis (if available)
             ])
         
         for metric in warning_metrics:
@@ -1242,6 +1333,7 @@ def final_status_pass(final_results):
                     final_status = "WARNING"
         
         # MLST status is informational only - doesn't affect QC pass/fail
+        # KAT SKIPPED status doesn't affect overall status (tool not available)
         # (handled separately for logging purposes)
 
     return final_status
