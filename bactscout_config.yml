@@ -2,10 +2,25 @@ bactscout_dbs_path: 'bactscout_dbs'
 sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
 metrics_file: 'filtered_metrics.csv'
 sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb'
-coverage_threshold: 30
-contamination_threshold: 10
-q30_pass_threshold: 0.70
-read_length_pass_threshold: 100
+
+# QC Thresholds - Support both WARN and FAIL levels
+# Coverage thresholds (in x)
+coverage_warn_threshold: 30
+coverage_fail_threshold: 20
+
+# Contamination thresholds (% of top species, lower is more contaminated)
+contamination_warn_threshold: 5
+contamination_fail_threshold: 10
+
+# Q30 thresholds (fraction of bases >= Q30)
+q30_warn_threshold: 0.80
+q30_fail_threshold: 0.70
+
+# Read length thresholds (mean read length in bp)
+read_length_warn_threshold: 80
+read_length_fail_threshold: 100
+
+
 mlst_species:
   escherichia_coli: 'Escherichia coli#1'
   salmonella_enterica: 'Salmonella enterica'

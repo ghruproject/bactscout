@@ -262,19 +262,47 @@ def handle_fastp_results(fastp_results, config):
     """
     Updates fastp_results dictionary with status and messages for Q30 and read length metrics.
 
+    Evaluates Q30 and read length against both WARNING and FAIL thresholds.
+    Status is PASSED if above FAIL threshold, WARNING if between WARN and FAIL thresholds,
+    and FAILED if below WARN threshold.
+
     Args:
         fastp_results (dict): Dictionary containing fastp metrics.
         config (dict): Configuration dictionary with thresholds:
-            - q30_pass_threshold (int): Minimum Q30 rate (%) to pass.
-            - read_length_pass_threshold (int): Minimum mean read length to pass.
+            - q30_warn_threshold (float): Q30 rate below which WARNING is triggered (default: 0.60)
+            - q30_fail_threshold (float): Q30 rate below which FAILED is triggered (default: 0.70)
+            - read_length_warn_threshold (int): Read length below which WARNING is triggered (default: 80)
+            - read_length_fail_threshold (int): Read length below which FAILED is triggered (default: 100)
+            - q30_pass_threshold (float): Legacy threshold, used if warn/fail not present (default: 0.80)
+            - read_length_pass_threshold (int): Legacy threshold, used if warn/fail not present (default: 100)
 
     Returns:
         dict: Updated fastp_results with status and message fields.
     """
-    q30_threshold = config.get("q30_pass_threshold", 0.80)
-    if q30_threshold > 1:
-        q30_threshold /= 100
-    read_length_threshold = config.get("read_length_pass_threshold", 100)
+    # Handle Q30 thresholds with backward compatibility
+    q30_fail_threshold = config.get("q30_fail_threshold")
+    q30_warn_threshold = config.get("q30_warn_threshold")
+
+    if q30_fail_threshold is None:
+        # Legacy mode: use pass_threshold as fail_threshold
+        q30_fail_threshold = config.get("q30_pass_threshold", 0.80)
+        q30_warn_threshold = q30_fail_threshold * 0.85  # Default warn at 85% of fail
+
+    if q30_fail_threshold > 1:
+        q30_fail_threshold /= 100
+    if q30_warn_threshold > 1:
+        q30_warn_threshold /= 100
+
+    # Handle read length thresholds with backward compatibility
+    read_length_fail_threshold = config.get("read_length_fail_threshold")
+    read_length_warn_threshold = config.get("read_length_warn_threshold")
+
+    if read_length_fail_threshold is None:
+        # Legacy mode: use pass_threshold as fail_threshold
+        read_length_fail_threshold = config.get("read_length_pass_threshold", 100)
+        read_length_warn_threshold = (
+            read_length_fail_threshold * 0.80
+        )  # Default warn at 80% of fail
 
     # Q30 status and message
     total_reads = fastp_results.get("read_total_reads", 0)
@@ -285,34 +313,51 @@ def handle_fastp_results(fastp_results, config):
         fastp_results["read_q30_message"] = (
             "No reads processed. Cannot determine quality metrics."
         )
-    elif q30_rate >= q30_threshold:
+    elif q30_rate >= q30_fail_threshold:
         fastp_results["read_q30_status"] = "PASSED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {q30_rate:.2f} meets threshold ({q30_threshold})."
+            f"Q30 rate {q30_rate:.2f} meets threshold ({q30_fail_threshold})."
+        )
+    elif q30_rate >= q30_warn_threshold:
+        fastp_results["read_q30_status"] = "WARNING"
+        fastp_results["read_q30_message"] = (
+            f"Q30 rate {q30_rate:.2f} falls between warning ({q30_warn_threshold}) and fail ({q30_fail_threshold}) thresholds."
         )
     else:
         fastp_results["read_q30_status"] = "FAILED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {q30_rate:.2f} below threshold ({q30_threshold})."
+            f"Q30 rate {q30_rate:.2f} below warning threshold ({q30_warn_threshold})."
         )
 
     # Read length status and message
     read1_len = fastp_results.get("read1_mean_length", 0)
     read2_len = fastp_results.get("read2_mean_length", 0)
+
     if total_reads == 0:
         fastp_results["read_length_status"] = "FAILED"
         fastp_results["read_length_message"] = (
             "No reads processed. Cannot determine read lengths."
         )
-    elif read1_len >= read_length_threshold and read2_len >= read_length_threshold:
+    elif (
+        read1_len >= read_length_fail_threshold
+        and read2_len >= read_length_fail_threshold
+    ):
         fastp_results["read_length_status"] = "PASSED"
         fastp_results["read_length_message"] = (
-            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} meet threshold (>{read_length_threshold})."
+            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} meet threshold (>{read_length_fail_threshold})."
+        )
+    elif (
+        read1_len >= read_length_warn_threshold
+        and read2_len >= read_length_warn_threshold
+    ):
+        fastp_results["read_length_status"] = "WARNING"
+        fastp_results["read_length_message"] = (
+            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} falls between warning (>{read_length_warn_threshold}) and fail (>{read_length_fail_threshold}) thresholds."
         )
     else:
         fastp_results["read_length_status"] = "FAILED"
         fastp_results["read_length_message"] = (
-            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} below threshold (>{read_length_threshold})."
+            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} below warning threshold (>{read_length_warn_threshold})."
         )
 
     return fastp_results
@@ -326,6 +371,10 @@ def handle_species_coverage(species_abundance, final_results, config):
     contamination based on the dominant species percentage, and assesses coverage against
     thresholds. Handles cases with no species detected, single species, or multiple species.
 
+    Supports both WARNING and FAIL thresholds for coverage and contamination metrics.
+    Status is PASSED if above FAIL threshold, WARNING if between WARN and FAIL thresholds,
+    and FAILED if below WARN threshold.
+
     Args:
         species_abundance (list): List of tuples from Sylph containing:
             - species_abundance[i][0]: Species scientific name
@@ -333,8 +382,12 @@ def handle_species_coverage(species_abundance, final_results, config):
             - species_abundance[i][2]: Estimated coverage from Sylph
         final_results (dict): Results dictionary to update with species and contamination data.
         config (dict): Configuration dictionary containing:
-            - coverage_threshold (int): Minimum acceptable coverage in x (default: 30)
-            - contamination_threshold (int): Minimum acceptable top species percentage (default: 10)
+            - coverage_fail_threshold (int): Minimum coverage for PASS (default: 30)
+            - coverage_warn_threshold (int): Minimum coverage for WARNING (default: 20)
+            - contamination_fail_threshold (int): Minimum % of top species for PASS (default: 10)
+            - contamination_warn_threshold (int): Minimum % of top species for WARNING (default: 5)
+            - coverage_threshold (int): Legacy threshold for backward compatibility (default: 30)
+            - contamination_threshold (int): Legacy threshold for backward compatibility (default: 10)
 
     Returns:
         tuple: (updated_final_results, species_list)
@@ -347,8 +400,28 @@ def handle_species_coverage(species_abundance, final_results, config):
         - Multiple species warning includes note about using top species only
         - Coverage estimate set from Sylph's direct measurement (top_species[2])
     """
-    coverage_cutoff = config.get("coverage_threshold", 30)
-    contamination_cutoff = config.get("contamination_threshold", 10)
+    # Handle coverage thresholds with backward compatibility
+    coverage_fail_threshold = config.get("coverage_fail_threshold")
+    coverage_warn_threshold = config.get("coverage_warn_threshold")
+
+    if coverage_fail_threshold is None:
+        # Legacy mode: use threshold as fail_threshold
+        coverage_fail_threshold = config.get("coverage_threshold", 30)
+        coverage_warn_threshold = (
+            coverage_fail_threshold * 0.67
+        )  # Default warn at ~67% of fail
+
+    # Handle contamination thresholds with backward compatibility
+    contamination_fail_threshold = config.get("contamination_fail_threshold")
+    contamination_warn_threshold = config.get("contamination_warn_threshold")
+
+    if contamination_fail_threshold is None:
+        # Legacy mode: use threshold as fail_threshold
+        contamination_fail_threshold = config.get("contamination_threshold", 10)
+        contamination_warn_threshold = (
+            contamination_fail_threshold * 0.50
+        )  # Default warn at 50% of fail
+
     if not species_abundance:
         final_results["coverage_status"] = "FAILED"
         final_results["contamination_status"] = "FAILED"
@@ -379,26 +452,43 @@ def handle_species_coverage(species_abundance, final_results, config):
     )
     final_results["species_coverage"] = ";".join([str(s[2]) for s in species_abundance])
     top_species = species_abundance[0] if species_abundance else None
-    if top_species and top_species[2] >= coverage_cutoff:
+
+    # Evaluate coverage with WARNING and FAIL thresholds
+    if top_species and top_species[2] >= coverage_fail_threshold:
         final_results["coverage_status"] = "PASSED"
         final_results["coverage_estimate"] = round(top_species[2], 2)
         final_results["coverage_message"] = (
-            f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x meets the threshold of {coverage_cutoff}x."
+            f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x meets the threshold of {coverage_fail_threshold}x."
+        )
+    elif top_species and top_species[2] >= coverage_warn_threshold:
+        final_results["coverage_status"] = "WARNING"
+        final_results["coverage_estimate"] = round(top_species[2], 2)
+        final_results["coverage_message"] = (
+            f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls between warning ({coverage_warn_threshold}x) and fail ({coverage_fail_threshold}x) thresholds."
         )
     else:
         final_results["coverage_estimate"] = (
             round(top_species[2], 2) if top_species else 0
         )
         final_results["coverage_message"] = (
-            f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls below the threshold of {coverage_cutoff}x."
+            f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls below warning threshold ({coverage_warn_threshold}x)."
         )
         final_results["coverage_status"] = "FAILED"
-    if top_species and top_species[1] > (100 - contamination_cutoff):
+
+    # Evaluate contamination with WARNING and FAIL thresholds
+    # Contamination is calculated as (100 - top_species_percentage)
+    # Lower top species percentage = higher contamination
+    if top_species and top_species[1] > (100 - contamination_fail_threshold):
         final_results["contamination_status"] = "PASSED"
         final_results["contamination_message"] = ""
+    elif top_species and top_species[1] > (100 - contamination_warn_threshold):
+        final_results["contamination_status"] = "WARNING"
+        final_results["contamination_message"] = (
+            f"Top species purity {top_species[1]:.2f}% falls between warning ({100 - contamination_warn_threshold}%) and fail ({100 - contamination_fail_threshold}%) thresholds."
+        )
     else:
         final_results["contamination_message"] = (
-            f"Top species {top_species[0]} with contamination {top_species[1]:.2f}x exceeds the threshold of {contamination_cutoff}x."
+            f"Top species purity {top_species[1]:.2f}% falls below warning threshold ({100 - contamination_warn_threshold}%)."
         )
         final_results["contamination_status"] = "FAILED"
     return final_results, species
