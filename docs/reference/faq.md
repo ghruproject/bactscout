@@ -146,15 +146,34 @@ To add more, install additional ARIBA databases.
 - Useful for epidemiological tracking and outbreak investigation
 
 ### Q: What if MLST is partial or fails?
-**A:** Common causes:
-- Low coverage over specific genes
-- Sample contamination
-- Sequence divergence (novel variants)
+**A:** When MLST cannot assign a valid ST, the status is set to **WARNING** (not FAIL). This is informational and does NOT cause the overall sample to fail QC.
 
-Solutions:
-- Increase sequencing depth
-- Check coverage for housekeeping genes
-- Verify sample quality
+Common causes of missing ST:
+- Low coverage over specific housekeeping genes
+- Sample contamination reducing coverage
+- Sequence divergence (novel allele combinations)
+- Unreported/novel ST not in pubMLST database
+
+**Important**: Missing MLST does not affect sample quality assessment. A sample can:
+- ✅ PASS overall QC with missing ST (if other metrics pass)
+- ✅ Have a valid MLST ST and still FAIL QC (if coverage/Q30/etc. fails)
+
+Solutions if you need MLST:
+- Increase sequencing depth for better coverage
+- Verify sample hasn't degraded
+- Check if novel ST can be submitted to pubMLST
+- Review housekeeping gene coverage in sample report
+
+### Q: Does missing MLST mean my sample failed?
+**A:** No! MLST status is separate from sample QC pass/fail. Example:
+
+| Scenario | Q30 | Coverage | Reads | Contamination | MLST | Overall Result |
+|----------|-----|----------|-------|----------------|------|---|
+| Good sample, ST found | PASS | PASS | PASS | PASS | PASSED | ✅ **PASS** |
+| Good sample, no ST | PASS | PASS | PASS | PASS | WARNING | ✅ **PASS** |
+| Poor Q30, has ST | FAIL | PASS | PASS | PASS | PASSED | ❌ **FAIL** |
+
+The sample quality is determined by sequencing metrics (coverage, Q30, contamination, read length). MLST is optional strain typing information.
 
 ## Data Management
 

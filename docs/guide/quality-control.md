@@ -298,6 +298,100 @@ Sometimes you may want to analyze samples that don't meet all thresholds:
 - High contamination (>20%) - unreliable species ID
 - Mixed species for single-species analysis
 
+## MLST & Strain Typing Results
+
+For single-species samples with available MLST databases, BactScout performs Multi-Locus Sequence Typing (MLST) to assign a sequence type (ST) for epidemiological tracking.
+
+### Understanding MLST Status
+
+MLST has two possible status values:
+
+| Status | Meaning | What it means for your sample |
+|--------|---------|------|
+| **PASSED** | Valid ST assigned | ST was successfully determined and is a known sequence type (ST > 0) |
+| **WARNING** | ST missing or unknown | No valid ST could be assigned - this is informational and does NOT cause overall sample QC failure |
+
+### When MLST Results in WARNING
+
+Missing or invalid MLST results (WARNING status) can occur due to:
+
+1. **No valid ST found**
+   - Novel allele combinations not in the database
+   - Partial coverage of housekeeping genes
+   - Sequence divergence from reference strains
+
+2. **Insufficient coverage over genes**
+   - Some housekeeping genes have low or zero coverage
+   - Sample contamination reducing coverage of target genes
+   - Random read distribution
+
+3. **No MLST database available**
+   - Species not included in BactScout's MLST databases
+   - Add additional databases via configuration
+
+4. **Unknown ST**
+   - Sample contains valid alleles but combination is novel (unreported in pubMLST)
+   - Will display high ST number (e.g., 99999) in some outputs
+
+### Important Note: MLST WARNING Does Not Cause Failure
+
+**MLST is informational and does NOT affect the overall sample QC pass/fail status.**
+
+Examples:
+- Sample with perfect coverage (100x), Q30 90%, clean species ID, but no ST → **Overall: PASS**
+- Sample with same metrics but novel ST (unreported combination) → **Overall: PASS**
+- Sample that fails Q30 threshold with valid ST → **Overall: FAIL** (due to Q30, not MLST)
+
+MLST is useful for:
+- Strain identification for surveillance
+- Outbreak tracking
+- Research purposes
+- NOT a core QC metric
+
+### No MLST Database for Species
+
+If your species doesn't have MLST results:
+
+1. Check `bactscout_config.yml` to see available databases
+2. To add MLST for additional species:
+   ```yaml
+   # In config file, specify new databases
+   mlst_species:
+     species_new: "Full Scientific Name"
+   ```
+3. Install the corresponding stringMLST database:
+   ```bash
+   stringMLST.py -S new_scheme --install
+   ```
+
+### Using MLST Results
+
+MLST results appear in:
+- `final_summary.csv` → `mlst_st` column (or None if missing)
+- Individual sample `_summary.csv` → `mlst_st` and `mlst_message`
+
+To analyze MLST results across batch:
+
+```python
+import pandas as pd
+
+df = pd.read_csv('bactscout_output/final_summary.csv')
+
+# Find samples with MLST results
+with_mlst = df.dropna(subset=['mlst_st'])
+print(f"Samples with valid ST: {len(with_mlst)} / {len(df)}")
+
+# ST distribution
+if len(with_mlst) > 0:
+    print("\nSequence Type distribution:")
+    print(with_mlst['mlst_st'].value_counts())
+    
+    # Find related samples (same ST)
+    for st in with_mlst['mlst_st'].unique():
+        related = with_mlst[with_mlst['mlst_st'] == st]
+        print(f"ST-{st}: {len(related)} samples")
+```
+
 ## Batch Quality Assessment
 
 After running `qc` on multiple samples, analyze the batch:

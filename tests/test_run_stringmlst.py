@@ -246,3 +246,74 @@ class TestRunCommand:
         # Verify the command includes the output file path
         call_args = mock_run.call_args
         assert expected_output_file in str(call_args)
+
+    def test_run_command_with_valid_st(
+        self, sample_fastq_files, species_db, config, temp_dirs
+    ):
+        """Test run_command with valid sequence type found."""
+        r1, r2 = sample_fastq_files
+        _, output_dir = temp_dirs
+
+        mlst_data = "Sample\tgapA\tinfB\tmdh\tpgi\tphoE\trpoB\ttonB\tST\n"
+        mlst_data += "sample_001\t4\t5\t1\t1\t9\t4\t36\t7230\n"
+
+        with mock.patch("subprocess.run"):
+            with mock.patch("builtins.open", mock.mock_open(read_data=mlst_data)):
+                result = run_command(r1, r2, species_db, output_dir, config)
+
+        assert result["stringmlst_results"]["ST"] == "7230"
+        assert "error" not in result["stringmlst_results"]
+
+    def test_run_command_with_missing_st_field(
+        self, sample_fastq_files, species_db, config, temp_dirs
+    ):
+        """Test run_command when ST field is present but has no value."""
+        r1, r2 = sample_fastq_files
+        _, output_dir = temp_dirs
+
+        # Header and row without ST value
+        mlst_data = "Sample\tgapA\tinfB\tmdh\tpgi\tphoE\trpoB\ttonB\tST\n"
+        mlst_data += "sample_001\t4\t5\t1\t1\t9\t4\t36\t\n"
+
+        with mock.patch("subprocess.run"):
+            with mock.patch("builtins.open", mock.mock_open(read_data=mlst_data)):
+                result = run_command(r1, r2, species_db, output_dir, config)
+
+        # ST field should be empty or missing
+        st_value = result["stringmlst_results"].get("ST", "")
+        assert st_value == "" or st_value is None
+
+    def test_run_command_with_zero_st(
+        self, sample_fastq_files, species_db, config, temp_dirs
+    ):
+        """Test run_command with ST value of 0 (invalid/unknown ST)."""
+        r1, r2 = sample_fastq_files
+        _, output_dir = temp_dirs
+
+        mlst_data = "Sample\tgapA\tinfB\tmdh\tpgi\tphoE\trpoB\ttonB\tST\n"
+        mlst_data += "sample_001\t4\t5\t1\t1\t9\t4\t36\t0\n"
+
+        with mock.patch("subprocess.run"):
+            with mock.patch("builtins.open", mock.mock_open(read_data=mlst_data)):
+                result = run_command(r1, r2, species_db, output_dir, config)
+
+        assert result["stringmlst_results"]["ST"] == "0"
+        assert "error" not in result["stringmlst_results"]
+
+    def test_run_command_with_novel_st(
+        self, sample_fastq_files, species_db, config, temp_dirs
+    ):
+        """Test run_command with novel ST (high number)."""
+        r1, r2 = sample_fastq_files
+        _, output_dir = temp_dirs
+
+        mlst_data = "Sample\tgapA\tinfB\tmdh\tpgi\tphoE\trpoB\ttonB\tST\n"
+        mlst_data += "sample_001\t4\t5\t1\t1\t9\t4\t36\t99999\n"
+
+        with mock.patch("subprocess.run"):
+            with mock.patch("builtins.open", mock.mock_open(read_data=mlst_data)):
+                result = run_command(r1, r2, species_db, output_dir, config)
+
+        assert result["stringmlst_results"]["ST"] == "99999"
+        assert "error" not in result["stringmlst_results"]
+
