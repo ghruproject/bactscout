@@ -43,6 +43,7 @@ pixi run bactscout collect sample_R1.fastq.gz sample_R2.fastq.gz -c config.yml
 | `--threads` | `-t` | 2 | Number of CPU threads to use |
 | `--config` | `-c` | `bactscout_config.yml` | Configuration file path |
 | `--skip-preflight` | - | False | Skip validation checks |
+| `--report-resources` | - | False | Track and report thread and memory usage for the sample |
 
 ## Input Format
 

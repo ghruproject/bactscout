@@ -37,6 +37,7 @@ from typing import Dict
 
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -46,10 +47,10 @@ except ImportError:
 class ResourceMonitor:
     """
     Monitor system resources (memory and threads) for a process.
-    
+
     Tracks peak memory usage, average memory usage, thread count,
     and execution duration. Uses psutil for cross-platform compatibility.
-    
+
     If psutil is not available, gracefully degrades with limited functionality.
     """
 
@@ -79,22 +80,22 @@ class ResourceMonitor:
     def start(self) -> None:
         """
         Start resource monitoring.
-        
+
         Records initial state and starts continuous memory monitoring thread.
         """
         self.start_time = time.time()
-        
+
         if HAS_PSUTIL and self._process:
             try:
                 # Get initial memory
                 mem_info = self._process.memory_info()
                 self.start_memory_mb = mem_info.rss / (1024 * 1024)
                 self.peak_memory_mb = self.start_memory_mb
-                
+
                 # Get initial thread count
                 self.start_threads = self._process.num_threads()
                 self.peak_threads = self.start_threads
-                
+
                 # Start continuous monitoring
                 self.monitoring_active = True
                 self._monitor_thread = threading.Thread(
@@ -108,16 +109,16 @@ class ResourceMonitor:
     def end(self) -> None:
         """
         Stop resource monitoring and record final state.
-        
+
         Stops continuous monitoring thread and captures final resource values.
         """
         self.end_time = time.time()
         self.monitoring_active = False
-        
+
         # Wait for monitor thread to finish
         if self._monitor_thread and self._monitor_thread.is_alive():
             self._monitor_thread.join(timeout=1.0)
-        
+
         # Final memory and thread count
         if HAS_PSUTIL and self._process:
             try:
@@ -125,7 +126,7 @@ class ResourceMonitor:
                 final_memory_mb = mem_info.rss / (1024 * 1024)
                 self.memory_samples.append(final_memory_mb)
                 self.peak_memory_mb = max(self.peak_memory_mb, final_memory_mb)
-                
+
                 final_threads = self._process.num_threads()
                 self.peak_threads = max(self.peak_threads, final_threads)
             except Exception:  # pylint: disable=broad-except
@@ -134,7 +135,7 @@ class ResourceMonitor:
     def _monitor_resources(self) -> None:
         """
         Continuously monitor resource usage (runs in separate thread).
-        
+
         Periodically samples memory and thread usage at the specified interval.
         """
         while self.monitoring_active:
@@ -144,14 +145,14 @@ class ResourceMonitor:
                     current_memory_mb = mem_info.rss / (1024 * 1024)
                     self.memory_samples.append(current_memory_mb)
                     self.peak_memory_mb = max(self.peak_memory_mb, current_memory_mb)
-                    
+
                     current_threads = self._process.num_threads()
                     self.peak_threads = max(self.peak_threads, current_threads)
                 except Exception:  # pylint: disable=broad-except
                     # Stop monitoring if process becomes inaccessible
                     self.monitoring_active = False
                     break
-            
+
             time.sleep(self.track_interval)
 
     def get_stats(self) -> Dict[str, float]:
@@ -198,7 +199,7 @@ def get_process_memory() -> float:
     """
     if not HAS_PSUTIL:
         return 0.0
-    
+
     try:
         process = psutil.Process(os.getpid())  # type: ignore
         mem_info = process.memory_info()
@@ -216,7 +217,7 @@ def get_process_threads() -> int:
     """
     if not HAS_PSUTIL:
         return 0
-    
+
     try:
         process = psutil.Process(os.getpid())  # type: ignore
         return process.num_threads()

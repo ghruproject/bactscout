@@ -38,6 +38,7 @@ pixi run bactscout qc /path/to/samples/ -c custom_config.yml
 | `--threads` | `-t` | 2 | Number of CPU threads to use |
 | `--config` | `-c` | `bactscout_config.yml` | Configuration file path |
 | `--skip-preflight` | - | False | Skip validation checks |
+| `--report-resources` | - | False | Track and report thread and memory usage per sample |
 
 ## Input Format
 

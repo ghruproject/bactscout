@@ -115,7 +115,14 @@ def blank_sample_results(sample_id):
 
 
 def run_one_sample(
-    sample_id, read1_file, read2_file, output_dir, config, threads=1, message=False, report_resources=False
+    sample_id,
+    read1_file,
+    read2_file,
+    output_dir,
+    config,
+    threads=1,
+    message=False,
+    report_resources=False,
 ):
     """
     Execute comprehensive QC analysis pipeline for a single bacterial sample.
@@ -158,7 +165,7 @@ def run_one_sample(
     if report_resources:
         resource_monitor = ResourceMonitor()
         resource_monitor.start()
-    
+
     if message:
         print_message(f"Running analysis for {sample_id}", "info")
     # Create output directory if it doesn't exist #
@@ -225,7 +232,7 @@ def run_one_sample(
     else:
         final_results["species_status"] = "FAILED"
     final_results["a_final_status"] = final_status_pass(final_results)
-    
+
     # Stop resource monitoring and add stats to results
     if resource_monitor:
         resource_monitor.end()
@@ -234,7 +241,7 @@ def run_one_sample(
         final_results["resource_memory_peak_mb"] = stats.get("peak_memory_mb", 0.0)
         final_results["resource_memory_avg_mb"] = stats.get("avg_memory_mb", 0.0)
         final_results["resource_duration_sec"] = stats.get("duration_sec", 0.0)
-    
+
     write_summary_file(final_results, sample_id, sample_output_dir)
 
     return {

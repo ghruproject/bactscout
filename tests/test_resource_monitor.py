@@ -16,13 +16,13 @@ def test_resource_monitor_basic():
     time.sleep(0.1)
     monitor.end()
     stats = monitor.get_stats()
-    
+
     # Verify stats dictionary has expected keys
     assert "duration_sec" in stats
     assert "peak_threads" in stats
     assert "peak_memory_mb" in stats
     assert "avg_memory_mb" in stats
-    
+
     # Verify reasonable values
     assert stats["duration_sec"] >= 0.1
     assert stats["peak_threads"] > 0
@@ -37,7 +37,7 @@ def test_resource_monitor_duration():
     time.sleep(sleep_time)
     monitor.end()
     stats = monitor.get_stats()
-    
+
     # Duration should be roughly equal to sleep time (within 100ms margin)
     assert stats["duration_sec"] >= sleep_time - 0.1
 
@@ -50,7 +50,7 @@ def test_resource_monitor_graceful_degradation():
     time.sleep(0.05)
     monitor.end()
     stats = monitor.get_stats()
-    
+
     # Should return valid stats dict
     assert isinstance(stats, dict)
 
@@ -58,7 +58,7 @@ def test_resource_monitor_graceful_degradation():
 def test_get_process_memory():
     """Test get_process_memory helper function."""
     mem = get_process_memory()
-    
+
     # Should return a non-negative float
     assert isinstance(mem, float)
     assert mem >= 0.0
@@ -67,7 +67,7 @@ def test_get_process_memory():
 def test_get_process_threads():
     """Test get_process_threads helper function."""
     threads = get_process_threads()
-    
+
     # Should return a non-negative integer
     assert isinstance(threads, int)
     assert threads > 0
@@ -79,7 +79,7 @@ def test_resource_monitor_memory_tracking():
     monitor.start()
     time.sleep(0.1)
     monitor.end()
-    
+
     # Check internal state
     assert hasattr(monitor, "memory_samples")
     assert len(monitor.memory_samples) > 0
@@ -88,14 +88,14 @@ def test_resource_monitor_memory_tracking():
 def test_resource_monitor_multiple_cycles():
     """Test multiple start/end cycles."""
     monitor = ResourceMonitor()
-    
+
     # First cycle
     monitor.start()
     time.sleep(0.05)
     monitor.end()
     stats1 = monitor.get_stats()
     assert stats1["duration_sec"] > 0
-    
+
     # Second cycle - create new monitor
     monitor2 = ResourceMonitor()
     monitor2.start()
