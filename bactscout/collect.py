@@ -70,7 +70,7 @@ def collect_sample(
             read2_file,
             output_dir,
             config_dict,
-            threads,
+            threads=threads,
             message=True,
         )
 

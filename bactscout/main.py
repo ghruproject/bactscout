@@ -1,3 +1,38 @@
+"""
+Main batch processing module for BactScout QC pipeline.
+
+This module provides the primary entry point for batch processing multiple samples.
+It handles sample discovery, orchestrates preflight validation, manages parallel
+processing, and aggregates results across all samples.
+
+Key Components:
+    - main(): Batch processing orchestrator
+    - locate_read_file_pairs(): Sample pair discovery
+    - Progress tracking with rich formatting
+
+Workflow:
+    1. Load configuration
+    2. Run preflight checks (unless skipped)
+    3. Discover FASTQ file pairs in input directory
+    4. Process each sample in parallel
+    5. Merge individual sample results into consolidated summary
+    6. Report processing statistics
+
+Dependencies:
+    - bactscout.preflight: Configuration and validation
+    - bactscout.thread: Individual sample processing
+    - bactscout.summary: Result aggregation
+    - bactscout.util: Output formatting
+
+Example:
+    >>> from bactscout.main import main
+    >>> main(
+    ...     input_dir="./samples",
+    ...     output_dir="./results",
+    ...     max_threads=4
+    ... )
+"""
+
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
