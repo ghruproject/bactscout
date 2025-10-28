@@ -50,6 +50,7 @@ from bactscout.software.run_fastp import run_command as run_fastp
 from bactscout.software.run_stringmlst import run_command as run_mlst
 from bactscout.software.run_sylph import extract_species_from_report
 from bactscout.software.run_sylph import run_command as run_sylph
+from bactscout.qc.kat_metrics import run_kat_analysis
 from bactscout.util import print_message
 
 
@@ -131,6 +132,28 @@ def blank_sample_results(sample_id):
         "adapter_detection_message": "No reads processed. Cannot verify adapter detection.",
         # Fastp QC Metrics - Composition Data
         "composition_data": {},
+        # KAT (K-mer Analysis Toolkit) Metrics - Histogram
+        "kat_k": 27,
+        "kat_total_kmers": 0,
+        "kat_total_kmer_instances": 0,
+        "kat_error_peak_cov": 0.0,
+        "kat_error_peak_prop": 0.0,
+        "kat_main_peak_cov": 0.0,
+        "kat_main_peak_height": 0,
+        "kat_unique_kmers_prop": 0.0,
+        "kat_median_kmer_cov": 0.0,
+        "kat_mean_kmer_cov": 0.0,
+        # KAT (K-mer Analysis Toolkit) Metrics - GC×Coverage
+        "kat_gcp_num_bins": 0,
+        "kat_gcp_top_bin_prop": 0.0,
+        "kat_gcp_multi_modal": 0,
+        "kat_gcp_lowcov_gc_prop": 0.0,
+        # KAT Boolean Flags
+        "kat_flag_low_coverage": 0,
+        "kat_flag_high_error": 0,
+        "kat_flag_contamination": 0,
+        # KAT Version (for reproducibility)
+        "kat_version": "unknown",
         # Resource Monitoring
         "resource_threads_peak": 0,
         "resource_memory_peak_mb": 0.0,
@@ -222,6 +245,16 @@ def run_one_sample(
     fastp_stats = handle_quality_trends(fastp_stats, config)
     fastp_stats = handle_adapter_detection(fastp_stats, config)
     final_results.update(fastp_stats)
+
+    # Run KAT k-mer analysis if enabled
+    kat_results = run_kat_analysis(
+        read1_file=read1_file,
+        read2_file=read2_file,
+        output_dir=sample_output_dir,
+        config=config,
+        threads=threads,
+    )
+    final_results.update(kat_results)
 
     final_results, species = handle_species_coverage(
         species_abundance, final_results, config

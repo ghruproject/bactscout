@@ -37,6 +37,38 @@ n_content_threshold: 0.001
 # Quality end-drop threshold (max allowed quality drop in last 20 cycles)
 quality_end_drop_threshold: 5
 
+# KAT (K-mer Analysis Toolkit) configuration
+kat:
+  enabled: true
+  k: 27  # K-mer size (typical: 19-31)
+  threads: 4  # Number of threads for KAT analysis
+  
+  # Which KAT subcommands to run
+  run:
+    hist: true   # Histogram: k-mer frequency distribution
+    gcp: true    # GC×coverage: GC% vs coverage matrix
+    comp: false  # Composition: k-mer sharing analysis
+    sect: false  # Sector: per-sector coverage analysis
+  
+  # Thresholds for metric-based flags and warnings
+  thresholds:
+    # Error region: coverage <= this value indicates sequencing errors
+    error_cov_cutoff: 4
+    
+    # High error warning: if error region contains > this fraction
+    error_prop_warn: 0.05
+    
+    # Low coverage warning: if main peak < this x coverage
+    main_cov_low: 10
+    
+    # Multi-modal contamination detection threshold
+    # Flag raised if any bin contains > this fraction of reads
+    gcp_multi_modal_bin_prop: 0.1
+    
+    # Low-coverage + extreme GC warning threshold
+    # Flag raised if > this fraction of reads have low coverage and extreme GC%
+    comp_shared_prop_warn: 0.9
+
 mlst_species:
   escherichia_coli: 'Escherichia coli#1'
   salmonella_enterica: 'Salmonella enterica'
