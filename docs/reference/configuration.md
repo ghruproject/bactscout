@@ -121,7 +121,112 @@ system_resources:
 - `10` - Standard, minor contamination acceptable
 - `15+` - Lenient, some contamination tolerated
 
-### MLST Species Configuration
+### Advanced QC Thresholds (TIER 1 & TIER 2)
+
+These thresholds control evaluation of additional sequencing quality metrics extracted from fastp reports.
+
+#### `duplication_warn_threshold`
+- **Type**: float
+- **Default**: `0.20`
+- **Range**: 0.0-1.0
+- **Unit**: Fraction (0.20 = 20% duplicate reads)
+- **Description**: Threshold for warning about PCR bias
+- **Status**: WARNING if duplicates exceed this, FAILED if above `duplication_fail_threshold`
+
+**Interpretation**:
+- Duplicate reads indicate PCR amplification bias
+- High values suggest library quality or coverage issues
+- **Typical values**: 0.15-0.25 for well-constructed libraries
+
+#### `duplication_fail_threshold`
+- **Type**: float
+- **Default**: `0.30`
+- **Range**: 0.0-1.0
+- **Unit**: Fraction (0.30 = 30% duplicate reads)
+- **Description**: Threshold for failing sample due to excessive PCR bias
+- **Impact**: Sample status = FAILED if `duplication_rate > threshold`
+
+#### `insert_size_min_threshold`
+- **Type**: integer
+- **Default**: `200`
+- **Range**: 50-1000
+- **Unit**: Base pairs
+- **Description**: Minimum expected insert size
+- **Status**: WARNING if insert size peak < threshold
+
+**Interpretation**:
+- Insert size = distance between paired-end reads
+- Too short may indicate DNA fragmentation
+- Too long may indicate library preparation issues
+
+#### `insert_size_max_threshold`
+- **Type**: integer
+- **Default**: `600`
+- **Range**: 100-2000
+- **Unit**: Base pairs
+- **Description**: Maximum expected insert size
+- **Status**: WARNING if insert size peak > threshold
+
+#### `filtering_pass_rate_threshold`
+- **Type**: float
+- **Default**: `0.95`
+- **Range**: 0.0-1.0
+- **Unit**: Fraction (0.95 = 95% reads pass)
+- **Description**: Minimum percentage of reads passing quality filters
+- **Status**: WARNING if pass rate < threshold
+
+**Interpretation**:
+- Fastp removes reads failing quality checks
+- Low pass rates indicate poor sample quality
+- Typical range: 0.90-0.98
+
+#### `n_content_threshold`
+- **Type**: float
+- **Default**: `0.001`
+- **Range**: 0.0-0.01
+- **Unit**: Fraction (0.001 = 0.1% ambiguous bases)
+- **Description**: Maximum allowed fraction of ambiguous (N) bases
+- **Status**: WARNING if N-content > threshold
+
+**Interpretation**:
+- N bases indicate uncertain base calls
+- High N-content suggests poor base-calling confidence
+- Usually < 0.1% in high-quality sequencing
+
+#### `quality_end_drop_threshold`
+- **Type**: integer
+- **Default**: `5`
+- **Range**: 1-20
+- **Unit**: Phred quality points
+- **Description**: Maximum acceptable quality drop in final 20 cycles
+- **Status**: WARNING if quality end-drop exceeds threshold
+
+**Interpretation**:
+- Quality often decreases toward read ends
+- Large drops indicate sequencer degradation
+- Typical drop: 0-5 quality points
+
+### Configuration Example with All Thresholds
+
+```yaml
+# Standard QC thresholds
+coverage_threshold: 30
+contamination_threshold: 10
+q30_pass_threshold: 0.80
+read_length_pass_threshold: 100
+
+# TIER 1 QC thresholds (duplication, insert size, filtering, N-content)
+duplication_warn_threshold: 0.20
+duplication_fail_threshold: 0.30
+insert_size_min_threshold: 200
+insert_size_max_threshold: 600
+filtering_pass_rate_threshold: 0.95
+n_content_threshold: 0.001
+
+# TIER 2 QC thresholds (quality trends, adapters)
+quality_end_drop_threshold: 5
+```
+
 
 #### `mlst_species`
 - **Type**: dictionary (key-value pairs)
