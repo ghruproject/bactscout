@@ -58,22 +58,38 @@ def run_command(r1, r2, species_db, output_dir, config, message=False, threads=1
             print(f"Command: {' '.join(mlst_cmd)}")
 
         subprocess.run(mlst_cmd, check=True, capture_output=not message)
-        # Open mlst.tsv add to results
-        with open(output_file) as f:
-            lines = f.readlines()
-            if len(lines) > 1:
-                header = lines[0].strip().split("\t")
-                values = lines[1].strip().split("\t")
-                mlst_data = dict(zip(header, values, strict=False))
-                stringmlst_results = mlst_data
-            else:
-                stringmlst_results = {"error": "No MLST results found in output file."}
+        
+        # Check if output file was created
+        if not os.path.exists(output_file):
+            stringmlst_results = {"error": "StringMLST did not create output file."}
+            if message:
+                print(f"Error: StringMLST did not create output file at {output_file}")
+        else:
+            # Open mlst.tsv add to results
+            with open(output_file) as f:
+                lines = f.readlines()
+                if len(lines) > 1:
+                    header = lines[0].strip().split("\t")
+                    values = lines[1].strip().split("\t")
+                    mlst_data = dict(zip(header, values, strict=False))
+                    stringmlst_results = mlst_data
+                else:
+                    stringmlst_results = {"error": "No MLST results found in output file."}
 
-        if message:
-            print(f"ARIBA completed successfully for {species_db}")
+            if message:
+                print(f"StringMLST completed successfully for {species_db}")
     except subprocess.CalledProcessError as e:
+        stringmlst_results = {"error": f"StringMLST command failed: {e}"}
         if message:
             print(f"Error running MLST for {species_db}: {e}")
+    except FileNotFoundError as e:
+        stringmlst_results = {"error": f"Output file not found: {e}"}
+        if message:
+            print(f"Error reading MLST output file: {e}")
+    except Exception as e:
+        stringmlst_results = {"error": f"Unexpected error: {e}"}
+        if message:
+            print(f"Unexpected error in MLST processing: {e}")
 
     return {
         "sample_name": sample_name,

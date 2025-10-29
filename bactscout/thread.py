@@ -1022,20 +1022,42 @@ def handle_mlst_results(
             threads=threads,
         )
         # Check MLST results
-        if mlst_result.get("stringmlst_results", {}).get("ST"):
-            final_results["mlst_st"] = mlst_result["stringmlst_results"]["ST"]
-            if int(final_results["mlst_st"]) > 0:
-                final_results["mlst_status"] = "PASSED"
-                final_results["mlst_message"] = (
-                    f"Valid ST found: {mlst_result['stringmlst_results']['ST']}"
-                )
-            else:
-                final_results["mlst_status"] = "WARNING"
-                final_results["mlst_message"] = "No valid ST found."
-        else:
+        stringmlst_results = mlst_result.get("stringmlst_results", {})
+        
+        # Check if there's an error in the MLST results
+        if "error" in stringmlst_results:
             final_results["mlst_st"] = None
             final_results["mlst_status"] = "WARNING"
-            final_results["mlst_message"] = "No valid ST found."
+            final_results["mlst_message"] = f"MLST analysis failed: {stringmlst_results['error']}"
+        # Check if ST field exists (even if empty)
+        elif "ST" in stringmlst_results:
+            st_value = stringmlst_results["ST"]
+            # Store the ST value, but convert empty/whitespace to None
+            final_results["mlst_st"] = st_value if st_value and st_value.strip() else None
+            
+            # Try to validate the ST value
+            if st_value and st_value.strip():  # Non-empty string
+                try:
+                    st_int = int(st_value.strip())
+                    if st_int > 0:
+                        final_results["mlst_status"] = "PASSED"
+                        final_results["mlst_message"] = f"Valid ST found: {st_value}"
+                    else:
+                        final_results["mlst_status"] = "WARNING"
+                        final_results["mlst_message"] = f"No valid ST found (ST={st_value})."
+                except ValueError:
+                    # ST is not a number (e.g., "-" or "N/A")
+                    final_results["mlst_status"] = "WARNING"
+                    final_results["mlst_message"] = f"No valid ST found (ST={st_value})."
+            else:
+                # ST field is empty
+                final_results["mlst_status"] = "WARNING"
+                final_results["mlst_message"] = "No valid ST found (empty ST field)."
+        else:
+            # No ST field in results
+            final_results["mlst_st"] = None
+            final_results["mlst_status"] = "WARNING"
+            final_results["mlst_message"] = "No valid ST found (ST field missing)."
     else:
         final_results["mlst_message"] = (
             "No MLST database found for species. Install via config.yml."
