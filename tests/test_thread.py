@@ -195,6 +195,61 @@ class TestHandleMLSTResults:
         assert result["mlst_st"] == "99999"
         assert "Valid ST found" in result["mlst_message"]
 
+    def test_mlst_error_results_in_warning_status(
+        self, sample_config, sample_final_results, sample_paths
+    ):
+        """Test that MLST errors result in WARNING status with error message."""
+        mlst_result = {
+            "stringmlst_results": {
+                "error": "StringMLST did not create output file."
+            }
+        }
+
+        with mock.patch("bactscout.thread.run_mlst", return_value=mlst_result):
+            result = handle_mlst_results(
+                sample_final_results,
+                sample_config,
+                "Escherichia coli",
+                sample_paths["read1"],
+                sample_paths["read2"],
+                sample_paths["output_dir"],
+                message=False,
+                threads=1,
+            )
+
+        assert result["mlst_status"] == "WARNING"
+        assert result["mlst_st"] is None
+        assert "MLST analysis failed" in result["mlst_message"]
+        assert "did not create output file" in result["mlst_message"]
+
+    def test_non_numeric_st_results_in_warning_status(
+        self, sample_config, sample_final_results, sample_paths
+    ):
+        """Test that non-numeric ST values (e.g., '-') result in WARNING status."""
+        mlst_result = {
+            "stringmlst_results": {
+                "ST": "-",
+                "Sample": "sample_001",
+            }
+        }
+
+        with mock.patch("bactscout.thread.run_mlst", return_value=mlst_result):
+            result = handle_mlst_results(
+                sample_final_results,
+                sample_config,
+                "Escherichia coli",
+                sample_paths["read1"],
+                sample_paths["read2"],
+                sample_paths["output_dir"],
+                message=False,
+                threads=1,
+            )
+
+        assert result["mlst_status"] == "WARNING"
+        assert result["mlst_st"] == "-"
+        assert "No valid ST found" in result["mlst_message"]
+        assert "ST=-" in result["mlst_message"]
+
     def test_species_name_mapping_with_underscores(
         self, sample_config, sample_final_results, sample_paths
     ):

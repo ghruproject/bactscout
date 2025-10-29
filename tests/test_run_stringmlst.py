@@ -183,9 +183,11 @@ class TestRunCommand:
 
         mock_subprocess.side_effect = CalledProcessError(1, "stringMLST.py")
 
-        # Should not raise, but return empty results
+        # Should not raise, but return error dict
         result = run_command(r1, r2, species_db, output_dir, config, message=False)
         assert result is not None
+        assert "error" in result["stringmlst_results"]
+        assert "StringMLST command failed" in result["stringmlst_results"]["error"]
 
     def test_run_command_with_message_flag(
         self, sample_fastq_files, species_db, config, temp_dirs, capsys
@@ -316,3 +318,36 @@ class TestRunCommand:
 
         assert result["stringmlst_results"]["ST"] == "99999"
         assert "error" not in result["stringmlst_results"]
+
+    def test_run_command_missing_output_file(
+        self, sample_fastq_files, species_db, config, temp_dirs
+    ):
+        """Test run_command when StringMLST succeeds but doesn't create output file."""
+        r1, r2 = sample_fastq_files
+        _, output_dir = temp_dirs
+
+        # Mock subprocess.run to succeed
+        with mock.patch("subprocess.run"):
+            # Mock os.path.exists to return False (file not created)
+            with mock.patch("os.path.exists", return_value=False):
+                result = run_command(r1, r2, species_db, output_dir, config)
+
+        assert "error" in result["stringmlst_results"]
+        assert "did not create output file" in result["stringmlst_results"]["error"]
+
+    def test_run_command_handles_file_read_error(
+        self, sample_fastq_files, species_db, config, temp_dirs
+    ):
+        """Test run_command when output file exists but can't be read."""
+        r1, r2 = sample_fastq_files
+        _, output_dir = temp_dirs
+
+        # Mock subprocess.run to succeed
+        with mock.patch("subprocess.run"):
+            # Mock file operations - exists returns True but open fails
+            with mock.patch("os.path.exists", return_value=True):
+                with mock.patch("builtins.open", side_effect=FileNotFoundError("File vanished")):
+                    result = run_command(r1, r2, species_db, output_dir, config, message=False)
+
+        assert "error" in result["stringmlst_results"]
+        assert "Output file not found" in result["stringmlst_results"]["error"]
