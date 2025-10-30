@@ -1,3 +1,12 @@
+"""
+Sylph wrapper module for ultrafast metagenomic profiling.
+
+This module provides functions to run Sylph on paired-end FASTQ files
+for taxonomic profiling and genome-to-genome distance estimation.
+Sylph uses k-mer based methods for rapid analysis of metagenomic samples
+against reference databases.
+"""
+
 import os
 import shutil
 import subprocess
@@ -5,12 +14,18 @@ import subprocess
 
 def run_command(r1, r2, output_dir, config, message=False, threads=1):
     """
-    Run Sylph on the input directory and save results to the output directory.
+    Run Sylph on paired-end FASTQ files for taxonomic profiling.
 
     Args:
-        input_dir (str): Path to the input directory containing FASTQ files.
+        r1 (str): Path to the R1 (forward) FASTQ file.
+        r2 (str): Path to the R2 (reverse) FASTQ file.
         output_dir (str): Path to the output directory where results will be saved.
-        threads (int): Number of threads to use for processing.
+        config (dict): Configuration dictionary containing bactscout_dbs_path and sylph_db.
+        message (bool): Whether to print success/error messages. Default is False.
+        threads (int): Number of threads to use for processing. Default is 1.
+
+    Returns:
+        dict: Dictionary containing sylph_report path and error information if any.
     """
 
     if not os.path.exists(output_dir):

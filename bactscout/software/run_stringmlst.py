@@ -1,3 +1,11 @@
+"""
+StringMLST wrapper module for Multi-Locus Sequence Typing (MLST).
+
+This module provides functions to run StringMLST on paired-end FASTQ files
+to determine sequence types based on allelic profiles. StringMLST performs
+k-mer based MLST typing directly from raw sequencing reads.
+"""
+
 import os
 import shutil
 import subprocess
@@ -5,19 +13,19 @@ import subprocess
 from bactscout.util import extract_sample_name, print_message
 
 
-def run_command(r1, r2, species_db, output_dir, message=False, threads=1):
+def run_command(r1, r2, species_db, output_dir, message=False):
     """
-    Run StringMLSt on paired-end FASTQ files for antimicrobial resistance gene detection.
+    Run StringMLST on paired-end FASTQ files for MLST typing.
 
     Args:
         r1 (str): Path to the R1 (forward) FASTQ file.
         r2 (str): Path to the R2 (reverse) FASTQ file.
+        species_db (str): Path to the species-specific MLST database directory.
         output_dir (str): Path to the output directory where results will be saved.
-        config (dict): Configuration dictionary containing ARIBA settings.
-        message (bool): Whether to print success/error messages.
+        message (bool): Whether to print success/error messages. Default is False.
 
     Returns:
-        dict: Dictionary containing paths to StringMLST output files.
+        dict: Dictionary containing sample_name, stringmlst_results, and output_dir.
     """
 
     # Create output directory and ensure it exists
@@ -41,9 +49,14 @@ def run_command(r1, r2, species_db, output_dir, message=False, threads=1):
         pass  # File doesn't exist or can't be removed, that's fine
     # Build StringMLST command: stringmlst.py --predict -P <database> -1 <reads_R1> -2 <reads_R2> <output_dir>
     # You need the prefix for the db as well,
-    db_prefix = os.path.join(
-        os.path.abspath(species_db), os.path.splitext(os.path.basename(species_db))[0]
-    )
+    # Check if species_db is a directory or file
+    if os.path.isdir(species_db):
+        db_prefix = os.path.join(
+            os.path.abspath(species_db),
+            os.path.splitext(os.path.basename(species_db))[0],
+        )
+    else:
+        db_prefix = species_db
     mlst_cmd = cmd + [
         "--predict",
         "-P",

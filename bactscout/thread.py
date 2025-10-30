@@ -282,7 +282,6 @@ def run_one_sample(
             read2_file=read2_file,
             sample_output_dir=sample_output_dir,
             message=message,
-            threads=threads,
         )
 
     else:
@@ -859,7 +858,6 @@ def handle_mlst_results(
     read2_file,
     sample_output_dir,
     message,
-    threads=1,
 ):
     """
     Execute MLST typing analysis and update results with typing data.
@@ -918,7 +916,6 @@ def handle_mlst_results(
             species_db_path,
             sample_output_dir,
             config,
-            threads=threads,
         )
         # Check MLST results
         stringmlst_results = mlst_result.get("stringmlst_results", {})

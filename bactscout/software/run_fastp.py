@@ -1,3 +1,11 @@
+"""
+FastP wrapper module for quality control of paired-end FASTQ files.
+
+This module provides functions to run FastP quality control on paired-end
+sequencing data, generating JSON and HTML reports. FastP is run with adapter
+trimming and quality filtering disabled for QC-only analysis.
+"""
+
 import os
 import shutil
 import subprocess
@@ -61,7 +69,9 @@ def run_command(r1, r2, output_dir, message=False, threads=1):
     try:
         if message:
             print_message(f"Running FastP for sample: {sample_name}")
-            print_message(f"Command: {' '.join(full_cmd)}")
+            # Make sure full_cmd is a string for printing
+            full_cmd_str = [str(part) for part in full_cmd]
+            print_message(f"Command: {' '.join(full_cmd_str)}")
 
         # Run FastP and capture output
         with open(log_file, "w", encoding="utf-8") as log:

@@ -5,6 +5,8 @@ import pytest
 from bactscout.software.run_fastp import run_command
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_run_command_real_sample_data(tmp_path):
     """Test run_command with real sample data from sample_data directory."""
     project_root = Path(__file__).resolve().parent.parent

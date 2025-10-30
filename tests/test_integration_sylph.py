@@ -15,6 +15,8 @@ R1_FILE = "Sample_25067cebsemb_R1.fastq.gz"
 R2_FILE = "Sample_25067cebsemb_R2.fastq.gz"
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_sylph_real_download(tmp_path):
     """
     Integration test: Download real FASTQ files and run Sylph.

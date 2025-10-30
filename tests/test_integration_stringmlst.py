@@ -15,6 +15,8 @@ R1_FILE = "Sample_25067cebsemb_R1.fastq.gz"
 R2_FILE = "Sample_25067cebsemb_R2.fastq.gz"
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_stringmlst_real_download(tmp_path):
     """
     Integration test: Download real FASTQ files and run StringMLST.
@@ -43,9 +45,7 @@ def test_stringmlst_real_download(tmp_path):
     output_dir = tmp_path / "stringmlst_output"
 
     # Run StringMLST on the downloaded files
-    result = run_command(
-        str(r1), str(r2), str(db_dir), str(output_dir), message=True, threads=2
-    )
+    result = run_command(str(r1), str(r2), str(db_dir), str(output_dir), message=True)
 
     # Verify results
     assert result["sample_name"] is not None

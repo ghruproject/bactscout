@@ -1,4 +1,4 @@
-"""Version information for GHRU Read QC Pipeline."""
+"""Version information for BactScout read QC Pipeline."""
 
-__version__ = "1.0.0"
-__version_info__ = (1, 0, 0)
+__version__ = "1.1.2"
+__version_info__ = (1, 1, 2)

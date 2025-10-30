@@ -61,7 +61,6 @@ def test_run_command_success(tmp_path):
                 str(species_db),
                 str(output_dir),
                 message=False,
-                threads=2,
             )
 
         # Check result structure
@@ -148,7 +147,7 @@ def test_run_command_with_message_enabled(tmp_path, capsys):
         mock_run.return_value = MagicMock(returncode=0)
 
         result = run_command(
-            str(r1), str(r2), str(species_db), str(output_dir), message=True, threads=1
+            str(r1), str(r2), str(species_db), str(output_dir), message=True
         )
 
         # Check that messages were printed
