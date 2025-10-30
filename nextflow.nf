@@ -25,7 +25,6 @@ params.input_dir = null
 params.output_dir = "${launchDir}/bactscout_output"
 params.config = "${launchDir}/bactscout_config.yml"
 params.threads = 4
-params.skip_preflight = false
 params.help = false
 
 // ============================================================================
@@ -56,9 +55,6 @@ if (params.help || params.input_dir == null) {
       
       --threads N             Number of threads per sample
                               (default: 4)
-      
-      --skip_preflight        Skip preflight checks (not recommended)
-                              (default: false)
       
       --help                  Show this help message
 
@@ -99,21 +95,17 @@ process collect_sample {
     path("**"), emit: all_outputs
     
     script:
-    // Build optional parameters
-    def skip_param = params.skip_preflight ? "--skip_preflight" : ""
-    
     """
     echo "Processing sample: ${sample_name}"
     echo "R1: ${read1}"
     echo "R2: ${read2}"
     
-    bactscout collect \\
+    pixi run bactscout collect \\
         ${read1} \\
         ${read2} \\
         --output_dir . \\
         --threads ${params.threads} \\
-        --config ${params.config} \\
-        ${skip_param}
+        --config ${params.config}
     
     echo "Sample ${sample_name} processing complete"
     """
@@ -134,7 +126,7 @@ process final_summary {
     
     script:
     """
-    bactscout summary \\
+    pixi run bactscout summary \\
         --input_dir ${params.output_dir} \\
         --output_file final_summary.csv
     """
