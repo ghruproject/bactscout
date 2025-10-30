@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get version from bactscout/__version__.py
-VERSION=$(python -c "from bactscout.__version__ import __version__; print(__version__)")
+VERSION=$(pixi run python -c "from bactscout.__version__ import __version__; print(__version__)")
 echo "Building BactScout Docker image version: $VERSION"
 
 # Build the Docker image
