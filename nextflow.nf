@@ -25,8 +25,6 @@ params.input_dir = null
 params.output_dir = "${launchDir}/bactscout_output"
 params.config = "${launchDir}/bactscout_config.yml"
 params.threads = 4
-params.kat_enabled = null  // null = use config default
-params.k_mer_size = null   // null = use config default
 params.skip_preflight = false
 params.help = false
 
@@ -59,13 +57,6 @@ if (params.help || params.input_dir == null) {
       --threads N             Number of threads per sample
                               (default: 4)
       
-      --kat_enabled true|false
-                              Enable/disable KAT analysis (overrides config)
-                              (default: use config setting)
-      
-      --k_mer_size N          K-mer size for KAT analysis
-                              (default: use config setting)
-      
       --skip_preflight        Skip preflight checks (not recommended)
                               (default: false)
       
@@ -75,8 +66,7 @@ if (params.help || params.input_dir == null) {
       nextflow run nextflow.nf \\
         --input_dir ./samples \\
         --output_dir ./results \\
-        --threads 8 \\
-        --kat_enabled true
+        --threads 8
 
     WORKFLOW STEPS:
       1. Discover paired-end FASTQ files in input directory
@@ -110,8 +100,6 @@ process collect_sample {
     
     script:
     // Build optional parameters
-    def kat_param = params.kat_enabled != null ? "--kat ${params.kat_enabled}" : ""
-    def k_param = params.k_mer_size != null ? "--k_mer_size ${params.k_mer_size}" : ""
     def skip_param = params.skip_preflight ? "--skip_preflight" : ""
     
     """
@@ -125,8 +113,6 @@ process collect_sample {
         --output_dir . \\
         --threads ${params.threads} \\
         --config ${params.config} \\
-        ${kat_param} \\
-        ${k_param} \\
         ${skip_param}
     
     echo "Sample ${sample_name} processing complete"
@@ -219,13 +205,6 @@ workflow {
     log.info "Output directory: ${params.output_dir}"
     log.info "Config file:      ${params.config}"
     log.info "Threads per sample: ${params.threads}"
-    
-    if (params.kat_enabled != null) {
-        log.info "KAT enabled: ${params.kat_enabled}"
-    }
-    if (params.k_mer_size != null) {
-        log.info "K-mer size: ${params.k_mer_size}"
-    }
     
     // Run collect_sample for all pairs
     collect_results = collect_sample(read_pairs)
