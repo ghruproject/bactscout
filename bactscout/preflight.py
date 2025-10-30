@@ -25,7 +25,7 @@ import psutil
 import yaml  # Ensure PyYAML is installed in the environment
 
 from bactscout.software.run_stringmlst import get_command as get_mlst_command
-from bactscout.util import print_message
+from bactscout.util import print_header, print_message
 
 
 def load_config(config_path) -> dict[str, str]:
@@ -38,6 +38,21 @@ def load_config(config_path) -> dict[str, str]:
     with open(config_path, encoding="utf-8") as f:
         config_dict = yaml.safe_load(f)
     return config_dict
+
+
+def preflight_check(skip_preflight: bool, config_dict: dict) -> bool:
+    all_ok = False
+    if skip_preflight:
+        all_ok = True
+        print_message("Skipping preflight checks", "warning")
+    else:
+        print_header("Preflight Checks")
+        all_ok = (
+            check_system_resources(config_dict)
+            and check_software(config_dict)
+            and check_databases(config_dict)
+        )
+    return all_ok
 
 
 def get_sylph_db(

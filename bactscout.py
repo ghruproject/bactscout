@@ -31,16 +31,6 @@ def qc(
         "--report-resources",
         help="Track and report thread and memory usage per sample",
     ),
-    kat_enabled: bool = typer.Option(
-        None,
-        "--kat",
-        help="Enable/disable KAT k-mer analysis (overrides config)",
-    ),
-    k_mer_size: int = typer.Option(
-        None,
-        "--k",
-        help="K-mer size for KAT analysis (default 27, overrides config)",
-    ),
 ):
     """Main QC command"""
     main(
@@ -50,8 +40,6 @@ def qc(
         config_file=config,
         skip_preflight=skip_preflight,
         report_resources=report_resources,
-        kat_enabled=kat_enabled,
-        k_mer_size=k_mer_size,
     )
 
 
@@ -69,22 +57,12 @@ def collect(
         "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
     ),
     skip_preflight: bool = typer.Option(
-        False, "--skip-preflight", help="Skip the preflight checks"
+        True, "--skip-preflight", help="Skip the preflight checks"
     ),
     report_resources: bool = typer.Option(
         False,
         "--report-resources",
         help="Track and report thread and memory usage for the sample",
-    ),
-    kat_enabled: bool = typer.Option(
-        None,
-        "--kat",
-        help="Enable/disable KAT k-mer analysis (overrides config)",
-    ),
-    k_mer_size: int = typer.Option(
-        None,
-        "--k",
-        help="K-mer size for KAT analysis (default 27, overrides config)",
     ),
 ):
     """Process a single sample with paired-end reads"""
@@ -96,8 +74,6 @@ def collect(
         config,
         skip_preflight,
         report_resources,
-        kat_enabled=kat_enabled,
-        k_mer_size=k_mer_size,
     )
 
 

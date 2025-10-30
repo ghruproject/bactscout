@@ -17,6 +17,7 @@ def run_command(r1, r2, output_dir, config, message=False, threads=1):
         os.makedirs(output_dir)
 
     sylph_report = os.path.join(output_dir, "sylph_report.txt")
+    sylph_errors = os.path.join(output_dir, "sylph_errors.log")
     cmd = get_command()
     database_path = os.path.join(
         config.get("bactscout_dbs_path", ""),
@@ -36,13 +37,16 @@ def run_command(r1, r2, output_dir, config, message=False, threads=1):
 
     try:
         with open(sylph_report, "w", encoding="utf-8") as report_file:
-            subprocess.run(
-                cmd, stdout=report_file, stderr=subprocess.DEVNULL, check=True
-            )
+            with open(sylph_errors, "w", encoding="utf-8") as error_file:
+                subprocess.run(cmd, stdout=report_file, stderr=error_file, check=True)
         if message:
             print(f"Sylph completed successfully. Results are in {output_dir}")
     except subprocess.CalledProcessError as e:
         print(f"Error running Sylph: {e}")
+        with open(sylph_errors, "r", encoding="utf-8") as error_file:
+            errors = error_file.read()
+            print(f"Sylph errors:\n{errors}")
+
     return {"sylph_report": sylph_report}
 
 

@@ -25,9 +25,6 @@ params.input_dir = null
 params.output_dir = "${launchDir}/bactscout_output"
 params.config = "${launchDir}/bactscout_config.yml"
 params.threads = 4
-params.kat_enabled = null  // null = use config default
-params.k_mer_size = null   // null = use config default
-params.skip_preflight = false
 params.help = false
 
 // ============================================================================
@@ -59,24 +56,13 @@ if (params.help || params.input_dir == null) {
       --threads N             Number of threads per sample
                               (default: 4)
       
-      --kat_enabled true|false
-                              Enable/disable KAT analysis (overrides config)
-                              (default: use config setting)
-      
-      --k_mer_size N          K-mer size for KAT analysis
-                              (default: use config setting)
-      
-      --skip_preflight        Skip preflight checks (not recommended)
-                              (default: false)
-      
       --help                  Show this help message
 
     EXAMPLE:
       nextflow run nextflow.nf \\
         --input_dir ./samples \\
         --output_dir ./results \\
-        --threads 8 \\
-        --kat_enabled true
+        --threads 8
 
     WORKFLOW STEPS:
       1. Discover paired-end FASTQ files in input directory
@@ -97,23 +83,19 @@ if (params.help || params.input_dir == null) {
 
 process collect_sample {
     tag { sample_name }
-    
+    container 'docker.io/happykhan/bactscout:latest'
+    stageInMode 'copy'
+
     publishDir "${params.output_dir}/${sample_name}", mode: 'copy'
     
     input:
     tuple val(sample_name), path(read1), path(read2)
     
     output:
-    path("${sample_name}_summary.csv"), emit: summary
-    path("${sample_name}_qc_report.html"), optional: true, emit: report
-    path("**"), emit: all_outputs
+    path("${sample_name}/${sample_name}_summary.csv"), emit: summary
+    path("${sample_name}/**"), emit: all_outputs
     
     script:
-    // Build optional parameters
-    def kat_param = params.kat_enabled != null ? "--kat ${params.kat_enabled}" : ""
-    def k_param = params.k_mer_size != null ? "--k_mer_size ${params.k_mer_size}" : ""
-    def skip_param = params.skip_preflight ? "--skip_preflight" : ""
-    
     """
     echo "Processing sample: ${sample_name}"
     echo "R1: ${read1}"
@@ -122,14 +104,10 @@ process collect_sample {
     bactscout collect \\
         ${read1} \\
         ${read2} \\
-        --output_dir . \\
+        --output . \\
         --threads ${params.threads} \\
-        --config ${params.config} \\
-        ${kat_param} \\
-        ${k_param} \\
-        ${skip_param}
+        --config /app/bactscout_config.yml 2>&1
     
-    echo "Sample ${sample_name} processing complete"
     """
 }
 
@@ -138,6 +116,8 @@ process collect_sample {
 // ============================================================================
 
 process final_summary {
+    container 'docker.io/happykhan/bactscout:latest'
+
     publishDir "${params.output_dir}", mode: 'copy'
     
     input:
@@ -149,8 +129,8 @@ process final_summary {
     script:
     """
     bactscout summary \\
-        --input_dir ${params.output_dir} \\
-        --output_file final_summary.csv
+         . \\
+        --output .
     """
 }
 
@@ -219,13 +199,6 @@ workflow {
     log.info "Output directory: ${params.output_dir}"
     log.info "Config file:      ${params.config}"
     log.info "Threads per sample: ${params.threads}"
-    
-    if (params.kat_enabled != null) {
-        log.info "KAT enabled: ${params.kat_enabled}"
-    }
-    if (params.k_mer_size != null) {
-        log.info "K-mer size: ${params.k_mer_size}"
-    }
     
     // Run collect_sample for all pairs
     collect_results = collect_sample(read_pairs)
