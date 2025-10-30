@@ -2,7 +2,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.integration
+@pytest.mark.slow
 def test_sample_data_qc(tmp_path):
     project_root = Path(__file__).resolve().parent.parent
     sample_dir = project_root / "sample_data"

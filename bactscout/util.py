@@ -1,3 +1,6 @@
+import os
+import re
+
 from rich.console import Console
 
 # Initialize Rich console
@@ -20,8 +23,6 @@ def extract_sample_name(filename: str) -> str:
         extract_sample_name("sample_001_R1.fastq.gz") -> "sample_001"
         extract_sample_name("GCA_000001405_1.fq") -> "GCA_000001405"
     """
-    import os
-    import re
 
     # Get just the filename if full path provided
     basename = os.path.basename(filename)
@@ -102,3 +103,72 @@ def print_header(title: str) -> None:
     console.print(f"\n[bold magenta]{'=' * 60}[/]")
     console.print(f"[bold magenta]{title.center(60)}[/]")
     console.print(f"[bold magenta]{'=' * 60}[/]\n")
+
+
+def format_summary_headers():
+    columns = [
+        # Identification
+        "sample_id",
+        # Overall Status
+        "a_final_status",
+        # Component Status Flags
+        "adapter_detection_status",
+        "contamination_status",
+        "species_status",
+        "coverage_status",
+        "coverage_alt_status",
+        "duplication_status",
+        "filtering_status",
+        "gc_content_status",
+        "insert_size_status",
+        "mlst_status",
+        "n_content_status",
+        "quality_trend_status",
+        "read_length_status",
+        "read_q30_status",
+        # Species & Contamination
+        "species",
+        "species_abundance",
+        "species_coverage",
+        "species_message",
+        "contamination_message",
+        # Coverage & Duplication
+        "coverage_estimate",
+        "coverage_message",
+        "coverage_alt_estimate",
+        "coverage_alt_message",
+        "duplication_rate",
+        "duplication_message",
+        # GC & N-content
+        "gc_content",
+        "gc_content_lower",
+        "gc_content_upper",
+        "gc_content_message",
+        "n_content_rate",
+        "n_content_message",
+        # Insert Size & MLST
+        "insert_size_peak",
+        "insert_size_message",
+        "mlst_st",
+        "mlst_message",
+        # Read Quality & Filtering
+        "read1_mean_length",
+        "read2_mean_length",
+        "read_length_message",
+        "read_q20_bases",
+        "read_q20_rate",
+        "read_q30_bases",
+        "read_q30_rate",
+        "read_q30_message",
+        "read_total_bases",
+        "read_total_reads",
+        "quality_trend_message",
+        "filtering_pass_rate",
+        "filtering_message",
+        "adapter_detection_message",
+        # Reference Genome Info
+        "genome_file",
+        "genome_file_path",
+        "genome_size_expected",
+    ]
+    return columns

@@ -1,9 +1,11 @@
 .ruff_cache/
-
+tests/cached_fastqs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+docker_test/
+docker_test/*
 
 # Coverage reports
 htmlcov/
