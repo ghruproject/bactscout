@@ -31,11 +31,12 @@ insert_size_max_threshold: 600
 # Filtering pass rate threshold (fraction of reads passing filters)
 filtering_pass_rate_threshold: 0.95
 
+gc_fail_percentage: 5
+
 # N-content threshold (fraction of reads with too many N's)
 n_content_threshold: 0.001
-
-# Quality end-drop threshold (max allowed quality drop in last 20 cycles)
-quality_end_drop_threshold: 5
+# Adapter overrepresented sequences threshold (number of overrepresented sequences)
+adapter_overrep_threshold: 5
 
 mlst_species:
   escherichia_coli: 'Escherichia coli#1'
