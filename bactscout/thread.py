@@ -973,11 +973,13 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
         final_results["coverage_alt_status"] = "PASSED"
         final_results["coverage_alt_message"] = (
             f"Estimated coverage {estimated_coverage:.2f}x meets the threshold of {coverage_cutoff}x."
+            + warning
         )
     else:
         final_results["coverage_alt_status"] = "FAILED"
         final_results["coverage_alt_message"] = (
             f"Estimated coverage {estimated_coverage:.2f}x below the threshold of {coverage_cutoff}x."
+            + warning
         )
     final_results["gc_content_lower"] = gc_lower
     final_results["gc_content_upper"] = gc_upper
