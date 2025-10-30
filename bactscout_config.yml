@@ -24,13 +24,7 @@ read_length_fail_threshold: 100
 duplication_warn_threshold: 0.20
 duplication_fail_threshold: 0.30
 
-# Insert size thresholds (base pairs)
-insert_size_min_threshold: 200
-insert_size_max_threshold: 600
-
-# Filtering pass rate threshold (fraction of reads passing filters)
-filtering_pass_rate_threshold: 0.95
-
+# GC content failure threshold (% of reads with unexpected GC content)
 gc_fail_percentage: 5
 
 # N-content threshold (fraction of reads with too many N's)

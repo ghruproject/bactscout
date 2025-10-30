@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bactscout"
+version = "1.1.2"
+description = "High-performance bacterial genome quality control and MLST analysis pipeline"
+readme = "README.md"
+requires-python = ">=3.9,<3.12"
+license = { text = "GPL-3.0-or-later" }
+keywords = ["qc", "mlst", "bacterial", "bioinformatics"]
+urls = {"Homepage" = "https://github.com/ghruproject/bactscout"}
+
+dependencies = [
+  "fastp>=1.0.1,<2",
+  "sylph>=0.8.1,<0.9",
+  "typer>=0.19.2,<0.20",
+  "rich>=14.1.0,<15",
+  "pyaml>=25.7.0,<26",
+  "psutil>=7.1.0,<8",
+  "stringmlst>=0.6.3,<0.7",
+  "requests>=2.32.5,<3",
+]
+
+[project.scripts]
+bactscout = "bactscout:app"

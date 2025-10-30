@@ -6,6 +6,7 @@ __pycache__/
 *$py.class
 docker_test/
 docker_test/*
+nextflow
 
 # Coverage reports
 htmlcov/

@@ -106,7 +106,7 @@ def blank_sample_results(sample_id):
         "species_status": "FAILED",
         "species_message": "No reads processed. Cannot determine species.",
         "mlst_st": None,
-        "mlst_status": "FAILED",
+        "mlst_status": "WARNING",
         "mlst_message": "Cannot determine MLST.",
         "contamination_status": "FAILED",
         "contamination_message": "No reads processed. Cannot determine contamination.",
