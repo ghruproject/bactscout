@@ -1,5 +1,5 @@
 .ruff_cache/
-
+tests/cached_fastqs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

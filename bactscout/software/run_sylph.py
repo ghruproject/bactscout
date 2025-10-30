@@ -107,6 +107,12 @@ def extract_species_from_report(sylph_report):
 
 
 def get_command():
+    """
+    Get the Sylph command, checking system PATH first, then falling back to pixi.
+
+    Returns:
+        list: Command as a list of strings for subprocess
+    """
     cmd = shutil.which("sylph")
     # If commands are not found, shutil.which returns None, try with pixi run.
     if cmd is None:

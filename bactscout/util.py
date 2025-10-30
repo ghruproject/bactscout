@@ -1,3 +1,6 @@
+import os
+import re
+
 from rich.console import Console
 
 # Initialize Rich console
@@ -20,8 +23,6 @@ def extract_sample_name(filename: str) -> str:
         extract_sample_name("sample_001_R1.fastq.gz") -> "sample_001"
         extract_sample_name("GCA_000001405_1.fq") -> "GCA_000001405"
     """
-    import os
-    import re
 
     # Get just the filename if full path provided
     basename = os.path.basename(filename)
