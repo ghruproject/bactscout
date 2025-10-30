@@ -73,6 +73,7 @@ def test_collect_sample_with_sample_data(tmp_path):
 
 @pytest.mark.integration
 @pytest.mark.slow
+@pytest.mark.skip_on_ci
 def test_collect_sample_with_cache_data(tmp_path):
     """
     Integration test: Run collect_sample on cached FASTQ files.

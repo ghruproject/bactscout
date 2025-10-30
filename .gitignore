@@ -4,6 +4,8 @@ tests/cached_fastqs/
 __pycache__/
 *.py[cod]
 *$py.class
+docker_test/
+docker_test/*
 
 # Coverage reports
 htmlcov/
