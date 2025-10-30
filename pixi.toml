@@ -2,7 +2,7 @@
 authors = ["Nabil-Fareed Alikhan <nabil@happykhan.com>"]
 channels = ["conda-forge", "bioconda"]
 name = "bactscout"
-platforms = ["osx-64", "linux-64"]
+platforms = ["osx-64", "linux-64", "linux-aarch64"]
 version = "0.1.0"
 
 [tasks]
@@ -16,11 +16,13 @@ cov-report="python -m coverage html && python -m coverage report"
 ci="pixi run check && pixi run test-cov"
 docs="mkdocs serve"
 docs-build="mkdocs build --strict"
+workflow="nextflow run nextflow.nf"
 
 [dependencies]
 fastp = ">=1.0.1,<2"
 sylph = ">=0.8.1,<0.9"
 pixi-pack = ">=0.7.3,<0.8"
+nextflow = ">=24.0.0,<25"
 python = ">=3.9,<3.12"
 
 [pypi-dependencies]

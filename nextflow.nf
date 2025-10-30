@@ -83,16 +83,17 @@ if (params.help || params.input_dir == null) {
 
 process collect_sample {
     tag { sample_name }
-    
+    container 'docker.io/happykhan/bactscout:latest'
+    stageInMode 'copy'
+
     publishDir "${params.output_dir}/${sample_name}", mode: 'copy'
     
     input:
     tuple val(sample_name), path(read1), path(read2)
     
     output:
-    path("${sample_name}_summary.csv"), emit: summary
-    path("${sample_name}_qc_report.html"), optional: true, emit: report
-    path("**"), emit: all_outputs
+    path("${sample_name}/${sample_name}_summary.csv"), emit: summary
+    path("${sample_name}/**"), emit: all_outputs
     
     script:
     """
@@ -100,14 +101,13 @@ process collect_sample {
     echo "R1: ${read1}"
     echo "R2: ${read2}"
     
-    pixi run bactscout collect \\
+    bactscout collect \\
         ${read1} \\
         ${read2} \\
-        --output_dir . \\
+        --output . \\
         --threads ${params.threads} \\
-        --config ${params.config}
+        --config /app/bactscout_config.yml 2>&1
     
-    echo "Sample ${sample_name} processing complete"
     """
 }
 
@@ -116,6 +116,8 @@ process collect_sample {
 // ============================================================================
 
 process final_summary {
+    container 'docker.io/happykhan/bactscout:latest'
+
     publishDir "${params.output_dir}", mode: 'copy'
     
     input:
@@ -126,9 +128,9 @@ process final_summary {
     
     script:
     """
-    pixi run bactscout summary \\
-        --input_dir ${params.output_dir} \\
-        --output_file final_summary.csv
+    bactscout summary \\
+         . \\
+        --output .
     """
 }
 

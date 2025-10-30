@@ -36,7 +36,6 @@ Example:
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
 
 from rich.progress import (
     BarColumn,
@@ -47,10 +46,8 @@ from rich.progress import (
 )
 
 from bactscout.preflight import (
-    check_databases,
-    check_software,
-    check_system_resources,
     load_config,
+    preflight_check,
 )
 from bactscout.summary import summary_dir
 from bactscout.thread import run_one_sample
@@ -64,8 +61,6 @@ def main(
     skip_preflight: bool = False,
     config_file: str = "bactscout_config.yml",
     report_resources: bool = False,
-    kat_enabled: Optional[bool] = None,
-    k_mer_size: Optional[int] = None,
 ):
     """
     Run the BactScout QC pipeline on multiple samples in batch mode.
@@ -105,28 +100,7 @@ def main(
         - Resource usage tracking includes peak thread count and memory consumption per sample
     """
     config = load_config(config_file)
-
-    # Override KAT settings from CLI if provided
-    if kat_enabled is not None:
-        kat_config = config.get("kat", {})  # type: ignore
-        kat_config["enabled"] = kat_enabled  # type: ignore
-        config["kat"] = kat_config  # type: ignore
-
-    if k_mer_size is not None:
-        kat_config = config.get("kat", {})  # type: ignore
-        kat_config["k"] = k_mer_size  # type: ignore
-        config["kat"] = kat_config  # type: ignore
-
-    if skip_preflight:
-        all_ok = True
-        print_message("Skipping preflight checks", "warning")
-    else:
-        print_header("Preflight Checks")
-        all_ok = (
-            check_system_resources(config)
-            and check_software(config)
-            and check_databases(config)
-        )
+    all_ok = preflight_check(skip_preflight, config)
 
     # Get all sample pairs
     sample_pairs = locate_read_file_pairs(input_dir)

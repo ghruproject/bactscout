@@ -1,4 +1,5 @@
 import csv
+import os
 from pathlib import Path
 
 from bactscout.util import print_message
@@ -17,7 +18,13 @@ def summary_dir(data_dir, output_file):
     # Convert to Path objects for easier manipulation
     data_path = Path(data_dir)
     output_path = Path(output_file)
-
+    if os.getenv("NXF_TASK_WORKDIR"):
+        output_path = Path(
+            os.getenv("NXF_TASK_WORKDIR", ""), os.path.basename(output_file)
+        )
+        print_message(f"Using Nextflow path for output: {output_path}", "info")
+        data_path = Path(os.getenv("NXF_TASK_WORKDIR", ""), os.path.basename(data_dir))
+        print_message(f"Using Nextflow path for input: {data_path}", "info")
     # Find all CSV files that match the pattern *_summary.csv
     summary_files = []
 
@@ -27,6 +34,10 @@ def summary_dir(data_dir, output_file):
             # Look for CSV files in this sample directory
             for csv_file in sample_dir.glob("*_summary.csv"):
                 summary_files.append(csv_file)
+    # OR there could be summary files directly in data_dir (don't include final_summary.csv)
+    for csv_file in data_path.glob("*_summary.csv"):
+        if csv_file.name != "final_summary.csv":
+            summary_files.append(csv_file)
 
     if not summary_files:
         print_message(f"No summary CSV files found in {data_dir}", "error")

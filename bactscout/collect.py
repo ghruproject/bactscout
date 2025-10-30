@@ -1,12 +1,8 @@
 """Single sample collection and processing module."""
 
-from typing import Optional
-
 from bactscout.preflight import (
-    check_databases,
-    check_software,
-    check_system_resources,
     load_config,
+    preflight_check,
 )
 from bactscout.thread import run_one_sample
 from bactscout.util import extract_sample_name, print_header, print_message
@@ -20,8 +16,6 @@ def collect_sample(
     config: str,
     skip_preflight: bool,
     report_resources: bool = False,
-    kat_enabled: Optional[bool] = None,
-    k_mer_size: Optional[int] = None,
 ) -> None:
     """
     Process a single sample with paired-end reads.
@@ -41,33 +35,10 @@ def collect_sample(
         None
     """
     config_dict = load_config(config)
-
-    # Override KAT settings from CLI if provided
-    if kat_enabled is not None:
-        kat_config = config_dict.get("kat", {})  # type: ignore
-        kat_config["enabled"] = kat_enabled  # type: ignore
-        config_dict["kat"] = kat_config  # type: ignore
-
-    if k_mer_size is not None:
-        kat_config = config_dict.get("kat", {})  # type: ignore
-        kat_config["k"] = k_mer_size  # type: ignore
-        config_dict["kat"] = kat_config  # type: ignore
-
-    if skip_preflight:
-        all_ok = True
-        print_message("Skipping preflight checks", "warning")
-    else:
-        print_header("Preflight Checks")
-        all_ok = (
-            check_system_resources(config_dict)
-            and check_software(config_dict)
-            and check_databases(config_dict)
-        )
-
+    all_ok = preflight_check(skip_preflight, config_dict)
     if not all_ok:
-        print_message("Preflight checks failed", "error")
+        print_message("Preflight checks failed. Exiting.", "error")
         return
-
     # Extract sample name from R1 filename
     sample_id = extract_sample_name(read1_file)
 
