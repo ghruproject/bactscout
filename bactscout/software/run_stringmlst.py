@@ -112,6 +112,7 @@ def run_command(r1, r2, species_db, output_dir, message=False):
         "sample_name": sample_name,
         "stringmlst_results": stringmlst_results,
         "output_dir": output_dir,
+        "error": None,
     }
 
 

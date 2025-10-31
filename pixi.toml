@@ -10,7 +10,7 @@ bactscout="python bactscout.py"
 # Developer tasks
 lint="pixi run -e dev ruff check ."
 format="pixi run -e dev ruff format ."
-check="pixi run -e dev ruff check --fix . && ruff format ."
+check="pixi run -e dev ruff check --fix . &&  pixi run -e dev ruff format ."
 test="pixi run -e dev python -m pytest tests/ -v"
 test-cov="pixi run -e dev python -m pytest tests/ --cov=bactscout --cov-report=term-missing --cov-report=html --cov-report=xml"
 cov-report="pixi run -e dev python -m coverage html && python -m coverage report"

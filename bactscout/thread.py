@@ -204,7 +204,10 @@ def run_one_sample(
         sample_output_dir = os.path.join(
             os.getenv("NXF_TASK_WORKDIR", ""), os.path.basename(sample_output_dir)
         )
-        print_message(f"Using Nextflow path for output: {sample_output_dir}", "info")
+        if message:
+            print_message(
+                f"Using Nextflow path for output: {sample_output_dir}", "info"
+            )
 
     if not os.path.exists(sample_output_dir):
         os.makedirs(sample_output_dir, exist_ok=True)
@@ -213,19 +216,23 @@ def run_one_sample(
         read1_file = os.path.join(
             os.getenv("NXF_TASK_WORKDIR", ""), os.path.basename(read1_file)
         )
-        print_message(f"Using Nextflow path for R1: {read1_file}", "info")
+        if message:
+            print_message(f"Using Nextflow path for R1: {read1_file}", "info")
     if not os.path.exists(read2_file):
         read2_file = os.path.join(
             os.getenv("NXF_TASK_WORKDIR", ""), os.path.basename(read2_file)
         )
-        print_message(f"Using Nextflow path for R2: {read2_file}", "info")
+        if message:
+            print_message(f"Using Nextflow path for R2: {read2_file}", "info")
 
     # Check R1 and R2 files exist
     if not os.path.exists(read1_file):
-        print_message(f"Error: R1 file {read1_file} does not exist.", "error")
+        if message:
+            print_message(f"Error: R1 file {read1_file} does not exist.", "error")
         return {"status": "failed", "message": f"R1 file {read1_file} not found."}
     if not os.path.exists(read2_file):
-        print_message(f"Error: R2 file {read2_file} does not exist.", "error")
+        if message:
+            print_message(f"Error: R2 file {read2_file} does not exist.", "error")
         return {"status": "failed", "message": f"R2 file {read2_file} not found."}
     # Initialize final results with blank values
     final_results = blank_sample_results(sample_id)
@@ -264,28 +271,35 @@ def run_one_sample(
                 f"Multiple species detected with significant abundance ({non_top_abundance:.2f}%). Skipping MLST."
             )
             not_contaminated = False
-    if not_contaminated:
-        species = species[0]
-        final_results["species_status"] = "PASSED"
-        if not has_multiple_species:
-            final_results["species_message"] = "Single species detected."
-        else:
-            final_results["species_message"] = (
-                "Multiple species detected. Using the top species for MLST."
-            )
-            final_results["species_status"] = "WARNING"
-        final_results = handle_mlst_results(
-            final_results=final_results,
-            config=config,
-            species=species,
-            read1_file=read1_file,
-            read2_file=read2_file,
-            sample_output_dir=sample_output_dir,
-            message=message,
-        )
 
+    # If no species were detected, ensure MLST is skipped and mark species as failed
+    if not species:
+        final_results["species_status"] = final_results.get("species_status", "FAILED")
+        if not final_results.get("species_message"):
+            final_results["species_message"] = "No species detected."
     else:
-        final_results["species_status"] = "FAILED"
+        # species is a list of detected species; use the top species for MLST
+        if not_contaminated:
+            top_species = species[0]
+            final_results["species_status"] = "PASSED"
+            if not has_multiple_species:
+                final_results["species_message"] = "Single species detected."
+            else:
+                final_results["species_message"] = (
+                    "Multiple species detected. Using the top species for MLST."
+                )
+                final_results["species_status"] = "WARNING"
+            final_results = handle_mlst_results(
+                final_results=final_results,
+                config=config,
+                species=top_species,
+                read1_file=read1_file,
+                read2_file=read2_file,
+                sample_output_dir=sample_output_dir,
+                message=message,
+            )
+        else:
+            final_results["species_status"] = "FAILED"
     final_results["a_final_status"] = final_status_pass(final_results)
 
     # Stop resource monitoring and add stats to results
@@ -875,6 +889,19 @@ def handle_mlst_results(
             sample_output_dir,
             config,
         )
+        # If mlst_results has error key, MLST failed
+        if mlst_result.get("error"):
+            final_results["mlst_st"] = None
+            final_results["mlst_status"] = "WARNING"
+            final_results["mlst_message"] = (
+                f"MLST analysis failed: {mlst_result['error']}"
+            )
+            if message:
+                print_message(
+                    f"MLST analysis failed for species: {species}. Error: {mlst_result['error']}",
+                    "warning",
+                )
+            return final_results
         # Check MLST results
         stringmlst_results = mlst_result.get("stringmlst_results", {})
 
@@ -937,23 +964,43 @@ def handle_mlst_results(
 
 
 def handle_genome_size(species_list, fastp_stats, final_results, config):
-    """
-    Evaluates genome coverage and GC content for a given sample based on species prediction and sequencing statistics.
+    """Evaluate genome coverage and GC content for the top predicted species.
 
-    Parameters:
-        species_list (list): List of detected species names, with the top species at index 0.
-        fastp_stats (dict): Dictionary containing sequencing statistics, including 'total_bases' and 'gc_content'.
-        final_results (dict): Dictionary to store the evaluation results and messages.
-        config (dict): Configuration dictionary containing thresholds and expected genome size information.
+    Parameters
+    ----------
+    species_list : list
+        Detected species names (top species at index 0). Only the top species is used
+        for genome-size and GC evaluations; a short warning text is appended when multiple
+        species are present.
+    fastp_stats : dict
+        Sequencing metrics. Expected keys: ``read_total_bases`` (int) and ``gc_content`` (float).
+    final_results : dict
+        Results dictionary updated in-place. Keys written include ``coverage_alt_estimate``,
+        ``genome_size_expected``, ``coverage_alt_status``, ``coverage_alt_message``,
+        ``gc_content_lower``, ``gc_content_upper``, and possibly ``gc_content_status``/``gc_content_message``.
+    config : dict
+        Configuration options used by this function. Recognised keys:
+            - ``coverage_threshold`` (int, default 30)
+            - ``metrics_file`` (path used by :func:`get_expected_genome_size`)
+            - ``gc_fail_percentage`` (float or int): tolerance for GC warnings; values >1 are
+              treated as percentages and divided by 100.
 
-    Returns:
-        dict: Updated final_results dictionary with estimated coverage, expected genome size, coverage status/message,
-              GC content range, and GC content status/message.
+    Notes
+    -----
+    - Calls :func:`get_expected_genome_size` to obtain expected genome size and GC bounds.
+    - Coverage is computed as ``read_total_bases / expected_genome_size`` when values are available
+      and stored (rounded) in ``coverage_alt_estimate``; ``coverage_alt_status`` is set to
+      "PASSED" when the estimate meets ``coverage_threshold`` otherwise "FAILED".
+    - GC bounds are stored in ``gc_content_lower`` and ``gc_content_upper``. When both bounds
+      are > 0 the function will set ``gc_content_status`` to "PASSED" or "WARNING" when the
+      GC content is within the exact bounds or within the expanded tolerance, respectively.
+      If the GC content is outside the tolerance range the function sets ``gc_content_message``
+      but does not change an existing ``gc_content_status`` (it is left as-initialised).
 
-    Notes:
-        - If multiple species are detected, only the top species is used for evaluation, and a warning is added.
-        - Coverage is calculated as total_bases / expected_genome_size.
-        - Coverage and GC content are evaluated against thresholds and expected ranges from config.
+    Returns
+    -------
+    dict
+        The updated ``final_results`` dictionary.
     """
     # Get expected genome size,
     coverage_cutoff = config.get("coverage_threshold", 30)

@@ -30,7 +30,7 @@ def run_command(r1, r2, output_dir, config, message=False, threads=1):
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
+    errors = None
     sylph_report = os.path.join(output_dir, "sylph_report.txt")
     sylph_errors = os.path.join(output_dir, "sylph_errors.log")
     cmd = get_command()
@@ -62,7 +62,7 @@ def run_command(r1, r2, output_dir, config, message=False, threads=1):
             errors = error_file.read()
             print(f"Sylph errors:\n{errors}")
 
-    return {"sylph_report": sylph_report}
+    return {"sylph_report": sylph_report, "errors": errors}
 
 
 def extract_species_from_report(sylph_report):
