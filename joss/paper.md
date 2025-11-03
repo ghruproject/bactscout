@@ -5,164 +5,106 @@ tags:
   - bioinformatics
   - quality control
   - bacterial genomics
-  - MLST
   - taxonomic profiling
   - genome assembly
 authors:
+  - name: Nabil-Fareed Alikhan
+    orcid: 0000-0002-1243-0767
+    affiliation: "1, 3" # (Multiple affiliations must be quoted)
+  - name: Varun Shamanna
+    affiliation: 2
   - name: GHRU Project Contributors
-    affiliation: 1
+    affiliation: 3
 affiliations:
   - index: 1
+    name: Centre for Genomic Pathogen Surveillance, University of Oxford, United Kingdom
+  - index: 2
+    name: KIMS
+  - index: 3
     name: Global Healthcare and Research Unit
-date: 28 October 2025
+date: 3 November 2025
 bibliography: paper.bib
 ---
 
 # Summary
 
-BactScout is a high-performance Python pipeline designed for rapid quality assessment, taxonomic profiling, and multi-locus sequence typing (MLST) of bacterial sequencing data. The software integrates three complementary bioinformatics tools—Fastp, Sylph, and StringMLST—into a unified workflow that processes paired-end Illumina sequencing data from cultured bacterial isolates. BactScout evaluates sequence data against multiple quality thresholds including sequencing coverage depth, base quality scores, read length, species purity, GC content, and strain typing, providing researchers with comprehensive quality metrics suitable for downstream applications including genome assembly and epidemiological surveillance.
+BactScout is a Python-based pipeline for rapid, standardized quality assessment and taxonomic profiling of sequencing data from cultured bacterial isolates. It integrates tools like Fastp for read quality control, Sylph for species-level taxonomic profiling, and StringMLST for multi-locus sequence typing into a single, reproducible workflow. BactScout evaluates sequencing data across multiple quality dimensions—read quality, coverage depth, species purity, GC content, and strain typing—producing clear, interpretable quality metrics for downstream applications such as genome assembly, antimicrobial resistance prediction, genotyping, and phylogenetic inference.
 
-The pipeline implements a modular architecture with configurable quality thresholds, parallel processing capabilities, and detailed result reporting. A single command processes single or multiple samples, generating per-sample quality summaries and batch-level statistical reports. BactScout's design prioritizes ease of use, reproducibility through containerized dependencies via Pixi, and extensibility for integration into genomics workflows.
+The pipeline features a modular and extensible architecture with configurable quality thresholds, parallel sample processing, and detailed per-sample and batch-level reporting. A single command can process hundreds of samples, automatically generating summaries and visual outputs suitable for laboratory or high-performance computing environments.
+
+BactScout emphasizes reproducibility and ease of use through deterministic, containerized environments managed by Pixi, ensuring consistent results across platforms. By combining quality control, taxonomic profiling, and strain typing in a unified, automated framework, BactScout reduces manual effort and improves standardization in bacterial genomics workflows.
 
 # Statement of need
 
-Quality assessment of bacterial sequencing data is a critical step in genomic analysis pipelines, particularly for applications requiring high-confidence genome assemblies. Researchers face several challenges:
+Quality assessment of bacterial sequencing data is a critical and often under-standardized step in genomic analysis pipelines, particularly for applications requiring high-confidence genome assemblies. Common challenges include contamination, low sequencing yield, poor read quality, and variable fragment lengths. While existing tools can report these metrics, interpreting their biological relevance typically requires manual assessment that depends on the species and sequencing context. This leads to inconsistent quality decisions and reduced reproducibility across projects and laboratories.
 
-1. **Fragmented Quality Assessment Landscape**: Existing quality control approaches typically require chaining multiple tools (quality trimming, taxonomic assignment, strain typing) with custom scripting, making reproducibility difficult and increasing implementation barriers.
+BactScout addresses this gap by providing an automated, standardized workflow for assessing sequencing quality of bacterial isolates. It integrates established, fast-performing tools with relatively low memory and CPU requirements to evaluate read quality, taxonomic purity, and strain identity, applying clear pass/fail criteria based on configurable thresholds and species-specific quality benchmarks (as defined in [QualiBact](https://happykhan.github.io/qualibact/)).
 
-2. **Inconsistent Thresholds and Documentation**: Different institutions and projects use varied quality criteria without standardized rationale, leading to inconsistent sample acceptance/rejection decisions and difficulties comparing results across studies.
+The pipeline is designed for typical isolate sequencing tasks encountered in public health surveillance and clinical microbiology, where rapid and reproducible decisions on sample quality are essential before downstream analyses such as genome assembly or resistance prediction. By formalizing interpretation and integrating species-aware thresholds, BactScout reduces subjective decision-making and improves consistency in bacterial genomics quality control. We invision BactScout as an initial rapid screening step to identify high-quality samples suitable for further analysis, working along side more comprehensive pipelines, which would explore the genome assembly quality in greater depth.
 
-3. **Lack of Integrated Strain Typing**: While taxonomic identification alone is insufficient for strain discrimination and epidemiological tracking, integrating MLST typing requires additional setup and configuration beyond standard QC pipelines.
 
-4. **Scalability for Batch Processing**: Processing large genomic datasets requires efficient parallelization, but most available tools require extensive manual orchestration.
+# BactScout Development
 
-5. **Missing Interpretability for Non-Specialists**: Clinical microbiologists and non-bioinformaticians need clear, actionable quality metrics without requiring deep understanding of sequencing technology or bioinformatics methodology.
+BactScout is implemented in **Python \(\geq 3.11\)** and designed for ease of deployment and extensibility.  
+The pipeline provides a **command-line interface** (CLI) built with *Typer*, supporting both individual and batch processing modes. Dependencies—including Fastp, Sylph, and StringMLST—are fully containerized and managed through **Pixi**, ensuring deterministic environments across Linux and macOS systems.
 
-BactScout addresses these gaps by providing:
+System-level tests, mock data, and example configurations are included to validate installations and future development. Continuous integration is performed via GitHub Actions on multiple platforms (Ubuntu 22.04 and macOS latest).  
+Parallelization is implemented through Python’s thread pool executor, enabling efficient processing of large sample sets on high-performance or cloud computing environments.
 
-- **Unified Pipeline**: Single entry point orchestrating read QC (Fastp), taxonomic profiling (Sylph), and strain typing (StringMLST) with transparent pass/fail criteria for each metric.
+# Tools Utilized in BactScout
 
-- **Configurable Thresholds**: Easily adjustable quality criteria via YAML configuration, enabling consistency within projects while allowing cross-project customization.
+BactScout orchestrates three primary external tools to evaluate sequencing quality and taxonomic composition (Table 1).
 
-- **Informative Reporting**: Detailed per-sample quality summaries and batch statistics identifying problematic samples and systematic issues.
+| Tool | Function | Quality Dimension |
+|------|-----------|------------------|
+| **Fastp** | Read-level quality control and adapter trimming | Read quality |
+| **Sylph** | Taxonomic profiling and species purity estimation | Species identification |
+| **StringMLST** | Multi-locus sequence typing (MLST) assignment | Strain typing |
 
-- **Parallel Processing**: Efficient multi-threaded execution processing hundreds of samples on typical compute infrastructure.
+Each module outputs standardized JSON or tabular results that are parsed and evaluated against BactScout’s threshold schema. Quality decisions (PASS/WARNING/FAIL) are derived from metrics such as:
+- Mean Q30 score and read length (Fastp)
+- Genome coverage and species composition (Sylph)
+- MLST type validity and completeness (StringMLST)
 
-- **Reproducible Environment**: Integration with Pixi ensures deterministic dependency management across platforms.
+Default thresholds are defined in YAML configuration files and can be customized to project or organism-specific standards.
 
-BactScout is particularly valuable for:
+# Quality Assessment and Reporting
 
-- **Genome Sequencing Projects**: Researchers generating bacterial genome assemblies needing objective quality validation before assembly
-- **Epidemiological Surveillance**: Public health labs tracking outbreak strains where ST information supplements species identification
-- **Quality Assurance**: Sequencing facilities implementing standardized quality control workflows
-- **Clinical Microbiology**: Diagnostic laboratories requiring reproducible, documented sample acceptance criteria
+BactScout performs quality evaluation in four primary domains:
 
-The software follows open-source best practices with comprehensive documentation, 114+ unit tests (76% code coverage), and continuous integration testing across multiple platforms.
+1. **Read Quality:** Calculates mean read length and percentage of bases \(\geq Q30\) from Fastp outputs.  
+2. **Coverage Depth:** Estimates genome coverage both from read counts and Sylph-derived genome size.  
+3. **Species Purity:** Quantifies dominant species proportion and flags cross-species contamination.  
+4. **Strain Typing:** Runs StringMLST when a single dominant species is detected to validate strain-level assignment.
 
-# Key Features
+Each sample is assigned an overall **status**—PASS, WARNING, or FAIL—with explanatory notes for each metric.  
+Reports include:
+- **Per-sample CSV summaries** with metric breakdowns  
+- **Batch-level summaries** aggregating performance across all samples  
+- **Optional Fastp HTML reports** for visual inspection  
 
-## Quality Assessment Dimensions
-
-BactScout evaluates bacterial sequencing data across four primary dimensions:
-
-1. **Read Quality**: Percentage of bases with Phred quality >=30 (Q30) and mean read length using Fastp post-trimming metrics
-
-2. **Coverage Depth**: Estimated genome coverage calculated from read abundance using both Sylph's direct measurement and calculated estimates (total bases / expected genome size)
-
-3. **Species Purity and Identification**: Species detection via Sylph ANI-based profiling with contamination assessment (% reads assigned to non-dominant species)
-
-4. **Strain Typing**: Multi-locus sequence typing (MLST) assignment via StringMLST when single-species samples identified
-
-Each dimension produces PASS/WARNING/FAILED status with configurable thresholds and detailed explanatory messages.
-
-## Modular Architecture
-
-The codebase is organized as separate modules:
-
-- `main.py`: Batch processing orchestrator for multiple samples
-- `thread.py`: Individual sample processing coordination and QC result aggregation
-- `collect.py`: Single-sample processing interface
-- `software/`: External tool integrations (Fastp, Sylph, StringMLST)
-- `summary.py`: Cross-sample result consolidation and statistics
-- `util.py`: Formatting and output utilities
-
-## Advanced Capabilities
-
-- **Parallel Execution**: Thread pool-based sample processing with configurable concurrency
-- **Flexible Input**: Support for multiple FASTQ naming conventions (\_R1/\_R2, \_1/\_2, both gzipped and uncompressed)
-- **Batch Statistics**: Aggregated summary CSV with species distribution, coverage statistics, and failure analysis
-- **MLST Integration**: Seamless species database mapping and automated ST assignment with novel ST detection
-
-# Implementation
-
-BactScout is implemented in Python 3.11+ using:
-
-- **Typer**: Command-line interface framework with auto-generated help text
-- **Rich**: Formatted terminal output with progress tracking
-- **Pixi**: Cross-platform dependency management (Python 3.11+, Fastp v0.23.4, Sylph v0.13.2, StringMLST)
-
-The pipeline processes each sample through these steps:
-
-1. Extract paired-end FASTQ file locations from input directory
-2. Run Fastp for read quality control and adapter trimming
-3. Run Sylph for species identification and abundance profiling
-4. Extract and evaluate Fastp and Sylph results against quality thresholds
-5. Assign expected genome size and GC content from metrics database
-6. Calculate coverage estimates (Sylph-based and read-count-based)
-7. Run StringMLST for strain typing if single species detected
-8. Evaluate all metrics to assign final PASS/WARNING/FAILED status
-9. Write per-sample summary CSV and append to batch results
-
-Results are written as:
-- Per-sample directory: `{sample_id}/{sample_id}_summary.csv`
-- Batch results: `final_summary.csv`
-- Optional: Fastp HTML reports for individual read quality inspection
-
-# Verification and Testing
-
-BactScout includes 114 unit tests covering:
-
-- CLI command parsing and validation
-- FASTQ pair detection for various naming schemes
-- Fastp result extraction and quality metric calculations
-- Sylph output parsing and species abundance handling
-- StringMLST invocation and ST assignment validation
-- QC threshold evaluation and pass/fail logic
-- Batch result aggregation and consistency
-
-Tests achieve 76% code coverage with continuous integration via GitHub Actions (Ubuntu 22.04 and macOS latest), ensuring cross-platform compatibility. Parallel test execution via pytest-xdist reduces CI time by >50%.
-
-# Performance
-
-BactScout processes samples efficiently:
-
-- Single sample (~1M reads): 5-15 minutes
-- Batch (100 samples): 8-25 hours depending on read depth and thread count
-- Typical resource usage: 2-8GB RAM, minimal disk I/O
-
-The software scales to hundreds of samples when distributed across computing infrastructure.
+Outputs are human-readable and machine-parseable, facilitating integration with LIMS systems or downstream pipelines such as **Nextflow**.
 
 # Applications
 
-BactScout has been designed for several research contexts:
+BactScout is applicable across multiple domains:
 
-1. **Genome Assembly Projects**: Pre-assembly quality filtering to identify candidates suitable for de novo assembly
-2. **Outbreak Investigation**: Rapid strain discrimination via ST assignment for epidemiological surveillance
-3. **Sequencing QA/QC**: Standardized acceptance criteria for diagnostic laboratory workflows
-4. **Research Cohorts**: Consistent sample quality documentation for multi-center studies
+- **Genome assembly projects** – Pre-assembly QC to identify high-quality inputs  
+- **Epidemiological surveillance** – Rapid strain verification and contamination detection  
+- **Sequencing QA/QC** – Standardized acceptance criteria for clinical or public health laboratories  
+- **Multi-center research cohorts** – Harmonized quality reporting across institutions  
 
-# Documentation and Community
+By producing interpretable, standardized outputs, BactScout helps ensure that only high-quality, biologically relevant sequencing data progress to downstream analysis.
 
-Comprehensive documentation is available at GitHub Pages including:
+# Source Code and Documentation
 
-- Installation guide with platform-specific instructions
-- Usage guide for batch and single-sample processing
-- Quality control interpretation guide
-- API reference and troubleshooting guide
-- Contributing guidelines for community development
+Source code for **BactScout** is available at [https://github.com/ghruproject/bactscout](https://github.com/ghruproject/bactscout) under the **GPLv3 License**.  
+Comprehensive documentation—covering installation, usage, configuration, and troubleshooting—is hosted on GitHub Pages.  
+It includes API references, example datasets, and developer contribution guidelines.
 
 # Acknowledgements
 
-BactScout integrates three excellent open-source bioinformatics tools: Fastp [@chen2018fastp], Sylph [@unckless2023sylph], and StringMLST [@datta2016stringmlst]. Development was supported by automated testing and documentation frameworks including pytest, pytest-xdist, MkDocs Material, and GitHub Actions.
+BactScout builds upon three outstanding open-source tools: **Fastp** (Chen et al., 2018), **Sylph** (Unckless et al., 2023), and **StringMLST** (Datta et al., 2016).  
+We thank contributors from the **Global Health Research Unit (GHRU)** for feedback during design and testing, and the open-source community for providing the foundational libraries and infrastructure enabling this work.
 
 # References
