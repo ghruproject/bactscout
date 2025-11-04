@@ -16,6 +16,7 @@ def collect_sample(
     config: str,
     skip_preflight: bool,
     report_resources: bool = False,
+    write_json: bool = False,
 ) -> None:
     """
     Process a single sample with paired-end reads.
@@ -63,6 +64,7 @@ def collect_sample(
             threads=threads,
             message=True,
             report_resources=report_resources,
+            write_json=write_json,
         )
 
         if result and result.get("status") == "success":

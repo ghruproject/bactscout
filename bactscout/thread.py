@@ -138,6 +138,7 @@ def run_one_sample(
     threads=1,
     message=False,
     report_resources=False,
+    write_json=False,
 ):
     """
     Execute comprehensive QC analysis pipeline for a single bacterial sample.
@@ -265,7 +266,9 @@ def run_one_sample(
     if has_multiple_species:
         # Sum up abundance of non-top species
         non_top_abundance = sum([s[1] for s in species_abundance[1:]])
-        if non_top_abundance > config.get("contamination_threshold", 10):
+        if non_top_abundance > config.get(
+            "contamination_fail_threshold", config.get("contamination_threshold", 10)
+        ):
             final_results["species_status"] = "FAILED"
             final_results["species_message"] = (
                 f"Multiple species detected with significant abundance ({non_top_abundance:.2f}%). Skipping MLST."
@@ -311,7 +314,9 @@ def run_one_sample(
         final_results["resource_memory_avg_mb"] = stats.get("avg_memory_mb", 0.0)
         final_results["resource_duration_sec"] = stats.get("duration_sec", 0.0)
 
-    write_summary_file(final_results, sample_id, sample_output_dir)
+    write_summary_file(
+        final_results, sample_id, sample_output_dir, write_json=write_json
+    )
 
     return {
         "status": "success",
@@ -320,7 +325,9 @@ def run_one_sample(
     }
 
 
-def write_summary_file(final_results, sample_id, sample_output_dir):
+def write_summary_file(
+    final_results, sample_id, sample_output_dir, write_json: bool = False
+):
     """
     Write sample analysis results to a CSV summary file with header validation.
 
@@ -390,6 +397,15 @@ def write_summary_file(final_results, sample_id, sample_output_dir):
             for h in headers
         ]
         f.write(",".join(values) + "\n")
+
+    # Optionally write a JSON copy of the summary for downstream tools
+    if write_json:
+        json_file = os.path.join(sample_output_dir, f"{sample_id}_summary.json")
+        try:
+            with open(json_file, "w", encoding="utf-8") as jf:
+                json.dump(final_results, jf, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print_message(f"Failed to write JSON summary {json_file}: {e}", "warning")
 
 
 def handle_fastp_results(fastp_results, config):
@@ -1003,7 +1019,15 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
         The updated ``final_results`` dictionary.
     """
     # Get expected genome size,
-    coverage_cutoff = config.get("coverage_threshold", 30)
+    # Use two-tier coverage thresholds when available (warn/fail). Fall back to legacy
+    # `coverage_threshold` for backward compatibility.
+    coverage_fail_threshold = config.get("coverage_fail_threshold")
+    coverage_warn_threshold = config.get("coverage_warn_threshold")
+
+    if coverage_fail_threshold is None:
+        # Legacy single-threshold mode
+        coverage_fail_threshold = config.get("coverage_threshold", 30)
+        coverage_warn_threshold = coverage_fail_threshold * 0.67
     species = species_list[0]  # Use the top species only
     warning = ""
     if len(species_list) > 1:
@@ -1016,16 +1040,23 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
         estimated_coverage = 0
     final_results["coverage_alt_estimate"] = round(estimated_coverage, 2)
     final_results["genome_size_expected"] = expected_genome_size
-    if estimated_coverage >= coverage_cutoff:
+    # Evaluate alternate coverage using WARN/FAIL thresholds
+    if estimated_coverage >= coverage_fail_threshold:
         final_results["coverage_alt_status"] = "PASSED"
         final_results["coverage_alt_message"] = (
-            f"Estimated coverage {estimated_coverage:.2f}x meets the threshold of {coverage_cutoff}x."
+            f"Estimated coverage {estimated_coverage:.2f}x meets the threshold of {coverage_fail_threshold}x."
+            + warning
+        )
+    elif estimated_coverage >= coverage_warn_threshold:
+        final_results["coverage_alt_status"] = "WARNING"
+        final_results["coverage_alt_message"] = (
+            f"Estimated coverage {estimated_coverage:.2f}x falls between warning ({coverage_warn_threshold}x) and pass ({coverage_fail_threshold}x) thresholds."
             + warning
         )
     else:
         final_results["coverage_alt_status"] = "FAILED"
         final_results["coverage_alt_message"] = (
-            f"Estimated coverage {estimated_coverage:.2f}x below the threshold of {coverage_cutoff}x."
+            f"Estimated coverage {estimated_coverage:.2f}x below the warning threshold ({coverage_warn_threshold}x)."
             + warning
         )
     final_results["gc_content_lower"] = gc_lower

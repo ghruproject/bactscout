@@ -12,6 +12,7 @@ authors:
     orcid: 0000-0002-1243-0767
     affiliation: "1, 3" # (Multiple affiliations must be quoted)
   - name: Varun Shamanna
+    orcid: 0000-0003-2775-2280
     affiliation: 2
   - name: GHRU Project Contributors
     affiliation: 3
@@ -104,7 +105,7 @@ It includes API references, example datasets, and developer contribution guideli
 
 # Acknowledgements
 
-BactScout builds upon three outstanding open-source tools: **Fastp** (Chen et al., 2018), **Sylph** (Unckless et al., 2023), and **StringMLST** (Datta et al., 2016).  
+BactScout builds upon three outstanding open-source tools: **Fastp** [@chen2018fastp], **Sylph** [@unckless2023sylph], and **StringMLST** [@datta2016stringmlst].  
 We thank contributors from the **Global Health Research Unit (GHRU)** for feedback during design and testing, and the open-source community for providing the foundational libraries and infrastructure enabling this work.
 
 # References

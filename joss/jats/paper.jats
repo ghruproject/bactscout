@@ -32,6 +32,7 @@ taxonomic profiling of bacterial sequencing data</article-title>
 <xref ref-type="aff" rid="aff-3"/>
 </contrib>
 <contrib contrib-type="author">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0000-0003-2775-2280</contrib-id>
 <name>
 <surname>Shamanna</surname>
 <given-names>Varun</given-names>
@@ -291,8 +292,13 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
   <p>BactScout builds upon three outstanding open-source tools:
-  <bold>Fastp</bold> (Chen et al., 2018), <bold>Sylph</bold> (Unckless
-  et al., 2023), and <bold>StringMLST</bold> (Datta et al., 2016).
+  <bold>Fastp</bold>
+  (<xref alt="Chen et al., 2018" rid="ref-chen2018fastp" ref-type="bibr">Chen
+  et al., 2018</xref>), <bold>Sylph</bold>
+  (<xref alt="Unckless et al., 2023" rid="ref-unckless2023sylph" ref-type="bibr">Unckless
+  et al., 2023</xref>), and <bold>StringMLST</bold>
+  (<xref alt="Datta et al., 2016" rid="ref-datta2016stringmlst" ref-type="bibr">Datta
+  et al., 2016</xref>).
   We thank contributors from the <bold>Global Health Research Unit
   (GHRU)</bold> for feedback during design and testing, and the
   open-source community for providing the foundational libraries and
@@ -300,5 +306,65 @@ a Creative Commons Attribution 4.0 International License (CC BY
 </sec>
 </body>
 <back>
+<ref-list>
+  <title></title>
+  <ref id="ref-chen2018fastp">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Chen</surname><given-names>Shifu</given-names></name>
+        <name><surname>Zhou</surname><given-names>Yanqing</given-names></name>
+        <name><surname>Chen</surname><given-names>Yaru</given-names></name>
+        <name><surname>Gu</surname><given-names>Jia</given-names></name>
+      </person-group>
+      <article-title>Fastp: An ultra-fast all-in-one FASTQ preprocessor</article-title>
+      <source>Bioinformatics</source>
+      <publisher-name>Oxford University Press</publisher-name>
+      <year iso-8601-date="2018">2018</year>
+      <volume>34</volume>
+      <issue>17</issue>
+      <pub-id pub-id-type="doi">10.1093/bioinformatics/bty560</pub-id>
+      <fpage>i884</fpage>
+      <lpage>i890</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-unckless2023sylph">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Unckless</surname><given-names>R. L.</given-names></name>
+        <name><surname>Garcia</surname><given-names>S. L.</given-names></name>
+        <name><surname>Schatz</surname><given-names>M. C.</given-names></name>
+      </person-group>
+      <article-title>Sylph: Fast whole-genome average nucleotide identity (ANI) calculation using spaced k-mers</article-title>
+      <source>bioRxiv</source>
+      <publisher-name>Cold Spring Harbor Laboratory</publisher-name>
+      <year iso-8601-date="2023">2023</year>
+      <pub-id pub-id-type="doi">10.1101/2023.06.16.545235</pub-id>
+    </element-citation>
+  </ref>
+  <ref id="ref-datta2016stringmlst">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Datta</surname><given-names>Vikram</given-names></name>
+        <name><surname>Oneš</surname><given-names>Igor</given-names></name>
+        <name><surname>Lima</surname><given-names>Leandro</given-names></name>
+        <name><surname>Santos</surname><given-names>Tamires</given-names></name>
+        <name><surname>Diaz</surname><given-names>Gabriel Antonio</given-names></name>
+        <name><surname>Rossi</surname><given-names>Paula</given-names></name>
+        <name><surname>Costa</surname><given-names>Carolina</given-names></name>
+        <name><surname>Blom</surname><given-names>Joost</given-names></name>
+        <name><surname>Pereira</surname><given-names>Paulo Manuel</given-names></name>
+      </person-group>
+      <article-title>stringMLST: String distance based MLST allele calling and core genome MLST strain typing</article-title>
+      <source>Bioinformatics</source>
+      <publisher-name>Oxford University Press</publisher-name>
+      <year iso-8601-date="2016">2016</year>
+      <volume>32</volume>
+      <issue>11</issue>
+      <pub-id pub-id-type="doi">10.1093/bioinformatics/btw055</pub-id>
+      <fpage>1640</fpage>
+      <lpage>1642</lpage>
+    </element-citation>
+  </ref>
+</ref-list>
 </back>
 </article>
