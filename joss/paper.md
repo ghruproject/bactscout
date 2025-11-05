@@ -48,48 +48,42 @@ The pipeline is designed for typical isolate sequencing tasks encountered in pub
 
 BactScout is implemented in modern, idiomatic Python (targeting Python >= 3.11) and organised as a compact, modular CLI-first pipeline to make installation, automation, and integration straightforward. The project is intentionally pragmatic: it prioritises reproducibility, stable machine-readable outputs, and predictable resource use so the same checks can be applied on a laptop, an institutional cluster, or in cloud environments.
 
-Architecture and packaging
--------------------------
 The codebase separates concerns into small, well-delineated modules. A lightweight CLI (implemented with Typer) exposes a small set of commands (`collect`, `summary`, `qc`), while the core orchestration layer implements the per-sample processing pipeline. Adapter modules encapsulate external tools (Fastp, Sylph and StringMLST), so the pipeline’s logic focuses on metrics aggregation and quality decision-making rather than tool internals. This approach keeps the public contract (CLI flags, CSV/JSON outputs) stable while allowing internal replacements or extensions.
 
 Packaging is designed for reproducibility. The repository provides Pixi manifests and example Docker/Singularity images that bundle system libraries and the third‑party binaries required to run BactScout. Users may run BactScout via containers (recommended for reproducibility) or install it into a site Python environment when container support is not available.
 
-Configuration and thresholds
----------------------------
 Runtime behaviour is driven by a single YAML configuration (`bactscout_config.yml`). This file centralises database paths, resource defaults and quality thresholds. The pipeline uses a two-tier threshold model (WARN and FAIL) for most metrics: WARN denotes borderline behaviour that merits inspection, and FAIL denotes a critical condition that prevents automatic acceptance. The explicit two-tier model helps laboratories tune sensitivity for different use-cases—for example, clinical surveillance pipelines can tighten FAIL thresholds while research studies may accept more WARNING results.
 
 Quality decisions are exported as canonical status fields in the per-sample summary (for example, `read_q30_status`, `coverage_status`, `contamination_status` and `mlst_status`). Each status field is accompanied by a human-readable message explaining why the metric passed, warned or failed. This stable results contract makes it straightforward to integrate BactScout outputs into LIMS, dashboards, or downstream analysis scripts.
 
-Outputs and data model
-----------------------
 Each `collect` invocation produces a self-contained sample directory containing a single-row summary CSV and an optional JSON copy, fastp HTML reports, Sylph outputs, MLST outputs when applicable, and logs. The summary CSV uses canonical, well-documented column names for coverage estimates, status flags, and explanatory messages. A separate `summary` command aggregates per-sample summaries into a batch-level CSV suitable for downstream analysis or archival. Keeping one directory per sample minimises filesystem contention when scaling and simplifies retries and per-sample inspection.
 
 Coverage is reported from two complementary sources: Sylph’s direct coverage estimate and a calculated estimate computed as total_bases_postfilter / expected_genome_size (coverage = total_bases / genome_size). Emitting both estimates allows users to cross-check Sylph’s model-based estimate against the simple reads/genome-size calculation and helps surface discrepancies caused by contamination or misidentified references.
 
-Scalability and orchestration
-----------------------------
 BactScout treats each sample as an independent unit of work. Horizontal scaling is therefore straightforward: many concurrent `bactscout collect` runs can be dispatched using GNU Parallel, scheduler job-arrays, or workflow engines such as Nextflow. The repository includes a Nextflow example demonstrating production-friendly patterns: node-local staging of inputs, containerised execution, per-sample `publishDir` semantics, and a small final aggregation step that runs `bactscout summary` to assemble a `final_summary.csv`.
 
 For single-node runs, the `--threads` option controls per-sample parallelism and should be set so the sum of threads across concurrent jobs does not exceed the available physical cores. On clusters, we recommend one process per job with tuned `--threads` and memory limits; use job arrays or workflow engines’ native concurrency controls to cap the number of simultaneous tasks. Practical tips: stage compressed FASTQs to node-local scratch, avoid creating millions of tiny files on metadata-limited filesystems, and publish per-sample outputs atomically to reduce contention.
 
-Testing, validation, and CI
---------------------------
 The project ships with small mock datasets and unit tests that validate parsing, header parity and the shape of programmatic outputs. Continuous integration runs these tests across supported platforms (Linux and macOS) and focuses on contract stability (column names, JSON schema, status semantics) rather than re-running heavy third-party analyses in CI. This testing strategy keeps CI fast and reliable while ensuring downstream consumers of the pipeline can depend on stable outputs.
 
-Operational observability and tuning
-----------------------------------
 For production deployments, BactScout can record lightweight resource telemetry (CPU usage, peak and average memory, and elapsed time) when invoked with `--report-resources`. Aggregating these metrics across representative samples helps teams choose conservative defaults for `--threads` and per-job memory and identify whether workloads are CPU- or I/O-bound. The pipeline retains per-sample logs and outputs by default to aid post-mortem debugging and reproducible reruns of failed samples.
 
-Extensibility and contributions
-------------------------------
+In common practice we find the following conservative starting points are useful for bacterial isolate sequencing using short-read Illumina data: `--threads 2-4` per sample and 4–8 GB RAM per concurrent process for modest-sized bacterial genomes at typical coverage. These should be validated and tuned with `--report-resources` across a representative pilot set. Example invocations:
+
+```bash
+# single sample (writes to ./results/<sample_id>/)
+bactscout collect sample_R1.fastq.gz sample_R2.fastq.gz --output ./results/sample --threads 4 --config bactscout_config.yml
+
+# aggregate all per-sample outputs into a final CSV
+bactscout summary ./results --output final_summary.csv
+```
+
+Because BactScout emits machine-readable CSV/JSON summaries with stable column names and clear status semantics, it is straightforward to plug the pipeline into existing laboratory information systems or larger analysis stacks. We provide a Nextflow example and minimal Pixi manifests to accelerate adoption; organisations with bespoke scheduling or storage constraints typically adapt the example to their site policies (node-local scratch, container registries, and scheduler directives). If preferred, BactScout can also be run in a fully containerised environment to maximise reproducibility across sites.
+
 The codebase is intentionally small and modular to lower the barrier to contribution. New analysis modules should implement the same compact results dictionary contract used by existing modules so that outputs remain consistent. The repository includes contribution guidelines, a changelog, and a code of conduct; contributors are asked to include unit tests and documentation for new features.
 
-Documentation and reproducibility
---------------------------------
 Extensive documentation is included under `docs/` and covers installation, configuration, the output schema, and recommended run patterns (local parallelism, job arrays, and Nextflow). Example Pixi manifests and the Nextflow example provide production-ready templates. Together, pinned container images, example configs, and clear documentation aim to make analytical runs reproducible across sites and over time.
 
-License and provenance
----------------------
 BactScout is released under the GPLv3 license. The repository includes authorship and bibliographic metadata to facilitate citation. The aim is to provide laboratories with a reproducible, auditable screening step that complements downstream assembly, typing, and resistance-detection workflows.
 
 In summary, BactScout is a compact, configurable and reproducible screening tool designed to slot into bacterial genomics pipelines: it delivers clear PASS/WARNING/FAIL decisions, stable machine-readable outputs, and an explicit scaling story so laboratories can apply the same checks to small or large cohorts with minimal operational overhead.

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import typer
 
+from bactscout.__version__ import __version__
 from bactscout.collect import collect_sample
 from bactscout.main import main
 from bactscout.preflight import load_config, preflight_check
@@ -132,6 +133,13 @@ def preflight(
     else:
         print_message("Preflight checks failed. See messages above.", "error")
         raise typer.Exit(code=3)
+
+
+@app.command()
+def version():
+    """Print BactScout version string and exit."""
+    print_message(f"Version: {__version__}", "info")
+    raise typer.Exit(code=0)
 
 
 if __name__ == "__main__":
