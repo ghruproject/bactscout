@@ -1,2 +1,0 @@
-Sample_file	Genome_file	Taxonomic_abundance	Sequence_abundance	Adjusted_ANI	True_cov	ANI_5-95_percentile	Eff_lambda	Lambda_5-95_percentile	Median_cov	Mean_cov_geq1	Containment_ind	Naive_ANI	kmers_reassigned	Contig_name
-test_data/Sample_4d9ab532semb_R1.fastq.gz	gtdb_genomes_reps_r226/database/GCF/000/742/135/GCF_000742135.1_genomic.fna.gz	100.0000	98.4252	99.05	35.376	NA-NA	HIGH	NA-NA	26	25.927	4020/5398	99.05	0	NZ_KN046818.1 Klebsiella pneumoniae strain ATCC 13883 scaffold1, whole genome shotgun sequence

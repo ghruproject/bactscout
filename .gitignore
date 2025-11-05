@@ -146,4 +146,4 @@ sylph_db/
 ariba_db/
 readqc_results/
 test_data/
-get_test_data.sh
+get_test_data.shoutput_test/

@@ -1,7 +1,0 @@
-2025-11-05T13:58:41.338Z INFO  [sylph::contain] Obtaining sketches...
-2025-11-05T13:58:45.203Z INFO  [sylph::contain] Finished obtaining genome sketches.
-2025-11-05T13:58:56.489Z INFO  [sylph::contain] test_data/Sample_6d9ceb52semb_R1.fastq.gz taxonomic profiling; reassigning k-mers for 5 genomes...
-2025-11-05T13:58:56.504Z INFO  [sylph::contain] test_data/Sample_6d9ceb52semb_R1.fastq.gz has 1 genomes passing profiling threshold. 
-2025-11-05T13:58:56.504Z INFO  [sylph::contain] test_data/Sample_6d9ceb52semb_R1.fastq.gz has 94.24% of reads detected in database by profile
-2025-11-05T13:58:56.504Z INFO  [sylph::contain] Finished paired sample test_data/Sample_6d9ceb52semb_R1.fastq.gz.
-2025-11-05T13:58:56.504Z INFO  [sylph::contain] sylph finished.
