@@ -112,7 +112,7 @@ docker run --rm -v "$PWD":/data --user "$(id -u):$(id -g)" happykhan/bactscout:l
 ```
 
 
-# Outputs
+## Outputs
 
 Using the `qc` command will generate an output directory with the following structure:
 
