@@ -61,7 +61,6 @@ nav:
   - Guide:
       - Quality Control Criteria: guide/quality-control.md
       - Scaling up: guide/scaling.md
-      - Working with Results: guide/results-analysis.md
       - Troubleshooting: guide/troubleshooting.md
   - Reference:
       - API Reference: reference/api.md

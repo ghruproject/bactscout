@@ -299,48 +299,12 @@ See [Configuration Guide](../getting-started/configuration.md#mlst-species).
 - Run QC again (it will reprocess everything)
 - Consider per-sample `collect` command for better control
 
-## Using Results
-
-### Q: How do I load results in Python?
-**A:**
-```python
-import pandas as pd
-
-df = pd.read_csv('bactscout_output/final_summary.csv')
-
-# Filter, analyze, plot
-high_qual = df[df['quality_pass'] == 'PASS']
-print(high_qual.describe())
-```
-
-See [Results Analysis Guide](../guide/results-analysis.md).
-
-### Q: How do I create visualizations?
-**A:** Use fastp HTML reports for quality visuals. For custom plots:
-
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
-
-df = pd.read_csv('bactscout_output/final_summary.csv')
-
-# Box plot of coverage by species
-df.boxplot(column='coverage', by='species')
-plt.show()
-
-# Scatter: coverage vs Q30%
-plt.scatter(df['coverage'], df['q30_percent'])
-plt.xlabel('Coverage (x)')
-plt.ylabel('Q30%')
-plt.show()
-```
 
 ### Q: Can I integrate with other pipelines?
 **A:** Yes:
 - BactScout outputs standard CSV
 - Results can feed into assembly, SNP calling, AMR detection, etc.
 - Python/R scripts can read CSV and prepare data
-- See [Results Analysis Guide](../guide/results-analysis.md) for export examples
 
 ## Contributing
 

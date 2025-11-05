@@ -73,3 +73,14 @@ If the `--report-resources` flag is enabled during `qc` or `collect`, the follow
 
 
 See [Quality Control Guide](../guide/quality-control.md) for interpretation guidelines.
+
+### Per-sample artifacts
+
+When the pipeline runs for a single sample it produces a set of per-sample artifacts in the sample output folder (e.g. `output/<sample_id>/`). Below are the common files and their purpose:
+
+- `<sample_id>.fastp.json` — Machine-readable fastp JSON report parsed by the pipeline to populate summary fields.
+- `<sample_id>_summary.csv` — Single-row CSV summary for the sample. Contains the canonical fields (see table above) and resource metrics when `--report-resources` is used.
+- `mlst.tsv` — Tab-separated MLST results (stringMLST) for the sample; contains ST and any per-locus notes.
+- `sylph_report.txt` — Raw Sylph species-detection output used to harvest top species, abundances and Sylph coverage estimates.
+- `sylph_errors.log` — Any Sylph warnings or errors captured while processing the sample.
+
