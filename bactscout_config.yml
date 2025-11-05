@@ -8,9 +8,9 @@ sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.
 coverage_warn_threshold: 30
 coverage_fail_threshold: 20
 
-# Contamination thresholds (% of top species, lower is more contaminated)
-contamination_warn_threshold: 5
-contamination_fail_threshold: 10
+# Contamination thresholds
+contamination_warn_threshold: 10
+contamination_fail_threshold: 20
 
 # Q30 thresholds (fraction of bases >= Q30)
 q30_warn_threshold: 0.80
@@ -24,13 +24,7 @@ read_length_fail_threshold: 100
 duplication_warn_threshold: 0.20
 duplication_fail_threshold: 0.30
 
-# Insert size thresholds (base pairs)
-insert_size_min_threshold: 200
-insert_size_max_threshold: 600
-
-# Filtering pass rate threshold (fraction of reads passing filters)
-filtering_pass_rate_threshold: 0.95
-
+# GC content failure threshold (% of reads with unexpected GC content)
 gc_fail_percentage: 5
 
 # N-content threshold (fraction of reads with too many N's)

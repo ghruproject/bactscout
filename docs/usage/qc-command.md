@@ -1,15 +1,21 @@
 # QC Command
 
 The `qc` command performs comprehensive quality control analysis on a batch of bacterial genome samples.
+**Try this command first.** When you want to run QC on multiple samples in one go, this is the command to use.
+
+If you want to run bactscout at scale on HPC or cloud, consider using the [Scaling up Guide](../guide/scaling.md), where you will separate the process by sample using the `collect` command ([link](collect-command.md)) and then aggregate results with the `summary` command ([link](summary-command.md)).
+
 
 ## Overview
 
 The QC command processes all FASTQ pairs in a directory, running:
+
 - **Quality assessment** (via fastp)
 - **Taxonomic profiling** (via Sylph)
 - **Contamination detection** (via Sylph)
-- **MLST typing** (via ARIBA)
+- **MLST typing** (via StringMLST)
 - **Quality metrics reporting** (CSV output)
+- **Applying Qualibact criteria** for PASS/FAIL determination
 
 ## Basic Usage
 
@@ -22,6 +28,12 @@ pixi run bactscout qc /path/to/samples/ -o /output/directory/
 
 # Use custom configuration
 pixi run bactscout qc /path/to/samples/ -c custom_config.yml
+
+# Skip preflight checks
+pixi run bactscout qc data/ --skip-preflight
+
+# Specify number of threads
+pixi run bactscout qc /path/to/samples/ -t 8
 ```
 
 ## Arguments
@@ -35,7 +47,7 @@ pixi run bactscout qc /path/to/samples/ -c custom_config.yml
 | Option | Short | Default | Description |
 |--------|-------|---------|-------------|
 | `--output` | `-o` | `bactscout_output` | Output directory for results |
-| `--threads` | `-t` | 2 | Number of CPU threads to use |
+| `--threads` | `-t` | 4 | Number of CPU threads to use |
 | `--config` | `-c` | `bactscout_config.yml` | Configuration file path |
 | `--skip-preflight` | - | False | Skip validation checks |
 | `--report-resources` | - | False | Track and report thread and memory usage per sample |
@@ -54,11 +66,14 @@ samples/
 ```
 
 Supported naming patterns:
+
 - `*_R1.fastq.gz` / `*_R2.fastq.gz`
 - `*_1.fastq.gz` / `*_2.fastq.gz`
 - `*_R1.fq.gz` / `*_R2.fq.gz`
 
 ## Output Structure
+
+`final_summary.csv` is the main output file, consolidating results across all samples.
 
 ```
 bactscout_output/
@@ -90,61 +105,8 @@ pixi run bactscout qc data/ -t 8  # Use 8 threads
 ```
 
 !!! note "Thread Recommendation"
-    - Use 2-4 threads per sample
+    - Each thread will be used for processing one sample. i.e. 4 threads = 4 samples processed in parallel.
     - More threads = faster analysis but higher memory usage
-    - Total = (number of samples) × (threads per sample)
-
-### Skip Preflight Checks
-
-For trusted data, skip validation:
-
-```bash
-pixi run bactscout qc data/ --skip-preflight
-```
-
-### Different Output Directory
-
-```bash
-pixi run bactscout qc data/ -o /results/batch_2024-01/
-```
-
-### Custom Configuration
-
-```bash
-pixi run bactscout qc data/ -c strict_qc_config.yml
-```
-
-## Processing Steps
-
-For each sample, BactScout:
-
-1. **Preflight Checks** - Validates FASTQ format
-2. **Quality Assessment** - fastp for read QC metrics
-3. **Taxonomic Identification** - Sylph for species ID
-4. **Contamination Screening** - Sylph contamination detection
-5. **MLST Typing** - ARIBA for strain typing
-6. **Result Aggregation** - Generates per-sample and batch CSVs
-
-## Performance
-
-Typical processing time per sample (on 2-thread system):
-- Small samples (< 100k reads): ~2-5 minutes
-- Medium samples (100k-1M reads): ~5-15 minutes
-- Large samples (> 1M reads): ~15-30+ minutes
-
-To significantly speed up analysis:
-- Increase `--threads`
-- Pre-filter low-quality reads with fastp
-- Use SSD storage for input/output
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | ✅ Success |
-| 1 | ❌ General error |
-| 2 | ❌ Invalid arguments |
-| 127 | ❌ Missing dependencies |
 
 ## Troubleshooting
 
@@ -164,7 +126,7 @@ pixi run bactscout qc data/ -t 2
 
 ### "Database not found"
 
-Databases auto-download on first run. If issues:
+Databases auto-download on first run. If there are issues (and the databases are indeed available), retry with:
 ```bash
 pixi run bactscout qc data/ --skip-preflight
 ```

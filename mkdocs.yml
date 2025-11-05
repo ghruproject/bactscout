@@ -52,6 +52,7 @@ nav:
       - Installation: getting-started/installation.md
       - Quick Start: getting-started/quick-start.md
       - Configuration: getting-started/configuration.md
+      - MLST Databases: getting-started/mlst-species.md
   - Usage:
       - QC Command: usage/qc-command.md
       - Collect Command: usage/collect-command.md
@@ -59,13 +60,10 @@ nav:
       - Output Format: usage/output-format.md
   - Guide:
       - Quality Control Criteria: guide/quality-control.md
-      - Working with Results: guide/results-analysis.md
+      - Scaling up: guide/scaling.md
       - Troubleshooting: guide/troubleshooting.md
   - Reference:
       - API Reference: reference/api.md
       - Configuration Reference: reference/configuration.md
       - FAQ: reference/faq.md
-  - Development:
       - Contributing: contributing.md
-      - Architecture: development/architecture.md
-      - Testing: development/testing.md

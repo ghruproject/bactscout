@@ -3,8 +3,10 @@ from pathlib import Path
 
 import typer
 
+from bactscout.__version__ import __version__
 from bactscout.collect import collect_sample
 from bactscout.main import main
+from bactscout.preflight import load_config, preflight_check
 from bactscout.summary import summary_dir
 from bactscout.util import print_header, print_message
 
@@ -64,6 +66,11 @@ def collect(
         "--report-resources",
         help="Track and report thread and memory usage for the sample",
     ),
+    write_json: bool = typer.Option(
+        False,
+        "--write-json",
+        help="Also write a JSON copy of the sample summary alongside the CSV",
+    ),
 ):
     """Process a single sample with paired-end reads"""
     collect_sample(
@@ -74,6 +81,7 @@ def collect(
         config,
         skip_preflight,
         report_resources,
+        write_json=write_json,
     )
 
 
@@ -98,6 +106,40 @@ def summary(
     summary_dir(input_dir, str(output_file))
 
     print_message(f"Summary report generated: {output_file}", "success")
+
+
+@app.command()
+def preflight(
+    config: str = typer.Option(
+        "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
+    ),
+):
+    """Run preflight checks and install/download required databases/tools.
+
+    This command performs the same preflight checks that are normally run
+    before `bactscout qc` but exits immediately after validating and
+    (where configured) downloading/setting up databases.
+    """
+    try:
+        config_dict = load_config(config)
+    except Exception as e:
+        print_message(f"Failed to load configuration '{config}': {e}", "error")
+        raise typer.Exit(code=2)
+
+    ok = preflight_check(False, config_dict)
+    if ok:
+        print_message("Preflight checks passed.", "success")
+        raise typer.Exit(code=0)
+    else:
+        print_message("Preflight checks failed. See messages above.", "error")
+        raise typer.Exit(code=3)
+
+
+@app.command()
+def version():
+    """Print BactScout version string and exit."""
+    print_message(f"Version: {__version__}", "info")
+    raise typer.Exit(code=0)
 
 
 if __name__ == "__main__":

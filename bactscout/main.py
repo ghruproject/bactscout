@@ -142,6 +142,7 @@ def main(
                         threads=1,
                         message=False,
                         report_resources=report_resources,
+                        batch_worker_count=max_threads,
                     ): sample
                     for sample, reads in sample_pairs.items()
                 }

@@ -13,7 +13,9 @@ import subprocess
 from bactscout.util import extract_sample_name, print_message
 
 
-def run_command(r1, r2, species_db, output_dir, message=False):
+def run_command(
+    r1: str, r2: str, species_db: str, output_dir: str, message: bool = False
+) -> dict:
     """
     Run StringMLST on paired-end FASTQ files for MLST typing.
 
@@ -39,7 +41,7 @@ def run_command(r1, r2, species_db, output_dir, message=False):
     # Get StringMLST command
     cmd = get_command()
     cmd = list(cmd) if isinstance(cmd, str) else cmd  # Ensure cmd is a list
-    stringmlst_results = {}
+    stringmlst_results: dict = {}
     output_file = os.path.abspath(os.path.join(output_dir, "mlst.tsv"))
     # Remove output file if it exists to avoid appending to old results
     try:
@@ -112,6 +114,7 @@ def run_command(r1, r2, species_db, output_dir, message=False):
         "sample_name": sample_name,
         "stringmlst_results": stringmlst_results,
         "output_dir": output_dir,
+        "error": None,
     }
 
 
