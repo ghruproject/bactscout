@@ -92,4 +92,4 @@ jobs:
             bactscout-dbs-
       
       - name: Run tests (parallel)
-        run: pixi run -e devpytest tests/ -n auto --tb=short
+        run: pixi run -e dev pytest tests/ -n auto --tb=short
