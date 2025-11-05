@@ -346,7 +346,7 @@ If your species doesn't have MLST results:
    ```bash
    stringMLST.py -S new_scheme --install
    ```
-See the [MLST Species Guide](./mlst-species.md) for details on supported species and database preparation.
+See the [MLST Species Guide](../getting-started/mlst-species.md) for details on supported species and database preparation.
 
 ## See Also
 
