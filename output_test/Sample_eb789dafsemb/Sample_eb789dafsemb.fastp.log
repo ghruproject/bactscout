@@ -1,0 +1,42 @@
+Read1 before filtering:
+total reads: 867491
+total bases: 130123650
+Q20 bases: 127529198(98.0062%)
+Q30 bases: 119283230(91.6691%)
+Q40 bases: 25573287(19.6531%)
+
+Read2 before filtering:
+total reads: 867491
+total bases: 130123650
+Q20 bases: 126622539(97.3094%)
+Q30 bases: 116649292(89.645%)
+Q40 bases: 25505793(19.6012%)
+
+Read1 after filtering:
+total reads: 867491
+total bases: 130123650
+Q20 bases: 127529198(98.0062%)
+Q30 bases: 119283230(91.6691%)
+Q40 bases: 25573287(19.6531%)
+
+Read2 after filtering:
+total reads: 867491
+total bases: 130123650
+Q20 bases: 126622539(97.3094%)
+Q30 bases: 116649292(89.645%)
+Q40 bases: 25505793(19.6012%)
+
+Filtering result:
+reads passed filter: 1734982
+reads failed due to low quality: 0
+reads failed due to too many N: 0
+
+Duplication rate: 0.0456489%
+
+Insert size peak (evaluated by paired-end reads): 200
+
+JSON report: output_test/Sample_eb789dafsemb/Sample_eb789dafsemb.fastp.json
+HTML report: output_test/Sample_eb789dafsemb/Sample_eb789dafsemb.fastp.html
+
+/Users/nfareed/code/bactscout/.pixi/envs/default/bin/fastp --in1 test_data/Sample_eb789dafsemb_R1.fastq.gz --in2 test_data/Sample_eb789dafsemb_R2.fastq.gz --json output_test/Sample_eb789dafsemb/Sample_eb789dafsemb.fastp.json --html output_test/Sample_eb789dafsemb/Sample_eb789dafsemb.fastp.html --thread 1 --detect_adapter_for_pe --disable_adapter_trimming --disable_quality_filtering --disable_length_filtering 
+fastp v1.0.1, time used: 16 seconds

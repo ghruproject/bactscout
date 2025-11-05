@@ -32,7 +32,7 @@ assignees: ''
 ```
 
 ## Additional Context
-<!-- Any other context, screenshots, or files that might help -->
+<!-- Any other context, screenshots, or files that might help. Please include the output files from the underlying tools (i.e fastp.json, mlst.tsv and sylph_report.txt) -->
 
 ## Possible Solution
 <!-- If you have a potential fix or workaround, describe it here -->

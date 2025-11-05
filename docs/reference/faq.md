@@ -242,7 +242,7 @@ pixi run bactscout qc data/ -c lenient_config.yml
 3. Update Sylph GTDB index
 4. Update ARIBA if adding MLST/resistance
 
-See [Configuration Guide](../getting-started/configuration.md#adding-new-species).
+See [Configuration Guide](../getting-started/configuration.md#mlst-species).
 
 ## Performance & Optimization
 
@@ -357,7 +357,6 @@ plt.show()
 2. Add your analysis in new module
 3. Integrate into CLI
 4. Submit pull request
-5. See [Development Guide](../development/architecture.md)
 
 ## Still Have Questions?
 

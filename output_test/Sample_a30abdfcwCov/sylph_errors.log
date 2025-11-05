@@ -1,0 +1,8 @@
+2025-11-05T13:58:14.814Z INFO  [sylph::contain] Obtaining sketches...
+2025-11-05T13:58:21.895Z INFO  [sylph::contain] Finished obtaining genome sketches.
+2025-11-05T13:58:22.150Z INFO  [sylph::contain] test_data/Sample_a30abdfcwCov_R1.fastq.gz short-read sample has high diversity compared to sequencing depth (approx. avg depth < 3). Using 99.5% as read accuracy estimate instead of automatic detection for --estimate-unknown.
+2025-11-05T13:58:29.786Z INFO  [sylph::contain] test_data/Sample_a30abdfcwCov_R1.fastq.gz taxonomic profiling; reassigning k-mers for 5 genomes...
+2025-11-05T13:58:29.819Z INFO  [sylph::contain] test_data/Sample_a30abdfcwCov_R1.fastq.gz has 1 genomes passing profiling threshold. 
+2025-11-05T13:58:29.819Z INFO  [sylph::contain] test_data/Sample_a30abdfcwCov_R1.fastq.gz has 100.00% of reads detected in database by profile
+2025-11-05T13:58:29.819Z INFO  [sylph::contain] Finished paired sample test_data/Sample_a30abdfcwCov_R1.fastq.gz.
+2025-11-05T13:58:29.819Z INFO  [sylph::contain] sylph finished.

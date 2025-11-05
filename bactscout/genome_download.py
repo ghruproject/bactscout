@@ -200,7 +200,7 @@ def download_reference_genomes(sample_results_list: list, output_dir: str) -> li
         output_dir (str): Base output directory
 
     Returns:
-        list: Updated sample results list with 'genome_file' field added
+        list: Updated sample results list with 'ref_genome' field added
     """
     cache_dir = os.path.join(output_dir, "reference_genomes")
 
@@ -213,22 +213,23 @@ def download_reference_genomes(sample_results_list: list, output_dir: str) -> li
         # Extract genome path from results (if present)
         genome_path = results.get("genome_file_path", "")
         if not genome_path:
-            results["genome_file"] = ""
+            # No genome path -> ensure ref_genome empty for consistency
+            results["ref_genome"] = ""
             continue
 
         # Extract accession
         accession = extract_accession_from_path(genome_path)
         if not accession:
             print_message(f"Could not extract accession from {genome_path}", "warning")
-            results["genome_file"] = ""
+            results["ref_genome"] = ""
             continue
 
         # Ensure genome is downloaded
         local_genome = ensure_genome_downloaded(accession, cache_dir)
         if local_genome:
-            # Store just the filename, not full path
-            results["genome_file"] = os.path.basename(local_genome)
+            # Store accession for downstream use
+            results["ref_genome"] = accession
         else:
-            results["genome_file"] = ""
+            results["ref_genome"] = ""
 
     return sample_results_list

@@ -24,8 +24,8 @@ def test_handle_genome_size_coverage_pass_and_gc_pass(tmp_path):
 
     updated = handle_genome_size(species, fastp_stats, final, cfg)
 
-    assert updated["coverage_alt_status"] == "PASSED"
-    assert "meets the threshold" in updated["coverage_alt_message"]
+    assert updated["coverage_estimate_qualibact_status"] == "PASSED"
+    assert "meets the threshold" in updated["coverage_estimate_qualibact_message"]
     assert updated["gc_content_status"] == "PASSED"
 
 
@@ -41,7 +41,7 @@ def test_handle_genome_size_coverage_fail_and_gc_warning(tmp_path):
 
     updated = handle_genome_size(species, fastp_stats, final, cfg)
 
-    assert updated["coverage_alt_status"] == "FAILED"
+    assert updated["coverage_estimate_qualibact_status"] == "FAILED"
     assert updated["gc_content_status"] == "WARNING"
 
 
@@ -56,8 +56,8 @@ def test_handle_genome_size_multiple_species_appends_warning(tmp_path):
     updated = handle_genome_size(species, fastp_stats, final, cfg)
 
     # coverage should pass and the message should include the multiple-species warning
-    assert updated["coverage_alt_status"] == "PASSED"
-    assert "Multiple species detected" in updated["coverage_alt_message"]
+    assert updated["coverage_estimate_qualibact_status"] == "PASSED"
+    assert "Multiple species detected" in updated["coverage_estimate_qualibact_message"]
 
 
 def test_handle_genome_size_gc_outside_range_sets_message_and_leaves_status(tmp_path):

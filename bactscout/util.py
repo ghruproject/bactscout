@@ -115,8 +115,8 @@ def format_summary_headers():
         "adapter_detection_status",
         "contamination_status",
         "species_status",
-        "coverage_status",
-        "coverage_alt_status",
+    "coverage_status",
+    "coverage_estimate_qualibact_status",
         "duplication_status",
         "filtering_status",
         "gc_content_status",
@@ -133,10 +133,10 @@ def format_summary_headers():
         "species_message",
         "contamination_message",
         # Coverage & Duplication
-        "coverage_estimate",
-        "coverage_message",
-        "coverage_alt_estimate",
-        "coverage_alt_message",
+    "coverage_estimate_sylph",
+    "coverage_estimate_sylph_message",
+    "coverage_estimate_qualibact",
+    "coverage_estimate_qualibact_message",
         "duplication_rate",
         "duplication_message",
         # GC & N-content
@@ -167,7 +167,7 @@ def format_summary_headers():
         "filtering_message",
         "adapter_detection_message",
         # Reference Genome Info
-        "genome_file",
+        "ref_genome",
         "genome_file_path",
         "genome_size_expected",
     ]

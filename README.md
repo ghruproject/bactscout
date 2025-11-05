@@ -32,7 +32,7 @@ All thresholds can be adjusted in the `bactscout_config.yml` file.
   - **PASS**: ≥ 30x coverage
   - Ensures sufficient depth for high-quality genome assembly
   - Reduces assembly gaps and improves base calling accuracy
-  - See columns `coverage_status` and `coverage_alt_status`
+  - See columns `coverage_status` and `coverage_estimate_qualibact_status`
 
 - **🧬 Species Purity & GC Content**: Single species with expected GC content
   - **Contamination FAIL threshold**: > 10% reads from secondary species
@@ -70,7 +70,7 @@ The same information as a table:
 
 | Metric | Default Thresholds | Purpose / Rationale | Key Columns |
 | :----- | :----------------- | :------------------ | :---------- |
-| 📈 **Coverage Depth** | FAIL: < 20x<br>WARNING: < 30x<br>PASS: ≥ 30x | • Ensures sufficient depth for high-quality assembly<br>• Reduces assembly gaps and improves base-calling accuracy<br>• Two-tier system allows marginal samples to proceed with caution | `coverage_status`, `coverage_alt_status` |
+| 📈 **Coverage Depth** | FAIL: < 20x<br>WARNING: < 30x<br>PASS: ≥ 30x | • Ensures sufficient depth for high-quality assembly<br>• Reduces assembly gaps and improves base-calling accuracy<br>• Two-tier system allows marginal samples to proceed with caution | `coverage_status`, `coverage_estimate_qualibact_status` |
 | 🧬 **Species Purity** | FAIL: > 10% contamination<br>WARNING: > 5% contamination<br>PASS: < 5% + GC within range | • Confirms sample contains only expected organism<br>• Rules out contamination from other species<br>• Critical for accurate genome reconstruction<br>• GC content validates species identification | `contamination_status`, `species_status`, `gc_content_status` |
 | 📏 **Read Quality** | Q30 FAIL: < 70%<br>Q30 WARNING: < 80%<br>Length FAIL: < 100bp<br>PASS: ≥ 70% Q30 + ≥ 100bp | • Indicates proper sequencing run completion<br>• Ensures optimal assembly performance<br>• High Q30 reduces errors in final assembly | `read_length_status`, `read_q30_status` |
 | 🔬 **Duplication** | WARNING: > 20%<br>FAIL: > 30% | • Detects PCR bias or library complexity issues<br>• High duplication may indicate poor library quality | `duplication_status` |
@@ -217,9 +217,9 @@ bactscout_output/
 
 The `final_summary.csv` file is a comprehensive report that consolidates all quality control metrics for every sample in your batch. This single file provides:
 
-**Key Status Columns:**
+- **Key Status Columns:**
 - **a_final_status**: Overall PASS/WARNING/FAIL based on all criteria
-- **coverage_status** / **coverage_alt_status**: Coverage depth evaluation (PASS ≥30x, WARNING ≥20x)
+ - **coverage_status** / **coverage_estimate_qualibact_status**: Coverage depth evaluation (PASS ≥30x, WARNING ≥20x)
 - **contamination_status**: Species purity (PASS <5%, WARNING <10%)
 - **species_status**: Single species detection
 - **gc_content_status**: GC content within expected range
@@ -241,8 +241,8 @@ The `final_summary.csv` file is a comprehensive report that consolidates all qua
 - **species**: Taxonomic identification from Sylph
 - **species_abundance**: Percentage of reads assigned to detected species
 - **species_coverage**: Estimated coverage from Sylph
-- **coverage_estimate**: Sylph-based genome coverage depth
-- **coverage_alt_estimate**: Alternative coverage calculation (total_bases / expected_genome_size)
+ - **coverage_estimate_sylph**: Sylph-based genome coverage depth
+ - **coverage_estimate_qualibact**: Alternative coverage calculation (total_bases / expected_genome_size)
 - **mlst_st**: Sequence Type from MLST analysis (0 = novel ST)
 - **gc_content_lower** / **gc_content_upper**: Expected GC range for species
 - **genome_size_expected**: Expected genome size for coverage calculation

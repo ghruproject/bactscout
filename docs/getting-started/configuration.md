@@ -54,6 +54,16 @@ system_resources:
   memory: 4.GB
 ```
 
+## Custom Configuration
+
+Create a custom config and pass it to BactScout:
+
+```bash
+cp bactscout_config.yml my_config.yml
+# Edit my_config.yml as needed
+pixi run bactscout qc data/ -c my_config.yml
+```
+
 ## Configuration Parameters
 
 ### Database Settings
@@ -117,6 +127,18 @@ separately to produce PASS/WARNING/FAIL decisions.
 | `n_content_threshold` | 0.001 | Fraction of reads with too many N's that triggers FAIL |
 | `adapter_overrep_threshold` | 5 | Number of overrepresented adapters before warning/failing |
 
+
+### Other QC applied (auto-determined)
+
+In addition to the thresholds above, BactScout applies several QC checks that are
+automatically determined from species assignment and the metrics database:
+
+- **Genome size** — obtained from the `metrics_file` (QualiBact-derived values) and the predicted species from Sylph; used to compute an estimated coverage when Sylph-derived coverage is unavailable.
+- **GC ranges** — species-specific GC lower/upper bounds are read from the QualiBact-derived metrics file. A sample GC within the species bounds is considered PASS; values slightly outside the bounds trigger a WARNING; values outside the bounds plus the configured `gc_fail_percentage` buffer are flagged as FAIL.
+
+These values are inferred at runtime (species + metrics) and do not require manual setting in the config.
+
+
 ### MLST Species
 
 Define species with available MLST schemes:
@@ -129,20 +151,31 @@ mlst_species:
 
 The **key** is used as the database directory name, the **value** is the scientific name for species matching.
 
+For a complete list of PUBMLST-format names supported by BactScout, see the
+dedicated page and raw list included with the docs:
+
+- [Human-readable list](./mlst-species.md)
+- [Raw machine-readable copy](./mlst_species.txt)
+
+Use the exact PUBMLST-format key as the directory name under
+`bactscout_dbs/` when adding MLST databases.
+
+To add MLST support for a new species:
+1. Prepare MLST databases following [PUBMLST format](mlst-species.md)
+2. Add to config:
+   ```yaml
+   mlst_species:
+     my_species: 'Genus species'
+   ```
+3. Place databases in `bactscout_dbs/my_species/`
+4. Run BactScout normally
+
 ### System Resources
 
 ```yaml
 system_resources:
   cpus: 2              # Minimum CPUs required
   memory: 4.GB         # Minimum memory required
-```
-
-## Custom Configuration
-
-Create a custom config and pass it to BactScout:
-
-```bash
-pixi run bactscout qc data/ -c my_config.yml
 ```
 
 ## Adjusting Thresholds
@@ -155,18 +188,6 @@ q30_pass_threshold: 0.75  # Instead of 0.80 (75% instead of 80%)
 read_length_pass_threshold: 80  # Instead of 100 bp
 ```
 
-## Adding New Species
-
-To add MLST support for a new species:
-
-1. Prepare MLST databases following [ARIBA format](https://ariba.readthedocs.io/)
-2. Add to config:
-   ```yaml
-   mlst_species:
-     my_species: 'Genus species'
-   ```
-3. Place databases in `bactscout_dbs/my_species/`
-4. Run BactScout normally
 
 !!! tip "Need Help?"
     See [Troubleshooting](../guide/troubleshooting.md) for help with configuration issues.

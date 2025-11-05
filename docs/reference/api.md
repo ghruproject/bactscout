@@ -458,9 +458,3 @@ for batch_dir in Path("data/").glob("batch_*"):
         threads=4
     )
 ```
-
-## See Also
-
-- [Architecture Guide](../development/architecture.md) - System design
-- [Development Guide](../development/testing.md) - Contributing
-- [Configuration Reference](./configuration.md) - Config options

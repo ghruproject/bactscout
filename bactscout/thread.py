@@ -79,6 +79,7 @@ def blank_sample_results(sample_id):
     return {
         "sample_id": sample_id,
         "a_final_status": "FAILED",
+        # Read info from fastp
         "read_total_reads": 0,
         "read_total_bases": 0,
         "read_q20_bases": 0,
@@ -91,14 +92,15 @@ def blank_sample_results(sample_id):
         "read2_mean_length": 0,
         "read_length_status": "FAILED",
         "read_length_message": "No reads processed. Cannot determine read lengths.",
-        "gc_content": 0.0,
+        "gc_content": 0.0,  # From fastp
+        # Species info from sylph
         "species": "",
         "species_abundance": "",
         "species_coverage": "",
-        "coverage_estimate": 0,
+        "coverage_estimate_sylph": 0,
         "genome_size_expected": 0,
         "coverage_status": "FAILED",
-        "coverage_message": "No reads processed. Cannot estimate genome size or coverage.",
+        "coverage_estimate_sylph_message": "No reads processed. Cannot estimate genome size or coverage.",
         "gc_content_lower": 0,
         "gc_content_upper": 0,
         "gc_content_status": "FAILED",
@@ -110,11 +112,11 @@ def blank_sample_results(sample_id):
         "mlst_message": "Cannot determine MLST.",
         "contamination_status": "FAILED",
         "contamination_message": "No reads processed. Cannot determine contamination.",
-        "coverage_alt_estimate": 0,
-        "coverage_alt_message": "No reads processed. Cannot estimate alternative coverage.",
-        "coverage_alt_status": "FAILED",
-        "genome_file_path": "",
-        "genome_file": "",
+        "coverage_estimate_qualibact": 0,
+        "coverage_estimate_qualibact_message": "No reads processed. Cannot estimate alternative coverage.",
+        "coverage_estimate_qualibact_status": "FAILED",
+        # accession (e.g. GCF_000742135.1) extracted from genome_file_path
+        "ref_genome": "",
         # Fastp QC Metrics - Duplication
         "duplication_rate": 0.0,
         "duplication_status": "FAILED",
@@ -139,6 +141,7 @@ def run_one_sample(
     message=False,
     report_resources=False,
     write_json=False,
+    batch_worker_count: int | None = None,
 ):
     """
     Execute comprehensive QC analysis pipeline for a single bacterial sample.
@@ -193,7 +196,9 @@ def run_one_sample(
     # Start resource monitoring if requested
     resource_monitor = None
     if report_resources:
-        resource_monitor = ResourceMonitor()
+        # Pass the batch worker count (ThreadPoolExecutor max_workers) so
+        # reported thread count can reflect the configured worker pool size
+        resource_monitor = ResourceMonitor(worker_threads_override=batch_worker_count)
         resource_monitor.start()
 
     if message:
@@ -243,10 +248,25 @@ def run_one_sample(
     species_abundance, genome_file_path = extract_species_from_report(
         sylph_result.get("sylph_report")
     )
-    final_results["genome_file_path"] = genome_file_path
+    # Populate ref_genome (accession) by extracting from the genome file path when available
+    # Lazily import extraction helper to avoid importing optional heavy deps at module import time
+    if genome_file_path:
+        try:
+            from bactscout.genome_download import extract_accession_from_path
+
+            final_results["ref_genome"] = extract_accession_from_path(genome_file_path)
+        except (ImportError, ModuleNotFoundError):
+            # If extraction helper or its deps aren't available at runtime, fall back to empty
+            final_results["ref_genome"] = ""
+    else:
+        final_results["ref_genome"] = ""
 
     fastp_result = run_fastp(
-        read1_file, read2_file, sample_output_dir, config, threads=threads
+        read1_file,
+        read2_file,
+        sample_output_dir,
+        message=message,
+        threads=threads,
     )
     fastp_stats = get_fastp_results(fastp_result)
     fastp_stats = handle_fastp_results(fastp_stats, config)
@@ -358,31 +378,54 @@ def write_summary_file(
     """
     final_output_file = os.path.join(sample_output_dir, f"{sample_id}_summary.csv")
     pref_header_list = format_summary_headers()
+
+    # Breaking change: write only the new canonical keys (no legacy shims).
+    # Make a shallow copy so we can massage values for output without
+    # mutating the original results dict.
+    final_results_to_write = dict(final_results)
+
+    # Round resource memory metrics to whole megabytes for cleaner output
+    for _k in ("resource_memory_avg_mb", "resource_memory_peak_mb"):
+        if _k in final_results_to_write and final_results_to_write[_k] is not None:
+            try:
+                # Use int(round(...)) to keep CSV/JSON neat (no long floats)
+                final_results_to_write[_k] = int(round(final_results_to_write[_k]))
+            except (TypeError, ValueError):
+                # If value isn't numeric, leave it as-is
+                pass
+
     with open(final_output_file, "w", encoding="utf-8") as f:
-        # Write header
-        headers = list(final_results.keys())
-        # Warn if headers are not the same as blank_sample_results()
-        if headers != list(blank_sample_results(sample_id).keys()):
+        # Initial header check (based on blank sample + resource headers)
+        resource_headers = [
+            "resource_threads_peak",
+            "resource_memory_peak_mb",
+            "resource_memory_avg_mb",
+            "resource_duration_sec",
+        ]
+        expected_headers = (
+            list(blank_sample_results(sample_id).keys()) + resource_headers
+        )
+
+        headers = list(final_results_to_write.keys())
+        if headers != expected_headers:
             print_message(
                 f"Warning: Headers in final results do not match expected headers for sample {sample_id}",
                 "warning",
             )
-            # Show the difference between actual and expected headers
-            expected_headers = set(blank_sample_results(sample_id).keys())
             actual_headers = set(headers)
-            missing_headers = expected_headers - actual_headers
-            extra_headers = actual_headers - expected_headers
+            missing_headers = set(expected_headers) - actual_headers
+            extra_headers = actual_headers - set(expected_headers)
             if missing_headers:
                 print_message(f"Missing headers: {missing_headers}", "warning")
             if extra_headers:
                 print_message(f"Extra headers: {extra_headers}", "warning")
+
         # Sort: sample_id first, then *_status, then alphabetical
         headers = sorted(
-            final_results.keys(),
+            final_results_to_write.keys(),
             key=lambda x: (x != "sample_id", not x.endswith("_status"), x),
-            # or: (0 if x == "sample_id" else 1, 0 if x.endswith("_status") else 1, x)
         )
-        # Order by pref_header_list
+        # Apply preferred header ordering where possible
         headers = sorted(
             headers,
             key=lambda x: pref_header_list.index(x)
@@ -391,9 +434,11 @@ def write_summary_file(
         )
 
         f.write(",".join(headers) + "\n")
-        # Write values
+        # Write values row (convert None to empty string)
         values = [
-            str(final_results[h]) if final_results[h] is not None else ""
+            str(final_results_to_write.get(h))
+            if final_results_to_write.get(h) is not None
+            else ""
             for h in headers
         ]
         f.write(",".join(values) + "\n")
@@ -403,8 +448,8 @@ def write_summary_file(
         json_file = os.path.join(sample_output_dir, f"{sample_id}_summary.json")
         try:
             with open(json_file, "w", encoding="utf-8") as jf:
-                json.dump(final_results, jf, ensure_ascii=False, indent=2)
-        except Exception as e:
+                json.dump(final_results_to_write, jf, ensure_ascii=False, indent=2)
+        except (OSError, TypeError) as e:
             print_message(f"Failed to write JSON summary {json_file}: {e}", "warning")
 
 
@@ -790,26 +835,26 @@ def handle_species_coverage(species_abundance, final_results, config):
     # Evaluate coverage with WARNING and FAIL thresholds
     if top_species and top_species[2] >= coverage_fail_threshold:
         final_results["coverage_status"] = "PASSED"
-        final_results["coverage_estimate"] = round(top_species[2], 2)
-        final_results["coverage_message"] = (
+        final_results["coverage_estimate_sylph"] = round(top_species[2], 2)
+        final_results["coverage_estimate_sylph_message"] = (
             f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x meets the threshold of {coverage_fail_threshold}x."
         )
     elif top_species and top_species[2] >= coverage_warn_threshold:
         final_results["coverage_status"] = "WARNING"
-        final_results["coverage_estimate"] = round(top_species[2], 2)
-        final_results["coverage_message"] = (
+        final_results["coverage_estimate_sylph"] = round(top_species[2], 2)
+        final_results["coverage_estimate_sylph_message"] = (
             f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls between warning ({coverage_warn_threshold}x) and fail ({coverage_fail_threshold}x) thresholds."
         )
     else:
-        final_results["coverage_estimate"] = (
+        final_results["coverage_estimate_sylph"] = (
             round(top_species[2], 2) if top_species else 0
         )
         if top_species is None:
-            final_results["coverage_message"] = (
+            final_results["coverage_estimate_sylph_message"] = (
                 "No species detected. Cannot estimate genome size or coverage."
             )
         else:
-            final_results["coverage_message"] = (
+            final_results["coverage_estimate_sylph_message"] = (
                 f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls below warning threshold ({coverage_warn_threshold}x)."
             )
         final_results["coverage_status"] = "FAILED"
@@ -903,7 +948,7 @@ def handle_mlst_results(
             read2_file,
             species_db_path,
             sample_output_dir,
-            config,
+            message=message,
         )
         # If mlst_results has error key, MLST failed
         if mlst_result.get("error"):
@@ -1038,24 +1083,24 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
         estimated_coverage = fastp_stats["read_total_bases"] / expected_genome_size
     else:
         estimated_coverage = 0
-    final_results["coverage_alt_estimate"] = round(estimated_coverage, 2)
+    final_results["coverage_estimate_qualibact"] = round(estimated_coverage, 2)
     final_results["genome_size_expected"] = expected_genome_size
     # Evaluate alternate coverage using WARN/FAIL thresholds
     if estimated_coverage >= coverage_fail_threshold:
-        final_results["coverage_alt_status"] = "PASSED"
-        final_results["coverage_alt_message"] = (
+        final_results["coverage_estimate_qualibact_status"] = "PASSED"
+        final_results["coverage_estimate_qualibact_message"] = (
             f"Estimated coverage {estimated_coverage:.2f}x meets the threshold of {coverage_fail_threshold}x."
             + warning
         )
     elif estimated_coverage >= coverage_warn_threshold:
-        final_results["coverage_alt_status"] = "WARNING"
-        final_results["coverage_alt_message"] = (
+        final_results["coverage_estimate_qualibact_status"] = "WARNING"
+        final_results["coverage_estimate_qualibact_message"] = (
             f"Estimated coverage {estimated_coverage:.2f}x falls between warning ({coverage_warn_threshold}x) and pass ({coverage_fail_threshold}x) thresholds."
             + warning
         )
     else:
-        final_results["coverage_alt_status"] = "FAILED"
-        final_results["coverage_alt_message"] = (
+        final_results["coverage_estimate_qualibact_status"] = "FAILED"
+        final_results["coverage_estimate_qualibact_message"] = (
             f"Estimated coverage {estimated_coverage:.2f}x below the warning threshold ({coverage_warn_threshold}x)."
             + warning
         )
@@ -1221,25 +1266,12 @@ def final_status_pass(final_results):
     statuses = {k: v for k, v in final_results.items() if k.endswith("_status")}
 
     # Critical metrics - failure in any of these means FAILED final status
-    total_reads = final_results.get("read_total_reads", 0)
-
-    # Always-critical metrics (even if no reads)
     critical_metrics = [
         "read_length_status",
         "read_q30_status",
         "contamination_status",
         "gc_content_status",
     ]
-
-    # New TIER metrics - only critical if reads were actually processed
-    if total_reads > 0:
-        critical_metrics.extend(
-            [
-                "duplication_status",  # TIER 1: High duplication is critical
-                "n_content_status",  # TIER 1: High N-content is concerning
-            ]
-        )
-
     for metric in critical_metrics:
         if statuses.get(metric) == "FAILED":
             final_status = "FAILED"
@@ -1250,13 +1282,13 @@ def final_status_pass(final_results):
         # If both coverage metrics failed, final status is failed
         if (
             statuses.get("coverage_status") == "FAILED"
-            and statuses.get("coverage_alt_status") == "FAILED"
+            and statuses.get("coverage_estimate_qualibact_status") == "FAILED"
         ):
             final_status = "FAILED"
         # If one coverage metric failed, it's a warning
         elif (
             statuses.get("coverage_status") == "FAILED"
-            or statuses.get("coverage_alt_status") == "FAILED"
+            or statuses.get("coverage_estimate_qualibact_status") == "FAILED"
         ):
             final_status = "WARNING"
 
@@ -1265,6 +1297,10 @@ def final_status_pass(final_results):
         # Always-evaluable warning metrics
         warning_metrics = [
             "species_status",  # Species identification issues
+            "mlst_status",  # MLST issues are informational only
+            "adapter_detection_status",  # Adapter contamination warnings
+            "duplication_status",  # Duplication warnings
+            "n_content_status",  # N-content warnings
         ]
 
         for metric in warning_metrics:

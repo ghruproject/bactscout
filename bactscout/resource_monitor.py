@@ -54,15 +54,26 @@ class ResourceMonitor:
     If psutil is not available, gracefully degrades with limited functionality.
     """
 
-    def __init__(self, track_interval: float = 0.5):
+    def __init__(
+        self,
+        track_interval: float = 0.5,
+        include_children: bool = True,
+        worker_threads_override: int | None = None,
+    ):
         """
         Initialize resource monitor.
 
         Args:
             track_interval (float): Interval in seconds between memory samples
                 during continuous monitoring. Default: 0.5 seconds.
+            include_children (bool): If True, include subprocesses of the current
+                process when summing memory and thread counts. Default: True.
         """
         self.track_interval = track_interval
+        self.include_children = include_children
+        # If provided, this value will be used as the reported peak thread count
+        # (useful to report the configured worker count rather than measured OS threads)
+        self.worker_threads_override = worker_threads_override
         self.start_time = None
         self.end_time = None
         self.start_memory_mb = 0
@@ -87,13 +98,30 @@ class ResourceMonitor:
 
         if HAS_PSUTIL and self._process:
             try:
-                # Get initial memory
+                # Get initial memory (optionally include children)
                 mem_info = self._process.memory_info()
-                self.start_memory_mb = mem_info.rss / (1024 * 1024)
+                total_rss = mem_info.rss
+                total_threads = self._process.num_threads()
+                if self.include_children:
+                    try:
+                        children = self._process.children(recursive=True)
+                        for child in children:
+                            try:
+                                child_mem = child.memory_info().rss
+                                total_rss += child_mem
+                                total_threads += child.num_threads()
+                            except Exception:
+                                # Child may have exited; ignore
+                                continue
+                    except Exception:
+                        # children() may not be supported on some platforms
+                        pass
+
+                self.start_memory_mb = total_rss / (1024 * 1024)
                 self.peak_memory_mb = self.start_memory_mb
 
-                # Get initial thread count
-                self.start_threads = self._process.num_threads()
+                # Get initial thread count (including children if enabled)
+                self.start_threads = total_threads
                 self.peak_threads = self.start_threads
 
                 # Start continuous monitoring
@@ -123,12 +151,25 @@ class ResourceMonitor:
         if HAS_PSUTIL and self._process:
             try:
                 mem_info = self._process.memory_info()
-                final_memory_mb = mem_info.rss / (1024 * 1024)
+                total_rss = mem_info.rss
+                total_threads = self._process.num_threads()
+                if self.include_children:
+                    try:
+                        children = self._process.children(recursive=True)
+                        for child in children:
+                            try:
+                                total_rss += child.memory_info().rss
+                                total_threads += child.num_threads()
+                            except Exception:
+                                continue
+                    except Exception:
+                        pass
+
+                final_memory_mb = total_rss / (1024 * 1024)
                 self.memory_samples.append(final_memory_mb)
                 self.peak_memory_mb = max(self.peak_memory_mb, final_memory_mb)
 
-                final_threads = self._process.num_threads()
-                self.peak_threads = max(self.peak_threads, final_threads)
+                self.peak_threads = max(self.peak_threads, total_threads)
             except Exception:  # pylint: disable=broad-except
                 pass
 
@@ -142,12 +183,27 @@ class ResourceMonitor:
             if HAS_PSUTIL and self._process:
                 try:
                     mem_info = self._process.memory_info()
-                    current_memory_mb = mem_info.rss / (1024 * 1024)
+                    total_rss = mem_info.rss
+                    total_threads = self._process.num_threads()
+                    if self.include_children:
+                        try:
+                            children = self._process.children(recursive=True)
+                            for child in children:
+                                try:
+                                    total_rss += child.memory_info().rss
+                                    total_threads += child.num_threads()
+                                except Exception:
+                                    # child may have exited; ignore
+                                    continue
+                        except Exception:
+                            # children() may not be supported on some platforms
+                            pass
+
+                    current_memory_mb = total_rss / (1024 * 1024)
                     self.memory_samples.append(current_memory_mb)
                     self.peak_memory_mb = max(self.peak_memory_mb, current_memory_mb)
 
-                    current_threads = self._process.num_threads()
-                    self.peak_threads = max(self.peak_threads, current_threads)
+                    self.peak_threads = max(self.peak_threads, total_threads)
                 except Exception:  # pylint: disable=broad-except
                     # Stop monitoring if process becomes inaccessible
                     self.monitoring_active = False
@@ -179,12 +235,22 @@ class ResourceMonitor:
         if self.memory_samples:
             avg_memory = sum(self.memory_samples) / len(self.memory_samples)
 
+        peak_threads = self.peak_threads
+        # If an override is provided (for example, the ThreadPoolExecutor max_workers),
+        # prefer the override as the canonical 'worker thread' count for reporting.
+        if self.worker_threads_override is not None:
+            try:
+                # coerce to int
+                peak_threads = int(self.worker_threads_override)
+            except Exception:
+                peak_threads = self.peak_threads
+
         return {
             "duration_sec": duration,
             "peak_memory_mb": self.peak_memory_mb,
             "avg_memory_mb": avg_memory,
             "start_memory_mb": self.start_memory_mb,
-            "peak_threads": self.peak_threads,
+            "peak_threads": peak_threads,
             "start_threads": self.start_threads,
             "available": HAS_PSUTIL,
         }
