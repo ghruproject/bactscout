@@ -8,9 +8,9 @@ sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.
 coverage_warn_threshold: 30
 coverage_fail_threshold: 20
 
-# Contamination thresholds (% of top species, lower is more contaminated)
-contamination_warn_threshold: 5
-contamination_fail_threshold: 10
+# Contamination thresholds
+contamination_warn_threshold: 10
+contamination_fail_threshold: 20
 
 # Q30 thresholds (fraction of bases >= Q30)
 q30_warn_threshold: 0.80
