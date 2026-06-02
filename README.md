@@ -10,6 +10,8 @@
 
 BactScout performs fast post-sequencing checks on bacterial WGS data: read QC (fastp), taxonomic profiling (Sylph) and MLST-based (stringMLST) checks to help decide whether samples are ready for assembly or downstream analysis.
 
+Long-read QC is also available through `bactscout long ...`, using `nanoq` for read statistics and Sylph for taxonomy/coverage without changing the existing Illumina workflow.
+
 Full user documentation, configuration reference, and examples are available at:
 
 https://ghruproject.github.io/bactscout/
@@ -67,6 +69,14 @@ Generate a consolidated summary of all samples:
 
 ```bash
 pixi run bactscout summary /path/to/results [OPTIONS]
+```
+
+### `long qc` - Long-read Quality Control
+
+Run long-read QC on single-end ONT or PacBio FASTQ files:
+
+```bash
+pixi run python bactscout.py long qc /path/to/fastq/files --platform ont_r10
 ```
 
 ### `version` - Print version

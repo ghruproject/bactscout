@@ -1,0 +1,28 @@
+bactscout_dbs_path: 'bactscout_dbs'
+sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
+sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb'
+metrics_file: 'filtered_metrics.csv'
+
+coverage_warn_threshold: 30
+coverage_fail_threshold: 20
+
+contamination_warn_threshold: 10
+contamination_fail_threshold: 20
+
+n50_warn: 8000
+n50_fail: 4000
+
+platforms:
+  ont_r9:
+    q_warn: 10
+    q_fail: 8
+  ont_r10:
+    q_warn: 15
+    q_fail: 12
+  pacbio_hifi:
+    q_warn: 20
+    q_fail: 18
+
+system_resources:
+  cpus: 2
+  memory: 4.GB

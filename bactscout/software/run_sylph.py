@@ -12,6 +12,36 @@ import shutil
 import subprocess
 
 
+def _get_database_path(config):
+    return os.path.join(
+        config.get("bactscout_dbs_path", ""),
+        config.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb"),
+    )
+
+
+def _run_sylph_command(cmd, output_dir, message=False):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    errors = None
+    sylph_report = os.path.join(output_dir, "sylph_report.txt")
+    sylph_errors = os.path.join(output_dir, "sylph_errors.log")
+
+    try:
+        with open(sylph_report, "w", encoding="utf-8") as report_file:
+            with open(sylph_errors, "w", encoding="utf-8") as error_file:
+                subprocess.run(cmd, stdout=report_file, stderr=error_file, check=True)
+        if message:
+            print(f"Sylph completed successfully. Results are in {output_dir}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error running Sylph: {e}")
+        with open(sylph_errors, "r", encoding="utf-8") as error_file:
+            errors = error_file.read()
+            print(f"Sylph errors:\n{errors}")
+
+    return {"sylph_report": sylph_report, "errors": errors}
+
+
 def run_command(r1, r2, output_dir, config, message=False, threads=1):
     """
     Run Sylph on paired-end FASTQ files for taxonomic profiling.
@@ -27,20 +57,9 @@ def run_command(r1, r2, output_dir, config, message=False, threads=1):
     Returns:
         dict: Dictionary containing sylph_report path and error information if any.
     """
-
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    errors = None
-    sylph_report = os.path.join(output_dir, "sylph_report.txt")
-    sylph_errors = os.path.join(output_dir, "sylph_errors.log")
-    cmd = get_command()
-    database_path = os.path.join(
-        config.get("bactscout_dbs_path", ""),
-        config.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb"),
-    )
-    cmd = cmd + [
+    cmd = get_command() + [
         "profile",
-        database_path,
+        _get_database_path(config),
         "-u",
         "-1",
         r1,
@@ -50,19 +69,21 @@ def run_command(r1, r2, output_dir, config, message=False, threads=1):
         str(threads),
     ]
 
-    try:
-        with open(sylph_report, "w", encoding="utf-8") as report_file:
-            with open(sylph_errors, "w", encoding="utf-8") as error_file:
-                subprocess.run(cmd, stdout=report_file, stderr=error_file, check=True)
-        if message:
-            print(f"Sylph completed successfully. Results are in {output_dir}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error running Sylph: {e}")
-        with open(sylph_errors, "r", encoding="utf-8") as error_file:
-            errors = error_file.read()
-            print(f"Sylph errors:\n{errors}")
+    return _run_sylph_command(cmd, output_dir, message=message)
 
-    return {"sylph_report": sylph_report, "errors": errors}
+
+def run_command_single(reads_file, output_dir, config, message=False, threads=1):
+    """Run Sylph on a single long-read FASTQ file for taxonomic profiling."""
+    cmd = get_command() + [
+        "profile",
+        _get_database_path(config),
+        "-u",
+        reads_file,
+        "-t",
+        str(threads),
+    ]
+
+    return _run_sylph_command(cmd, output_dir, message=message)
 
 
 def extract_species_from_report(sylph_report):

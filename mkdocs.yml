@@ -55,11 +55,13 @@ nav:
       - MLST Databases: getting-started/mlst-species.md
   - Usage:
       - QC Command: usage/qc-command.md
+      - Long-read QC: usage/long-read-qc.md
       - Collect Command: usage/collect-command.md
       - Summary Command: usage/summary-command.md
       - Output Format: usage/output-format.md
   - Guide:
       - Quality Control Criteria: guide/quality-control.md
+      - Long-read Validation: guide/long-read-validation.md
       - Scaling up: guide/scaling.md
       - Troubleshooting: guide/troubleshooting.md
   - Reference:

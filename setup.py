@@ -7,6 +7,7 @@ setup(
     entry_points={"console_scripts": ["bactscout = bactscout:app"]},
     install_requires=[
         "fastp>=1.0.1,<2",
+        "nanoq>=0.10.0,<0.11",
         "sylph>=0.8.1,<0.9",
         "typer>=0.19.2,<0.20",
         "rich>=14.1.0,<15",

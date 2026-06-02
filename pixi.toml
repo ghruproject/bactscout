@@ -24,6 +24,7 @@ build-conda="conda-build conda"
 
 [dependencies]
 fastp = ">=1.0.1,<2"
+nanoq = ">=0.10.0,<0.11"
 sylph = ">=0.8.1,<0.9"
 pixi-pack = ">=0.7.3,<0.8"
 nextflow = ">=24.0.0,<25"
