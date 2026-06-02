@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/github/ghruproject/bactscout/graph/badge.svg?token=NH4TFLH9X4)](https://codecov.io/github/ghruproject/bactscout)
 [![Pixi](https://img.shields.io/badge/built%20with-pixi-green)](https://pixi.sh)
 
-BactScout performs fast post-sequencing checks on bacterial WGS data: read QC (fastp), taxonomic profiling (Sylph) and MLST-based (stringMLST) checks to help decide whether samples are ready for assembly or downstream analysis.
+BactScout performs fast post-sequencing checks on bacterial WGS data: read QC (fastp or nanoq), taxonomic profiling (Sylph), and MLST-based checks (stringMLST) to help decide whether samples are ready for assembly or downstream analysis.
 
 Long-read QC is also available through `bactscout long ...`, using `nanoq` for read statistics and Sylph for taxonomy/coverage without changing the existing Illumina workflow.
 
@@ -16,16 +16,24 @@ Full user documentation, configuration reference, and examples are available at:
 
 https://ghruproject.github.io/bactscout/
 
-Important: this repository now contains a breaking change in v1.2.0 — coverage-related output fields were renamed to canonical keys (for example `coverage_estimate_sylph` and `coverage_estimate_qualibact`). 
+Latest release: `v1.3.0` adds an additive long-read QC workflow for ONT and PacBio HiFi inputs, with separate long-read summaries, long-read preflight checks, and validated Slurm-based test coverage.
 
 ## ✨ Features
 
 - What BactScout’s QC does
   - Rapid post‑sequencing checks for bacterial WGS (fit for assembly, typing, AMR and phylogeny)
   - Combines read‑level metrics from fastp (Q30, mean read length, duplication, N‑content, adapter over‑representation)
+  - Adds long-read QC through nanoq (read count, yield, N50, and quality summaries) for ONT and PacBio HiFi data
   - Adds Sylph taxonomic profiling and a reads/expected‑genome‑size coverage estimate (you get both Sylph‑derived and calculated coverage)
   - Two‑tier thresholds (WARN / FAIL) are configurable so borderline samples are flagged for review rather than auto‑rejected
   - Full list of reported fields and per‑sample outputs: https://ghruproject.github.io/bactscout/usage/output-format/
+
+- New in `v1.3.0`
+  - `bactscout long qc`, `bactscout long collect`, `bactscout long summary`, and `bactscout long preflight`
+  - Single-end Sylph execution support for long-read inputs
+  - Long-read configuration via `bactscout_long_config.yml`
+  - Batch-level output in `final_summary_long.csv`
+  - Validation assets and documentation for Slurm-based long-read testing
 
 - PASS / WARNING / FAIL logic
   - Any critical metric FAILED (Q30, read length, contamination, or GC deviation) → overall FAIL

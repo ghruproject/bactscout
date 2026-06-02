@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bactscout"
-version = "1.1.2"
+version = "1.3.0"
 description = "High-performance bacterial genome quality control and MLST analysis pipeline"
 readme = "README.md"
 requires-python = ">=3.9,<3.12"

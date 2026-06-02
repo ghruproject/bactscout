@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="bactscout",
-    version="1.1.2",
+    version="1.3.0",
     packages=find_packages(),
     entry_points={"console_scripts": ["bactscout = bactscout:app"]},
     install_requires=[
