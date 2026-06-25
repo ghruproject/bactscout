@@ -43,7 +43,7 @@ This will install all required dependencies including:
 - **fastp** - Read quality control and trimming
 - **sylph** - Ultra-fast taxonomic profiling
 - **stringMLST** - MLST analysis
-- **Python 3.11+** - Core runtime
+- **Python 3.10-3.14** - Core runtime
 - **typer** - CLI framework
 - **rich** - Beautiful terminal output
 

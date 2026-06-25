@@ -12,7 +12,7 @@
 - Automatic package downloads
 - CI/CD compatibility
 
-If you prefer conda/pip, you'll need to manually install: Python 3.11+, fastp, sylph, ariba, stringmlst, and required Python packages.
+If you prefer conda/pip, you'll need to manually install: Python 3.10-3.14, fastp, sylph, ariba, stringmlst, and required Python packages.
 
 ### Q: Can I run BactScout on Windows?
 **A:** Not directly - BactScout uses Unix-based tools (fastp, Sylph, ARIBA). Options:
