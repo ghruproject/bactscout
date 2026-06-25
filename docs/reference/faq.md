@@ -81,7 +81,7 @@ This skips FASTQ format validation. Use only if you trust your input data.
 Check which metric failed and see [Quality Control Guide](../guide/quality-control.md).
 
 ### Q: Can I adjust quality thresholds?
-**A:** Yes, edit `bactscout_config.yml`:
+**A:** Yes, edit `bactscout/config/bactscout_config.yml`:
 ```yaml
 coverage_threshold: 20           # Stricter or more lenient
 q30_pass_threshold: 0.75         # Lower for relaxed QC
@@ -226,7 +226,7 @@ df.to_json('results.json', orient='records')
 ## Configuration
 
 ### Q: How do I set permanent defaults?
-**A:** Edit `bactscout_config.yml` in project root. These become defaults for all runs.
+**A:** Edit `bactscout/config/bactscout_config.yml`. These become defaults for all runs.
 
 ### Q: Can I have multiple configs?
 **A:** Yes, create copies and use with `-c` flag:

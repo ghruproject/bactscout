@@ -38,22 +38,20 @@ RUN pixi install --locked
 
 # Copy application code
 COPY bactscout/ ./bactscout/
-COPY bactscout.py ./
-COPY filtered_metrics.csv ./
-COPY bactscout_config.yml* ./
 
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
 # Alter bactscout_config.yml to set database paths to /app/bactscout_dbs
-RUN sed -i "s|bactscout_dbs_path: .*|bactscout_dbs_path: '/app/bactscout_dbs'|" bactscout_config.yml
+RUN sed -i "s|bactscout_dbs_path: .*|bactscout_dbs_path: '/app/bactscout_dbs'|" bactscout/config/bactscout_config.yml && \
+    sed -i "s|bactscout_dbs_path: .*|bactscout_dbs_path: '/app/bactscout_dbs'|" bactscout/config/bactscout_long_config.yml
 
 # Create a bactscout wrapper script in /usr/local/bin
 RUN mkdir -p /usr/local/bin && \
     echo '#!/bin/bash' > /usr/local/bin/bactscout && \
     echo 'cd /app' >> /usr/local/bin/bactscout && \
-    echo 'exec pixi run python bactscout.py "$@"' >> /usr/local/bin/bactscout && \
+    echo 'exec pixi run bactscout "$@"' >> /usr/local/bin/bactscout && \
     chmod +x /usr/local/bin/bactscout
 
 # No ENTRYPOINT, just use default bash

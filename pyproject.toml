@@ -26,6 +26,3 @@ bactscout = "bactscout.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["bactscout"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"bactscout.py" = "bactscout.py"

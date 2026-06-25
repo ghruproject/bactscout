@@ -4,14 +4,13 @@ BactScout uses a YAML configuration file to define analysis parameters and thres
 
 ## Default Configuration
 
-The default `bactscout_config.yml` (project root) is the single source of truth for
+The default `bactscout/config/bactscout_config.yml` is the single source of truth for
 thresholds, database locations, and system requirements. Below is the current
 configuration shipped with this repository:
 
 ```yaml
 bactscout_dbs_path: 'bactscout_dbs'
 sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
-metrics_file: 'filtered_metrics.csv'
 sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb'
 
 # QC Thresholds - Support both WARN and FAIL levels
@@ -59,7 +58,7 @@ system_resources:
 Create a custom config and pass it to BactScout:
 
 ```bash
-cp bactscout_config.yml my_config.yml
+cp bactscout/config/bactscout_config.yml my_config.yml
 # Edit my_config.yml as needed
 pixi run bactscout qc data/ -c my_config.yml
 ```
@@ -72,7 +71,7 @@ pixi run bactscout qc data/ -c my_config.yml
 |-----------|---------|-------------|
 | `bactscout_dbs_path` | `bactscout_dbs` | Directory for storing reference databases |
 | `sylph_db` | `gtdb-r226-c1000-dbv1.syldb` | Sylph GTDB database filename |
-| `metrics_file` | `filtered_metrics.csv` | Species-specific genome size and GC content metrics |
+| `metrics_file` | `bactscout/config/filtered_metrics.csv` | Species-specific genome size and GC content metrics |
 | `sylph_db_url` | [See config] | URL to download Sylph database if not found |
 
 ### Using alternative Sylph databases
@@ -82,7 +81,7 @@ Sylph provides a set of pre-built reference databases targeting different trade-
 - The default database shipped in BactScout (`gtdb-r226-c1000-dbv1.syldb`) is compact and fast, and works well for many routine surveillance tasks, but it may be smaller than the largest available references and therefore slightly less sensitive for rare or unusual species.
 - Larger, more comprehensive Sylph databases (for example full GTDB builds or RefSeq-style databases) include many more taxa and yield higher sensitivity at the cost of increased disk usage, higher memory requirements, and longer profiling runtimes.
 
-If you want to use an alternative Sylph database, update these fields in `bactscout_config.yml`:
+If you want to use an alternative Sylph database, update these fields in `bactscout/config/bactscout_config.yml`:
 
 ```yaml
 sylph_db: 'my-large-db.syldb'

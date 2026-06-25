@@ -31,7 +31,7 @@ Latest release: `v1.3.0` adds an additive long-read QC workflow for ONT and PacB
 - New in `v1.3.0`
   - `bactscout long qc`, `bactscout long collect`, `bactscout long summary`, and `bactscout long preflight`
   - Single-end Sylph execution support for long-read inputs
-  - Long-read configuration via `bactscout_long_config.yml`
+  - Long-read configuration via `bactscout/config/bactscout_long_config.yml`
   - Batch-level output in `final_summary_long.csv`
   - Validation assets and documentation for Slurm-based long-read testing
 
@@ -39,7 +39,7 @@ Latest release: `v1.3.0` adds an additive long-read QC workflow for ONT and PacB
   - Any critical metric FAILED (Q30, read length, contamination, or GC deviation) → overall FAIL
   - Both coverage estimates FAILED → overall FAIL; one coverage FAILED → overall WARNING
   - Non‑critical issues (duplication, adapters, missing MLST) generally produce WARNINGs rather than immediate FAILs
-  - All thresholds are configurable in `bactscout_config.yml`; remediation and examples: https://ghruproject.github.io/bactscout/getting-started/configuration
+  - All thresholds are configurable in `bactscout/config/bactscout_config.yml`; remediation and examples: https://ghruproject.github.io/bactscout/getting-started/configuration
   - See Quality Control Guide for full details: https://ghruproject.github.io/bactscout/guide/quality-control/
 
 
@@ -55,7 +55,7 @@ pixi run bactscout qc /path/to/fastq/files [OPTIONS]
 **Options:**
 - `--output, -o` - Output directory (default: `bactscout_output`)
 - `--threads, -t` - Number of threads (default: 4)
-- `--config, -c` - Config file path (default: `bactscout_config.yml`)
+- `--config, -c` - Config file path (default: `bactscout/config/bactscout_config.yml`)
 - `--skip-preflight` - Skip preflight checks (not recommended)
 
 **Example:**
@@ -84,7 +84,7 @@ pixi run bactscout summary /path/to/results [OPTIONS]
 Run long-read QC on single-end ONT or PacBio FASTQ files:
 
 ```bash
-pixi run python bactscout.py long qc /path/to/fastq/files --platform ont_r10
+pixi run bactscout long qc /path/to/fastq/files --platform ont_r10
 ```
 
 ### `version` - Print version

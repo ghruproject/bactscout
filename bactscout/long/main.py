@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
+from bactscout.config import DEFAULT_LONG_CONFIG
 from bactscout.long.collect import extract_long_sample_name, run_one_long_sample
 from bactscout.long.preflight import preflight_check_long
 from bactscout.long.summary import summary_dir_long
@@ -35,7 +36,7 @@ def main_long(
     max_threads,
     platform,
     skip_preflight: bool = False,
-    config_file: str = "bactscout_long_config.yml",
+    config_file: str = DEFAULT_LONG_CONFIG,
     report_resources: bool = False,
 ):
     """Run the long-read QC pipeline in batch mode."""

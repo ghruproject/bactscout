@@ -35,7 +35,7 @@ pixi run bactscout summary bactscout_output/ -c config.yml
 | Option | Short | Default | Description |
 |--------|-------|---------|-------------|
 | `--output` | `-o` | `bactscout_output` | Location to write `final_summary.csv` |
-| `--config` | `-c` | `bactscout_config.yml` | Configuration file path |
+| `--config` | `-c` | `bactscout/config/bactscout_config.yml` | Configuration file path |
 
 ## Input Format
 

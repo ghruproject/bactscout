@@ -23,7 +23,7 @@ nextflow.enable.dsl = 2
 
 params.input_dir = null
 params.output_dir = "${launchDir}/bactscout_output"
-params.config = "${launchDir}/bactscout_config.yml"
+params.config = "/app/bactscout/config/bactscout_config.yml"
 params.threads = 4
 params.help = false
 
@@ -51,7 +51,7 @@ if (params.help || params.input_dir == null) {
                               (default: ./bactscout_output)
       
       --config FILE           Path to BactScout config file
-                              (default: ./bactscout_config.yml)
+                              (default: /app/bactscout/config/bactscout_config.yml)
       
       --threads N             Number of threads per sample
                               (default: 4)
@@ -71,7 +71,7 @@ if (params.help || params.input_dir == null) {
     
     REQUIREMENTS:
       - BactScout installed and available in PATH
-      - Python 3.9+
+      - Python 3.10-3.14
       - Paired-end FASTQ files properly named
     """.stripIndent()
     exit 0
@@ -106,7 +106,7 @@ process collect_sample {
         ${read2} \\
         --output . \\
         --threads ${params.threads} \\
-        --config /app/bactscout_config.yml 2>&1
+        --config ${params.config} 2>&1
     
     """
 }

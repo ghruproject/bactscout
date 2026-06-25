@@ -48,7 +48,7 @@ pixi run bactscout qc /path/to/samples/ -t 8
 |--------|-------|---------|-------------|
 | `--output` | `-o` | `bactscout_output` | Output directory for results |
 | `--threads` | `-t` | 4 | Number of CPU threads to use |
-| `--config` | `-c` | `bactscout_config.yml` | Configuration file path |
+| `--config` | `-c` | `bactscout/config/bactscout_config.yml` | Configuration file path |
 | `--skip-preflight` | - | False | Skip validation checks |
 | `--report-resources` | - | False | Track and report thread and memory usage per sample |
 

@@ -16,7 +16,7 @@ Run batch quality control analysis on all samples in a directory.
 - `input_dir` (Path | str): Directory containing FASTQ files
 - `output_dir` (Path | str, optional): Output directory (default: "bactscout_output")
 - `threads` (int, optional): Number of threads (default: 2)
-- `config` (Path | str, optional): Config file path (default: "bactscout_config.yml")
+- `config` (Path | str, optional): Config file path (default: "bactscout/config/bactscout_config.yml")
 - `skip_preflight` (bool, optional): Skip validation checks (default: False)
 
 **Returns:**
@@ -90,7 +90,7 @@ from bactscout.thread import run_one_sample
 import yaml
 
 # Load config
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Process sample
@@ -248,7 +248,7 @@ print("Summary written to: bactscout_output/final_summary.csv")
     # Database paths
     "bactscout_dbs_path": "bactscout_dbs",
     "sylph_db": "gtdb-r226-c1000-dbv1.syldb",
-    "metrics_file": "filtered_metrics.csv",
+    "metrics_file": "bactscout/config/filtered_metrics.csv",
     
     # QC thresholds
     "coverage_threshold": 30,
@@ -299,7 +299,7 @@ from bactscout.main import main
 import yaml
 
 # Load configuration
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Run batch analysis
@@ -323,7 +323,7 @@ from bactscout.util import extract_sample_name
 import yaml
 
 # Load configuration
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Process single sample
@@ -379,7 +379,7 @@ from bactscout.util import extract_sample_name
 import yaml
 
 # Load config
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Find all samples

@@ -45,6 +45,7 @@ Dependencies:
 import json
 import os
 
+from bactscout.config import DEFAULT_METRICS_FILE
 from bactscout.resource_monitor import ResourceMonitor
 from bactscout.software.run_fastp import run_command as run_fastp
 from bactscout.software.run_stringmlst import run_command as run_mlst
@@ -1213,7 +1214,8 @@ def get_expected_genome_size(species, config):
 
     Args:
         species (str): The scientific name of the species (e.g., "Streptococcus agalactiae").
-        config (dict): Configuration dictionary containing the path to the metrics file under the key "metrics_file".
+        config (dict): Configuration dictionary. The optional "metrics_file" key
+            overrides the packaged metrics CSV.
 
     Returns:
         tuple:
@@ -1228,7 +1230,7 @@ def get_expected_genome_size(species, config):
         - Species names in the file should use underscores instead of spaces or periods.
         - If no matching entry is found, returns zeros for all values.
     """
-    metrics_file = config.get("metrics_file")
+    metrics_file = config.get("metrics_file", DEFAULT_METRICS_FILE)
     safe_species_name = species.replace(" ", "_").replace(".", "_")
     genome_size = 0
     gc_lower = 0

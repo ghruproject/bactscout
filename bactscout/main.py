@@ -45,6 +45,7 @@ from rich.progress import (
     TextColumn,
 )
 
+from bactscout.config import DEFAULT_CONFIG
 from bactscout.preflight import (
     load_config,
     preflight_check,
@@ -59,7 +60,7 @@ def main(
     output_dir,
     max_threads,
     skip_preflight: bool = False,
-    config_file: str = "bactscout_config.yml",
+    config_file: str = DEFAULT_CONFIG,
     report_resources: bool = False,
 ):
     """
@@ -79,7 +80,7 @@ def main(
         skip_preflight (bool, optional): Skip preflight validation checks. Defaults to False.
             When True, skips system resource, software availability, and database checks.
         config_file (str, optional): Path to BactScout configuration file.
-            Defaults to "bactscout_config.yml".
+            Defaults to the packaged bactscout_config.yml.
         report_resources (bool, optional): Track and report thread and memory usage per sample.
             Defaults to False.
 

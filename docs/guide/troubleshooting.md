@@ -128,7 +128,7 @@ ls bactscout_dbs/
 
 # Should contain:
 # - gtdb-r226-c1000-dbv1.syldb
-# - filtered_metrics.csv
+# - bactscout/config/filtered_metrics.csv
 # - acinetobacter_baumannii/
 # - escherichia_coli/
 # - etc.
@@ -136,7 +136,7 @@ ls bactscout_dbs/
 # If missing, download:
 # Databases auto-download on first run, or manually:
 cd bactscout_dbs/
-# Download from configured URL in bactscout_config.yml
+# Download from configured URL in bactscout/config/bactscout_config.yml
 ```
 
 ### "Out of memory" error

@@ -7,8 +7,7 @@ Complete reference for all BactScout configuration options.
 BactScout looks for configuration in this order:
 
 1. File specified with `-c` flag: `pixi run bactscout qc data/ -c /path/to/config.yml`
-2. `bactscout_config.yml` in current directory
-3. Built-in defaults
+2. `bactscout/config/bactscout_config.yml`
 
 ## Complete Configuration Example
 
@@ -16,7 +15,6 @@ BactScout looks for configuration in this order:
 # Database Configuration
 bactscout_dbs_path: 'bactscout_dbs'
 sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
-metrics_file: 'filtered_metrics.csv'
 sylph_db_url: 'https://example.com/database.syldb'
 
 # Quality Control Thresholds
@@ -57,9 +55,9 @@ system_resources:
 
 #### `metrics_file`
 - **Type**: string
-- **Default**: `'filtered_metrics.csv'`
+- **Default**: `bactscout/config/filtered_metrics.csv`
 - **Description**: CSV file with species genome metrics (size, GC%)
-- **Location**: `{bactscout_dbs_path}/{metrics_file}`
+- **Location**: `bactscout/config/filtered_metrics.csv`
 
 #### `sylph_db_url`
 - **Type**: string
@@ -344,7 +342,7 @@ mlst_species:
 
 ```bash
 # Create custom config
-cp bactscout_config.yml my_lenient_config.yml
+cp bactscout/config/bactscout_config.yml my_lenient_config.yml
 
 # Edit thresholds
 nano my_lenient_config.yml
@@ -382,7 +380,7 @@ While command-line threshold overrides aren't supported, you can:
 ```
 bactscout_dbs/
 ├── gtdb-r226-c1000-dbv1.syldb      # Sylph GTDB database
-├── filtered_metrics.csv             # Genome metrics
+├── bactscout/config/filtered_metrics.csv  # Genome metrics
 ├── escherichia_coli/                # MLST database
 │   └── [ARIBA database files]
 ├── salmonella_enterica/
@@ -525,7 +523,7 @@ system_resources:
 
 ```bash
 # Check if file exists
-ls -la bactscout_config.yml
+ls -la bactscout/config/bactscout_config.yml
 
 # Use full path
 pixi run bactscout qc data/ -c /full/path/to/config.yml
@@ -535,7 +533,7 @@ pixi run bactscout qc data/ -c /full/path/to/config.yml
 
 Check file with YAML validator:
 ```bash
-python -c "import yaml; yaml.safe_load(open('bactscout_config.yml'))"
+python -c "import yaml; yaml.safe_load(open('bactscout/config/bactscout_config.yml'))"
 ```
 
 ### "Database not found"
@@ -546,7 +544,7 @@ ls -la bactscout_dbs/
 
 # Should show:
 # gtdb-r226-c1000-dbv1.syldb
-# filtered_metrics.csv
+# bactscout/config/filtered_metrics.csv
 # [species folders]
 ```
 

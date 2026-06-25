@@ -5,6 +5,7 @@ import typer
 
 from bactscout.__version__ import __version__
 from bactscout.collect import collect_sample
+from bactscout.config import DEFAULT_CONFIG, DEFAULT_LONG_CONFIG
 from bactscout.long.collect import collect_sample_long
 from bactscout.long.main import main_long
 from bactscout.long.preflight import preflight_check_long
@@ -32,7 +33,7 @@ def qc(
     ),
     threads: int = typer.Option(4, "--threads", "-t", help="Number of threads to use"),
     config: str = typer.Option(
-        "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
+        DEFAULT_CONFIG, "--config", "-c", help="Path to the configuration file"
     ),
     report_resources: bool = typer.Option(
         False,
@@ -62,7 +63,7 @@ def collect(
         4, "--threads", "-t", help="Number of threads to pass to tools"
     ),
     config: str = typer.Option(
-        "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
+        DEFAULT_CONFIG, "--config", "-c", help="Path to the configuration file"
     ),
     skip_preflight: bool = typer.Option(
         True, "--skip-preflight", help="Skip the preflight checks"
@@ -117,7 +118,7 @@ def summary(
 @app.command()
 def preflight(
     config: str = typer.Option(
-        "bactscout_config.yml", "--config", "-c", help="Path to the configuration file"
+        DEFAULT_CONFIG, "--config", "-c", help="Path to the configuration file"
     ),
 ):
     """Run preflight checks and install/download required databases/tools.
@@ -161,7 +162,7 @@ def long_qc(
     ),
     threads: int = typer.Option(4, "--threads", "-t", help="Number of threads to use"),
     config: str = typer.Option(
-        "bactscout_long_config.yml",
+        DEFAULT_LONG_CONFIG,
         "--config",
         "-c",
         help="Path to the long-read configuration file",
@@ -197,7 +198,7 @@ def long_collect(
         4, "--threads", "-t", help="Number of threads to pass to tools"
     ),
     config: str = typer.Option(
-        "bactscout_long_config.yml",
+        DEFAULT_LONG_CONFIG,
         "--config",
         "-c",
         help="Path to the long-read configuration file",
@@ -247,7 +248,7 @@ def long_summary(
 @long_app.command("preflight")
 def long_preflight(
     config: str = typer.Option(
-        "bactscout_long_config.yml",
+        DEFAULT_LONG_CONFIG,
         "--config",
         "-c",
         help="Path to the long-read configuration file",

@@ -42,7 +42,7 @@ pixi run bactscout collect sample_R1.fastq.gz sample_R2.fastq.gz -c config.yml
 |--------|-------|---------|-------------|
 | `--output` | `-o` | `bactscout_output` | Output directory for results. Results csv will be in `bactscout_output/<sample_name>/` |
 | `--threads` | `-t` | 4 | Number of CPU threads to use |
-| `--config` | `-c` | `bactscout_config.yml` | Configuration file path |
+| `--config` | `-c` | `bactscout/config/bactscout_config.yml` | Configuration file path |
 | `--skip-preflight` | - | True | Skip validation checks (default for `collect`)
 | `--report-resources` | - | False | Track and report thread and memory usage for the sample |
 | `--write-json` | - | False | Write results to JSON file as well |
