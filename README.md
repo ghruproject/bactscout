@@ -56,6 +56,7 @@ pixi run bactscout qc /path/to/fastq/files [OPTIONS]
 - `--output, -o` - Output directory (default: `bactscout_output`)
 - `--threads, -t` - Number of threads (default: 4)
 - `--config, -c` - Config file path (default: `bactscout/config/bactscout_config.yml`)
+- `--database, --db` - Database directory path
 - `--skip-preflight` - Skip preflight checks (not recommended)
 
 **Example:**
@@ -127,6 +128,13 @@ Example:
 docker pull happykhan/bactscout:latest
 docker run --rm -v "$PWD":/data --user "$(id -u):$(id -g)" happykhan/bactscout:latest \
   bactscout qc /data/fastq -o /data/results
+```
+
+To reuse a host database directory, mount it and pass `--database`:
+
+```bash
+docker run --rm -v "$PWD":/data -v /path/to/bactscout_dbs:/db --user "$(id -u):$(id -g)" happykhan/bactscout:latest \
+  bactscout qc /data/fastq -o /data/results --database /db
 ```
 
 

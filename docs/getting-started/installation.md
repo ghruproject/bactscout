@@ -66,6 +66,18 @@ docker run -v /path/to/fastq:/input -v /path/to/output:/output \
   bactscout:latest pixi run bactscout qc /input -o /output
 ```
 
+When building locally, an existing `bactscout_dbs/` directory in the build
+context is copied into the image. The Docker build then runs
+`bactscout preflight --database /app/bactscout_dbs`, which reuses existing
+database files and sets up any missing files.
+
+To use a different database folder from the build context:
+
+```bash
+docker build -t bactscout:latest -f docker/Dockerfile \
+  --build-arg BACTSCOUT_DATABASE_SOURCE=path/to/existing_db .
+```
+
 If you prefer to run BactScout from a **pre-built container**, pull the image from Docker Hub and run it with your data mounted. The official image is published at: [https://hub.docker.com/repository/docker/happykhan/bactscout/general](https://hub.docker.com/repository/docker/happykhan/bactscout/general)
 
 ```bash
@@ -78,6 +90,14 @@ docker run --rm \
 	--user "$(id -u):$(id -g)" \
 	happykhan/bactscout:latest \
 	bactscout qc /data/fastq -o /data/results
+
+# Reuse a database directory mounted from the host
+docker run --rm \
+	--volume "$PWD":/data \
+	--volume /path/to/bactscout_dbs:/db \
+	--user "$(id -u):$(id -g)" \
+	happykhan/bactscout:latest \
+	bactscout qc /data/fastq -o /data/results --database /db
 
 # Show available commands
 docker run --rm happykhan/bactscout:latest bactscout --help
@@ -96,9 +116,15 @@ The sylph database will occupy the most disk space (~4GB). No additional manual 
 
 ```bash
 pixi run bactscout preflight
+# or choose a specific database directory
+pixi run bactscout preflight --database /path/to/bactscout-db
 ```
 
 This command performs all validation checks and downloads necessary databases without running the full QC pipeline. This is useful for ensuring everything is set up correctly before processing large datasets (on infrastructure with limited internet access, etc.)
+
+By default, BactScout reuses `bactscout_dbs/` in a source checkout when that
+directory exists. Otherwise, Pixi/conda installs use the active environment's
+database location. Use `--database` to force a specific directory.
 
 ## Troubleshooting
 

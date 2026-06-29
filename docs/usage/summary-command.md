@@ -19,9 +19,6 @@ pixi run bactscout summary bactscout_output/
 
 # Specify custom output location
 pixi run bactscout summary bactscout_output/ -o final_results/
-
-# Use different configuration
-pixi run bactscout summary bactscout_output/ -c config.yml
 ```
 
 ## Arguments
@@ -35,7 +32,6 @@ pixi run bactscout summary bactscout_output/ -c config.yml
 | Option | Short | Default | Description |
 |--------|-------|---------|-------------|
 | `--output` | `-o` | `bactscout_output` | Location to write `final_summary.csv` |
-| `--config` | `-c` | `bactscout/config/bactscout_config.yml` | Configuration file path |
 
 ## Input Format
 

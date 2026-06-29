@@ -1,20 +1,13 @@
 # Multi-stage Dockerfile for bactscout using pixi
-FROM ghcr.io/prefix-dev/pixi:latest AS builder
+FROM ghcr.io/prefix-dev/pixi:latest AS source
 
-# Set working directory
-WORKDIR /app
-
-# Copy pixi configuration files
-COPY pixi.toml pixi.lock* ./
-
-# Install dependencies using pixi
-RUN pixi install --locked
-
-# Copy the entire application
+ARG BACTSCOUT_DATABASE_SOURCE=bactscout_dbs
+WORKDIR /src
 COPY . .
-
-# Build/pack the environment (optional, for smaller final image)
-# RUN pixi run pixi-pack pack
+RUN mkdir -p /src/bactscout_dbs && \
+    if [ -d "/src/${BACTSCOUT_DATABASE_SOURCE}" ] && [ "${BACTSCOUT_DATABASE_SOURCE}" != "bactscout_dbs" ]; then \
+        cp -a "/src/${BACTSCOUT_DATABASE_SOURCE}/." /src/bactscout_dbs/; \
+    fi
 
 # Final stage
 FROM ghcr.io/prefix-dev/pixi:latest
@@ -26,10 +19,8 @@ LABEL version="0.1.0"
 
 # Set working directory
 WORKDIR /app
-# Create directories for databases and output
-RUN mkdir -p /app/bactscout_dbs /app/bactscout_output
-# Copy database files 
-COPY bactscout_dbs/ /app/bactscout_dbs/
+# Create output directory
+RUN mkdir -p /app/bactscout_output
 # Copy pixi configuration and lock file
 COPY pixi.toml pixi.lock* ./
 
@@ -38,14 +29,13 @@ RUN pixi install --locked
 
 # Copy application code
 COPY bactscout/ ./bactscout/
-
+COPY --from=source /src/bactscout_dbs/ /app/bactscout_dbs/
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Alter bactscout_config.yml to set database paths to /app/bactscout_dbs
-RUN sed -i "s|bactscout_dbs_path: .*|bactscout_dbs_path: '/app/bactscout_dbs'|" bactscout/config/bactscout_config.yml && \
-    sed -i "s|bactscout_dbs_path: .*|bactscout_dbs_path: '/app/bactscout_dbs'|" bactscout/config/bactscout_long_config.yml
+# Reuse database files copied from bactscout_dbs/ and set up any missing files.
+RUN pixi run bactscout preflight --database /app/bactscout_dbs
 
 # Create a bactscout wrapper script in /usr/local/bin
 RUN mkdir -p /usr/local/bin && \

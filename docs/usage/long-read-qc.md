@@ -24,6 +24,13 @@ Run long-read preflight checks:
 pixi run bactscout long preflight
 ```
 
+Use a specific database directory:
+
+```bash
+pixi run bactscout long preflight --database /path/to/bactscout-db
+pixi run bactscout long qc /path/to/fastqs --platform ont_r10 --database /path/to/bactscout-db
+```
+
 Merge per-sample long-read summaries:
 
 ```bash

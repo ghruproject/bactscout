@@ -123,20 +123,14 @@ pixi run bactscout qc data/ -t 3.5 # ❌ Must be integer
 
 **Solution**:
 ```bash
-# Ensure bactscout_dbs directory exists
-ls bactscout_dbs/
+# Set up databases in the default location
+bactscout preflight
 
-# Should contain:
-# - gtdb-r226-c1000-dbv1.syldb
-# - bactscout/config/filtered_metrics.csv
-# - acinetobacter_baumannii/
-# - escherichia_coli/
-# - etc.
+# Or choose a writable database directory
+bactscout preflight --database /path/to/bactscout-db
 
-# If missing, download:
-# Databases auto-download on first run, or manually:
-cd bactscout_dbs/
-# Download from configured URL in bactscout/config/bactscout_config.yml
+# Reuse that path for later runs
+bactscout qc data/ --database /path/to/bactscout-db
 ```
 
 ### "Out of memory" error

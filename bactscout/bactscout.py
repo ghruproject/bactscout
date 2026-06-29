@@ -11,7 +11,7 @@ from bactscout.long.main import main_long
 from bactscout.long.preflight import preflight_check_long
 from bactscout.long.summary import summary_dir_long
 from bactscout.main import main
-from bactscout.preflight import load_config, preflight_check
+from bactscout.preflight import apply_database_destination, load_config, preflight_check
 from bactscout.summary import summary_dir
 from bactscout.util import print_header, print_message
 
@@ -35,6 +35,9 @@ def qc(
     config: str = typer.Option(
         DEFAULT_CONFIG, "--config", "-c", help="Path to the configuration file"
     ),
+    database: str | None = typer.Option(
+        None, "--database", "--db", help="Path to the BactScout database directory"
+    ),
     report_resources: bool = typer.Option(
         False,
         "--report-resources",
@@ -49,6 +52,7 @@ def qc(
         config_file=config,
         skip_preflight=skip_preflight,
         report_resources=report_resources,
+        database=database,
     )
 
 
@@ -64,6 +68,9 @@ def collect(
     ),
     config: str = typer.Option(
         DEFAULT_CONFIG, "--config", "-c", help="Path to the configuration file"
+    ),
+    database: str | None = typer.Option(
+        None, "--database", "--db", help="Path to the BactScout database directory"
     ),
     skip_preflight: bool = typer.Option(
         True, "--skip-preflight", help="Skip the preflight checks"
@@ -89,6 +96,7 @@ def collect(
         skip_preflight,
         report_resources,
         write_json=write_json,
+        database=database,
     )
 
 
@@ -120,6 +128,9 @@ def preflight(
     config: str = typer.Option(
         DEFAULT_CONFIG, "--config", "-c", help="Path to the configuration file"
     ),
+    database: str | None = typer.Option(
+        None, "--database", "--db", help="Path to the BactScout database directory"
+    ),
 ):
     """Run preflight checks and install/download required databases/tools.
 
@@ -128,7 +139,7 @@ def preflight(
     (where configured) downloading/setting up databases.
     """
     try:
-        config_dict = load_config(config)
+        config_dict = apply_database_destination(load_config(config), database)
     except Exception as e:
         print_message(f"Failed to load configuration '{config}': {e}", "error")
         raise typer.Exit(code=2)
@@ -167,6 +178,9 @@ def long_qc(
         "-c",
         help="Path to the long-read configuration file",
     ),
+    database: str | None = typer.Option(
+        None, "--database", "--db", help="Path to the BactScout database directory"
+    ),
     platform: str = typer.Option(
         ..., "--platform", "-p", help="Sequencing platform: ont_r9, ont_r10, pacbio_hifi"
     ),
@@ -185,6 +199,7 @@ def long_qc(
         platform=platform,
         skip_preflight=skip_preflight,
         report_resources=report_resources,
+        database=database,
     )
 
 
@@ -202,6 +217,9 @@ def long_collect(
         "--config",
         "-c",
         help="Path to the long-read configuration file",
+    ),
+    database: str | None = typer.Option(
+        None, "--database", "--db", help="Path to the BactScout database directory"
     ),
     platform: str = typer.Option(
         ..., "--platform", "-p", help="Sequencing platform: ont_r9, ont_r10, pacbio_hifi"
@@ -224,6 +242,7 @@ def long_collect(
         platform,
         skip_preflight,
         report_resources,
+        database=database,
     )
 
 
@@ -253,10 +272,13 @@ def long_preflight(
         "-c",
         help="Path to the long-read configuration file",
     ),
+    database: str | None = typer.Option(
+        None, "--database", "--db", help="Path to the BactScout database directory"
+    ),
 ):
     """Run long-read preflight checks and install/download required databases/tools."""
     try:
-        config_dict = load_config(config)
+        config_dict = apply_database_destination(load_config(config), database)
     except Exception as e:
         print_message(f"Failed to load configuration '{config}': {e}", "error")
         raise typer.Exit(code=2)

@@ -5,11 +5,12 @@ BactScout uses a YAML configuration file to define analysis parameters and thres
 ## Default Configuration
 
 The default `bactscout/config/bactscout_config.yml` is the single source of truth for
-thresholds, database locations, and system requirements. Below is the current
+thresholds, database filenames/URLs, and system requirements. The database
+directory is selected automatically unless `--database` or `bactscout_dbs_path`
+is provided. Below is the current
 configuration shipped with this repository:
 
 ```yaml
-bactscout_dbs_path: 'bactscout_dbs'
 sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
 sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb'
 
@@ -69,7 +70,7 @@ pixi run bactscout qc data/ -c my_config.yml
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `bactscout_dbs_path` | `bactscout_dbs` | Directory for storing reference databases |
+| `bactscout_dbs_path` | Auto-selected | Optional directory override for storing reference databases |
 | `sylph_db` | `gtdb-r226-c1000-dbv1.syldb` | Sylph GTDB database filename |
 | `metrics_file` | `bactscout/config/filtered_metrics.csv` | Species-specific genome size and GC content metrics |
 | `sylph_db_url` | [See config] | URL to download Sylph database if not found |
@@ -91,7 +92,8 @@ bactscout_dbs_path: '/path/to/local/dbs'
 
 Notes and recommendations:
 
-- You can point `sylph_db_url` at any HTTP(S)-accessible `.syldb` file; the `preflight` command will try to download it into `bactscout_dbs_path` when missing.
+- You can point `sylph_db_url` at any HTTP(S)-accessible `.syldb` file; the `preflight` command will try to download it into the selected database directory when missing.
+- You can also choose the database directory on the command line with `--database /path/to/bactscout-db`.
 - Expect larger `.syldb` files to require more disk space (tens to hundreds of GB for very large RefSeq/GTDB builds) and more RAM during profiling. Test on a small subset first to measure performance impact.
 - If you are running BactScout inside containers, ensure the database path is mounted into the container and that permissions allow the process to read the file.
 - If you need the highest sensitivity for taxonomic assignment, pick one of the larger pre-built databases from the Sylph docs, but accept that profiling will take longer.

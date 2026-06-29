@@ -4,7 +4,7 @@ BactScout is a Python-based pipeline for rapid, standardized quality assessment 
 
 ## ✨ Key Features
 
-- 🧭 Command-line interface — a top-level Typer application (entrypoint `bactscout`) provides intuitive subcommands such as `bactscout qc` and `bactscout summarize` for per-sample and batch workflows. The project also exposes a `bactscout` console script for easy execution via `pixi run` or Docker.
+- 🧭 Command-line interface — a top-level Typer application (entrypoint `bactscout`) provides intuitive subcommands such as `bactscout qc` and `bactscout summary` for per-sample and batch workflows. The project also exposes a `bactscout` console script for easy execution via `pixi run` or Docker.
 - 📊 Fastp integration — read-level QC, adapter trimming, mean read length and Q30 calculations, and optional Fastp HTML reports for visual inspection.
 - 🔬 Sylph-based taxonomic profiling — species identification and abundance estimates used to compute species-aware thresholds, contamination percentages, and genome-size-informed coverage estimates.
 - 🛡️ StringMLST support — MLST assignment when a single dominant species is detected, producing sequence type (ST) calls and allelic summaries to aid downstream analyses.

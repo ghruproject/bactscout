@@ -9,7 +9,7 @@ from bactscout.config import DEFAULT_LONG_CONFIG
 from bactscout.long.collect import extract_long_sample_name, run_one_long_sample
 from bactscout.long.preflight import preflight_check_long
 from bactscout.long.summary import summary_dir_long
-from bactscout.preflight import load_config
+from bactscout.preflight import apply_database_destination, load_config
 from bactscout.util import print_header, print_message
 
 
@@ -38,9 +38,10 @@ def main_long(
     skip_preflight: bool = False,
     config_file: str = DEFAULT_LONG_CONFIG,
     report_resources: bool = False,
+    database: str | None = None,
 ):
     """Run the long-read QC pipeline in batch mode."""
-    config = load_config(config_file)
+    config = apply_database_destination(load_config(config_file), database)
     all_ok = preflight_check_long(skip_preflight, config)
     if not all_ok:
         print_message("Preflight checks failed. Exiting.", "error")

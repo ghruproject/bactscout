@@ -13,7 +13,8 @@ BactScout looks for configuration in this order:
 
 ```yaml
 # Database Configuration
-bactscout_dbs_path: 'bactscout_dbs'
+# Optional: override the auto-selected database directory
+# bactscout_dbs_path: '/path/to/bactscout-db'
 sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
 sylph_db_url: 'https://example.com/database.syldb'
 
@@ -43,15 +44,15 @@ system_resources:
 
 #### `bactscout_dbs_path`
 - **Type**: string
-- **Default**: `'bactscout_dbs'`
-- **Description**: Directory path for storing reference databases
+- **Default**: auto-selected
+- **Description**: Optional directory path for storing reference databases
 - **Example**: `'./databases'` or `'/opt/bactscout_dbs'`
 
 #### `sylph_db`
 - **Type**: string
 - **Default**: `'gtdb-r226-c1000-dbv1.syldb'`
 - **Description**: Filename of Sylph GTDB database
-- **Note**: Must exist in `bactscout_dbs_path`
+- **Note**: Must exist in the selected database directory
 
 #### `metrics_file`
 - **Type**: string

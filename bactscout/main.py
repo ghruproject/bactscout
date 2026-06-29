@@ -47,6 +47,7 @@ from rich.progress import (
 
 from bactscout.config import DEFAULT_CONFIG
 from bactscout.preflight import (
+    apply_database_destination,
     load_config,
     preflight_check,
 )
@@ -62,6 +63,7 @@ def main(
     skip_preflight: bool = False,
     config_file: str = DEFAULT_CONFIG,
     report_resources: bool = False,
+    database: str | None = None,
 ):
     """
     Run the BactScout QC pipeline on multiple samples in batch mode.
@@ -100,7 +102,7 @@ def main(
         - Progress shown with rich formatting and spinner
         - Resource usage tracking includes peak thread count and memory consumption per sample
     """
-    config = load_config(config_file)
+    config = apply_database_destination(load_config(config_file), database)
     all_ok = preflight_check(skip_preflight, config)
 
     # Get all sample pairs

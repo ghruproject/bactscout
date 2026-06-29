@@ -34,6 +34,7 @@ requirements:
     - psutil >=7.1.0,<8
     - stringmlst >=0.6.3,<0.7
     - requests >=2.32.5,<3
+    - platformdirs >=4,<5
 
 test:
   imports:
