@@ -1,6 +1,7 @@
 """Single sample collection and processing module."""
 
 from bactscout.preflight import (
+    apply_database_destination,
     load_config,
     preflight_check,
 )
@@ -17,6 +18,7 @@ def collect_sample(
     skip_preflight: bool,
     report_resources: bool = False,
     write_json: bool = False,
+    database: str | None = None,
 ) -> None:
     """
     Process a single sample with paired-end reads.
@@ -35,7 +37,7 @@ def collect_sample(
     Returns:
         None
     """
-    config_dict = load_config(config)
+    config_dict = apply_database_destination(load_config(config), database)
     all_ok = preflight_check(skip_preflight, config_dict)
     if not all_ok:
         print_message("Preflight checks failed. Exiting.", "error")

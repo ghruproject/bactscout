@@ -9,25 +9,32 @@ The long-read workflow is additive: it does not change the existing Illumina com
 Run batch QC on a directory of long-read FASTQ files:
 
 ```bash
-pixi run python bactscout.py long qc /path/to/fastqs --platform ont_r10
+pixi run bactscout long qc /path/to/fastqs --platform ont_r10
 ```
 
 Process a single long-read sample:
 
 ```bash
-pixi run python bactscout.py long collect /path/to/sample.fastq.gz --platform ont_r10
+pixi run bactscout long collect /path/to/sample.fastq.gz --platform ont_r10
 ```
 
 Run long-read preflight checks:
 
 ```bash
-pixi run python bactscout.py long preflight
+pixi run bactscout long preflight
+```
+
+Use a specific database directory:
+
+```bash
+pixi run bactscout long preflight --database /path/to/bactscout-db
+pixi run bactscout long qc /path/to/fastqs --platform ont_r10 --database /path/to/bactscout-db
 ```
 
 Merge per-sample long-read summaries:
 
 ```bash
-pixi run python bactscout.py long summary bactscout_long_output
+pixi run bactscout long summary bactscout_long_output
 ```
 
 ## Inputs
@@ -55,6 +62,6 @@ The long-read workflow uses:
 
 - `nanoq` for read count, total bases, N50, read lengths, and quality summaries
 - Sylph for taxonomy and direct coverage estimates
-- expected genome size from `filtered_metrics.csv` when available
+- expected genome size from `bactscout/config/filtered_metrics.csv` when available
 
 If the expected genome size is missing for the top taxon, BactScout keeps the Sylph coverage estimate, marks the calculated coverage flag as `WARNING`, and records the reason in the summary.

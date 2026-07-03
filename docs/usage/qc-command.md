@@ -29,6 +29,9 @@ pixi run bactscout qc /path/to/samples/ -o /output/directory/
 # Use custom configuration
 pixi run bactscout qc /path/to/samples/ -c custom_config.yml
 
+# Use a specific database directory
+pixi run bactscout qc /path/to/samples/ --database /path/to/bactscout-db
+
 # Skip preflight checks
 pixi run bactscout qc data/ --skip-preflight
 
@@ -48,7 +51,8 @@ pixi run bactscout qc /path/to/samples/ -t 8
 |--------|-------|---------|-------------|
 | `--output` | `-o` | `bactscout_output` | Output directory for results |
 | `--threads` | `-t` | 4 | Number of CPU threads to use |
-| `--config` | `-c` | `bactscout_config.yml` | Configuration file path |
+| `--config` | `-c` | `bactscout/config/bactscout_config.yml` | Configuration file path |
+| `--database` | - | Auto-selected | Database directory path |
 | `--skip-preflight` | - | False | Skip validation checks |
 | `--report-resources` | - | False | Track and report thread and memory usage per sample |
 

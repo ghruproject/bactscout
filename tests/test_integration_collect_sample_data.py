@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from bactscout.collect import collect_sample
+from bactscout.config import DEFAULT_CONFIG
 from tests.util_test import download_fastq_files
 
 # Use a cache directory that persists across test runs
@@ -44,12 +45,6 @@ def test_collect_sample_with_sample_data(tmp_path):
     output_dir = tmp_path / "collect_output"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Path to config file
-    config_file = project_root / "bactscout_config.yml"
-
-    if not config_file.exists():
-        pytest.skip(f"Config file not found at {config_file}")
-
     # Run collect_sample
     try:
         collect_sample(
@@ -57,7 +52,7 @@ def test_collect_sample_with_sample_data(tmp_path):
             read2_file=r2_file,
             output_dir=str(output_dir),
             threads=2,
-            config=str(config_file),
+            config=DEFAULT_CONFIG,
             skip_preflight=False,
             report_resources=False,
         )
@@ -82,8 +77,6 @@ def test_collect_sample_with_cache_data(tmp_path):
     the complete collection workflow.
     """
     r1, r2 = download_fastq_files(CACHE_DIR, R1_FILE, R1_URL, R2_FILE, R2_URL)
-    project_root = Path(__file__).resolve().parent.parent
-    config_file = project_root / "bactscout_config.yml"
     output_dir = tmp_path / "collect_output_cache"
 
     # Run collect_sample
@@ -92,7 +85,7 @@ def test_collect_sample_with_cache_data(tmp_path):
         read2_file=r2,
         output_dir=str(output_dir),
         threads=4,
-        config=str(config_file),
+        config=DEFAULT_CONFIG,
         skip_preflight=False,
         report_resources=True,
     )

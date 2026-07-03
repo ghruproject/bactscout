@@ -6,7 +6,7 @@ import os
 from bactscout.long.evaluate import evaluate_long
 from bactscout.long.nanoq import run_nanoq
 from bactscout.long.preflight import preflight_check_long
-from bactscout.preflight import load_config
+from bactscout.preflight import apply_database_destination, load_config
 from bactscout.resource_monitor import ResourceMonitor
 from bactscout.software.run_sylph import extract_species_from_report
 from bactscout.software.run_sylph import run_command_single as run_sylph_single
@@ -165,9 +165,10 @@ def collect_sample_long(
     platform: str,
     skip_preflight: bool,
     report_resources: bool = False,
+    database: str | None = None,
 ) -> None:
     """Process a single long-read sample."""
-    config_dict = load_config(config)
+    config_dict = apply_database_destination(load_config(config), database)
     all_ok = preflight_check_long(skip_preflight, config_dict)
     if not all_ok:
         print_message("Preflight checks failed. Exiting.", "error")

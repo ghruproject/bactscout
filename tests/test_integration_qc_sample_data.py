@@ -17,7 +17,8 @@ def test_sample_data_qc(tmp_path):
 
     cmd = [
         sys.executable,
-        str(project_root / "bactscout.py"),
+        "-m",
+        "bactscout.cli",
         "qc",
         str(sample_dir),
         "--output",

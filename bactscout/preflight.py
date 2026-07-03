@@ -24,6 +24,7 @@ import urllib.request
 import psutil
 import yaml  # Ensure PyYAML is installed in the environment
 
+from bactscout.config import default_database_destination
 from bactscout.software.run_stringmlst import get_command as get_mlst_command
 from bactscout.util import print_header, print_message
 
@@ -37,6 +38,15 @@ def load_config(config_path) -> dict[str, str]:
 
     with open(config_path, encoding="utf-8") as f:
         config_dict = yaml.safe_load(f)
+    apply_database_destination(config_dict)
+    return config_dict
+
+
+def apply_database_destination(config_dict: dict, database: str | None = None) -> dict:
+    if database is not None:
+        config_dict["bactscout_dbs_path"] = str(database)
+    else:
+        config_dict.setdefault("bactscout_dbs_path", str(default_database_destination()))
     return config_dict
 
 
@@ -79,7 +89,18 @@ def check_databases(config_dict) -> bool:
     """
     print_message("Checking required databases...", "info")
     db_path = config_dict.get("bactscout_dbs_path", "")
-    os.makedirs(db_path, exist_ok=True)
+    try:
+        os.makedirs(db_path, exist_ok=True)
+    except OSError as e:
+        print_message(
+            f"No database is found, provide database with --database /path/to/bactscout-db. "
+            f"Cannot create database directory '{db_path}': {e}. "
+            "If it is not set up, you can do it using: bactscout preflight. "
+            "Or to a specific folder with: "
+            "bactscout preflight --database /path/to/bactscout-db.",
+            "error",
+        )
+        return False
     print_message("Checking Sylph...", "info")
     sylph_db_url = config_dict.get(
         "sylph_db_url",
@@ -89,6 +110,9 @@ def check_databases(config_dict) -> bool:
         db_path, config_dict.get("sylph_db", "gtdb-r226-c1000-dbv1.syldb")
     )
     get_sylph_db(sylph_db_file, sylph_db_url)
+    if not os.path.exists(sylph_db_file):
+        print_message(f"Sylph database missing: {sylph_db_file}", "error")
+        return False
     # For each species in mlst_species, check database availability. Otherwise download and format for mlst.
     for species_name, species_db_name in config_dict.get("mlst_species", {}).items():
         if not db_path:

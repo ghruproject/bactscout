@@ -198,9 +198,8 @@ bactscout/
 ├── thread.py            # Sample processing
 ├── preflight.py         # Input validation
 ├── util.py              # Utilities
-└── summary.py           # Report generation
-
-bactscout.py             # CLI entry point
+├── summary.py           # Report generation
+└── bactscout.py         # CLI entry point
 
 tests/
 ├── test_fastp.py        # Fastp extraction tests (56)

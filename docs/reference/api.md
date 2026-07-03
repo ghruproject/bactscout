@@ -8,7 +8,7 @@ This page documents the BactScout Python API for programmatic use.
 
 Core pipeline functions for batch processing.
 
-#### `main(input_dir, output_dir, threads, config, skip_preflight)`
+#### `main(input_dir, output_dir, threads, config, skip_preflight, database)`
 
 Run batch quality control analysis on all samples in a directory.
 
@@ -16,8 +16,9 @@ Run batch quality control analysis on all samples in a directory.
 - `input_dir` (Path | str): Directory containing FASTQ files
 - `output_dir` (Path | str, optional): Output directory (default: "bactscout_output")
 - `threads` (int, optional): Number of threads (default: 2)
-- `config` (Path | str, optional): Config file path (default: "bactscout_config.yml")
+- `config` (Path | str, optional): Config file path (default: "bactscout/config/bactscout_config.yml")
 - `skip_preflight` (bool, optional): Skip validation checks (default: False)
+- `database` (Path | str, optional): Database directory path (default: auto-selected)
 
 **Returns:**
 - None
@@ -34,7 +35,8 @@ main(
     input_dir="data/samples/",
     output_dir="results/",
     threads=4,
-    skip_preflight=False
+    skip_preflight=False,
+    database="/path/to/bactscout-db",
 )
 ```
 
@@ -90,7 +92,7 @@ from bactscout.thread import run_one_sample
 import yaml
 
 # Load config
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Process sample
@@ -112,31 +114,23 @@ print(f"Species: {results['species']}")
 
 Input validation and system checks.
 
-#### `run_preflight_checks(input_dir, config, skip)`
+#### `preflight_check(skip_preflight, config_dict)`
 
-Validate inputs before analysis.
+Run system, software, and database checks before analysis.
 
 **Parameters:**
-- `input_dir` (Path | str): Directory to validate
-- `config` (dict): Configuration dictionary
-- `skip` (bool): Skip checks if True
+- `skip_preflight` (bool): Skip checks if True
+- `config_dict` (dict): Configuration dictionary
 
 **Returns:**
 - bool: True if all checks pass
 
-**Raises:**
-- `ValueError`: If validation fails
-- `FileNotFoundError`: If required databases missing
-
 **Example:**
 ```python
-from bactscout.preflight import run_preflight_checks
+from bactscout.preflight import load_config, preflight_check
 
-is_valid = run_preflight_checks(
-    input_dir="data/",
-    config=config,
-    skip=False
-)
+config = load_config("bactscout/config/bactscout_config.yml")
+is_valid = preflight_check(False, config)
 
 if is_valid:
     print("✓ All checks passed")
@@ -214,27 +208,22 @@ print_header("Per-Sample Analysis", level=2)
 
 Report generation and aggregation.
 
-#### `generate_summary(input_dir, output_dir, config)`
+#### `summary_dir(data_dir, output_file)`
 
 Generate consolidated summary from per-sample results.
 
 **Parameters:**
-- `input_dir` (Path | str): Directory with sample results
-- `output_dir` (Path | str): Output directory
-- `config` (dict): Configuration dictionary
+- `data_dir` (Path | str): Directory with sample results
+- `output_file` (Path | str): Path to write the merged summary CSV
 
 **Returns:**
 - None (writes final_summary.csv)
 
 **Example:**
 ```python
-from bactscout.summary import generate_summary
+from bactscout.summary import summary_dir
 
-generate_summary(
-    input_dir="bactscout_output/",
-    output_dir="bactscout_output/",
-    config=config
-)
+summary_dir("bactscout_output/", "bactscout_output/final_summary.csv")
 
 print("Summary written to: bactscout_output/final_summary.csv")
 ```
@@ -245,10 +234,10 @@ print("Summary written to: bactscout_output/final_summary.csv")
 
 ```python
 {
-    # Database paths
-    "bactscout_dbs_path": "bactscout_dbs",
+    # Optional database path override
+    "bactscout_dbs_path": "/path/to/bactscout-db",
     "sylph_db": "gtdb-r226-c1000-dbv1.syldb",
-    "metrics_file": "filtered_metrics.csv",
+    "metrics_file": "bactscout/config/filtered_metrics.csv",
     
     # QC thresholds
     "coverage_threshold": 30,
@@ -299,7 +288,7 @@ from bactscout.main import main
 import yaml
 
 # Load configuration
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Run batch analysis
@@ -323,7 +312,7 @@ from bactscout.util import extract_sample_name
 import yaml
 
 # Load configuration
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Process single sample
@@ -379,7 +368,7 @@ from bactscout.util import extract_sample_name
 import yaml
 
 # Load config
-with open("bactscout_config.yml") as f:
+with open("bactscout/config/bactscout_config.yml") as f:
     config = yaml.safe_load(f)
 
 # Find all samples

@@ -128,7 +128,7 @@ process collect_sample {
     ${read2} \
     --output . \
     --threads ${params.threads} \
-    --config /app/bactscout_config.yml 2>&1
+    --config /app/bactscout/config/bactscout_config.yml 2>&1
 
   """
 }

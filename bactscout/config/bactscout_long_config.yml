@@ -1,7 +1,5 @@
-bactscout_dbs_path: 'bactscout_dbs'
 sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
 sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.syldb'
-metrics_file: 'filtered_metrics.csv'
 
 coverage_warn_threshold: 30
 coverage_fail_threshold: 20

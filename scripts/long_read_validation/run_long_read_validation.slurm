@@ -32,7 +32,7 @@ cat > "$VALIDATION_CONFIG" <<EOF
 bactscout_dbs_path: '$DB_DIR'
 sylph_db: 'validation_db.syldb'
 sylph_db_url: 'unused-for-validation'
-metrics_file: '$ROOT_DIR/filtered_metrics.csv'
+metrics_file: '$ROOT_DIR/bactscout/config/filtered_metrics.csv'
 coverage_warn_threshold: 30
 coverage_fail_threshold: 20
 contamination_warn_threshold: 10
@@ -54,7 +54,7 @@ system_resources:
   memory: 4.GB
 EOF
 
-pixi run python bactscout.py long preflight --config "$VALIDATION_CONFIG"
+pixi run bactscout long preflight --config "$VALIDATION_CONFIG"
 
 GOOD_KP="$SIM_DIR/kleb_good.fastq.gz"
 BAD_KP="$SIM_DIR/kleb_bad.fastq.gz"
@@ -105,11 +105,11 @@ GOOD_ECOLI_BASE="$SIM_DIR/ecoli_good_base.fastq.gz"
 { for _i in $(seq 1 36); do cat "$GOOD_KP_BASE"; done; for _i in $(seq 1 4); do cat "$GOOD_ECOLI_BASE"; done; } > "$MIX_90"
 { for _i in $(seq 1 32); do cat "$GOOD_KP_BASE"; done; for _i in $(seq 1 8); do cat "$GOOD_ECOLI_BASE"; done; } > "$MIX_80"
 
-pixi run python bactscout.py long collect "$GOOD_KP" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
-pixi run python bactscout.py long collect "$BAD_KP" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
-pixi run python bactscout.py long collect "$MIX_90" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
-pixi run python bactscout.py long collect "$MIX_80" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
+pixi run bactscout long collect "$GOOD_KP" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
+pixi run bactscout long collect "$BAD_KP" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
+pixi run bactscout long collect "$MIX_90" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
+pixi run bactscout long collect "$MIX_80" --platform ont_r10 --output "$OUT_DIR" --threads 4 --config "$VALIDATION_CONFIG" --skip-preflight
 
-pixi run python bactscout.py long summary "$OUT_DIR" --output "$OUT_DIR"
+pixi run bactscout long summary "$OUT_DIR" --output "$OUT_DIR"
 
 echo "Validation outputs written to $OUT_DIR"

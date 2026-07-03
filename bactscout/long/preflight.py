@@ -26,7 +26,18 @@ def check_databases_long(config_dict) -> bool:
     """Verify only the databases required for long-read QC."""
     print_message("Checking required databases...", "info")
     db_path = config_dict.get("bactscout_dbs_path", "")
-    os.makedirs(db_path, exist_ok=True)
+    try:
+        os.makedirs(db_path, exist_ok=True)
+    except OSError as e:
+        print_message(
+            f"No database is found, provide database with --database /path/to/bactscout-db. "
+            f"Cannot create database directory '{db_path}': {e}. "
+            "If it is not set up, you can do it using: bactscout preflight. "
+            "Or to a specific folder with: "
+            "bactscout preflight --database /path/to/bactscout-db.",
+            "error",
+        )
+        return False
     print_message("Checking Sylph...", "info")
     sylph_db_url = config_dict.get(
         "sylph_db_url",
