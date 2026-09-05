@@ -16,7 +16,7 @@ Full user documentation, configuration reference, and examples are available at:
 
 https://ghruproject.github.io/bactscout/
 
-Latest release: `v1.3.0` adds an additive long-read QC workflow for ONT and PacBio HiFi inputs, with separate long-read summaries, long-read preflight checks, and validated Slurm-based test coverage.
+Latest release: `v1.4.1` corrects Sylph-based contamination assessment so unclassified sequence is not mistaken for an additional species.
 
 ## ✨ Features
 
@@ -28,12 +28,10 @@ Latest release: `v1.3.0` adds an additive long-read QC workflow for ONT and PacB
   - Two‑tier thresholds (WARN / FAIL) are configurable so borderline samples are flagged for review rather than auto‑rejected
   - Full list of reported fields and per‑sample outputs: https://ghruproject.github.io/bactscout/usage/output-format/
 
-- New in `v1.3.0`
-  - `bactscout long qc`, `bactscout long collect`, `bactscout long summary`, and `bactscout long preflight`
-  - Single-end Sylph execution support for long-read inputs
-  - Long-read configuration via `bactscout/config/bactscout_long_config.yml`
-  - Batch-level output in `final_summary_long.csv`
-  - Validation assets and documentation for Slurm-based long-read testing
+- New in `v1.4.1`
+  - Contamination uses Sylph's taxonomic abundance across detected taxa
+  - Unclassified sequence no longer causes false contamination failures
+  - Duplicate reference rows for the same species are combined before QC
 
 - PASS / WARNING / FAIL logic
   - Any critical metric FAILED (Q30, read length, contamination, or GC deviation) → overall FAIL

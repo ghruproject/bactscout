@@ -15,7 +15,7 @@ FROM ghcr.io/prefix-dev/pixi:latest
 # Set metadata
 LABEL maintainer="Nabil-Fareed Alikhan <nabil@happykhan.com>"
 LABEL description="BactScout - Bacterial genome QC and analysis tool"
-LABEL version="0.1.0"
+LABEL version="1.4.1"
 
 # Set working directory
 WORKDIR /app

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-05
+- Fixed false contamination failures for clean single-species samples by using Sylph's taxonomic abundance rather than treating unclassified sequence as another species.
+- Collapsed multiple Sylph reference rows for the same species before calculating species purity.
+
 ## [1.3.0] - 2026-06-02
 - Added a new `bactscout long` command group with `qc`, `collect`, `summary`, and `preflight` subcommands.
 - Added long-read QC using `nanoq` for ONT and PacBio HiFi reads.
