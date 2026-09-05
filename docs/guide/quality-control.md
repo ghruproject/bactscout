@@ -53,7 +53,7 @@ Summary of primary metrics and the configuration keys used by the code:
     - Config keys: `read_length_warn_threshold` and `read_length_fail_threshold` (bp).
 
 - **Contamination (species purity):**
-    - Computed as 100 - (top species abundance). The code stores species abundances and evaluates purity.
+    - Computed as 100 - (top taxonomic abundance). BactScout uses Sylph's `Taxonomic_abundance`, which is normalised across detected taxa; the unclassified fraction in `Sequence_abundance` is not treated as contamination.
     - Status stored in `contamination_status` and messages in `contamination_message`.
     - Config keys: `contamination_warn_threshold` and `contamination_fail_threshold` (percent secondary species tolerated). The code treats these as percentages of non-top-species allowed; e.g. `contamination_fail_threshold: 10` means top species purity must be >90% to PASS.
     - The proportion of unassigned reads is included, this means that a sample with 75% Escherichia coli, 15% other species, and 10% unassigned would have 25% contamination.

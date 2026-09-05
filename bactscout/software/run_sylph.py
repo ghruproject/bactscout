@@ -92,7 +92,7 @@ def extract_species_from_report(sylph_report):
 
     Parses the Sylph output file to extract:
     - Species names (from contig info)
-    - Sequence abundance percentages
+    - Taxonomic abundance percentages
     - Coverage estimates
     - Genome file paths (from Genome_file column)
 
@@ -104,7 +104,7 @@ def extract_species_from_report(sylph_report):
             - species_abundance (list): List of tuples (species_name, abundance, coverage)
             - genome_file_path (str): Path to reference genome file (top species), or empty string
     """
-    species_abundance = []
+    species_matches = []
     genome_file_path = ""
 
     try:
@@ -126,18 +126,52 @@ def extract_species_from_report(sylph_report):
                     if len(words) >= 3:
                         genus_species = f"{words[1]} {words[2]}"
                         try:
-                            abundance = float(parts[3])  # Sequence_abundance column
+                            # Taxonomic_abundance is normalised across detected
+                            # taxa. Sequence_abundance also includes the
+                            # unclassified fraction, so using it as purity can
+                            # falsely mark a single-species sample contaminated.
+                            abundance = float(parts[2])
                         except (ValueError, IndexError):
                             abundance = 0.0
                         try:
                             coverage = float(parts[5])  # Coverage column
                         except (ValueError, IndexError):
                             coverage = 0.0
-                        species_abundance.append((genus_species, abundance, coverage))
+                        species_matches.append((genus_species, abundance, coverage))
     except FileNotFoundError:
         print(f"Report file {sylph_report} not found.")
 
-    # Sort by abundance descending
+    # A Sylph database can contain more than one reference genome for the same
+    # species. Treating each reference row as a separate taxon duplicates the
+    # species in BactScout's output and makes a pure isolate look contaminated.
+    # Sum the assigned abundance for matching species, but retain the coverage
+    # estimate from its most abundant reference rather than inflating coverage
+    # by adding estimates from closely related references.
+    species_by_name = {}
+    for species_name, abundance, coverage in species_matches:
+        if species_name in species_by_name:
+            total_abundance, representative_coverage, representative_abundance = (
+                species_by_name[species_name]
+            )
+            if abundance > representative_abundance:
+                representative_coverage = coverage
+                representative_abundance = abundance
+            species_by_name[species_name] = (
+                total_abundance + abundance,
+                representative_coverage,
+                representative_abundance,
+            )
+        else:
+            species_by_name[species_name] = (abundance, coverage, abundance)
+
+    species_abundance = [
+        (species_name, abundance, coverage)
+        for species_name, (
+            abundance,
+            coverage,
+            _representative_abundance,
+        ) in species_by_name.items()
+    ]
     species_abundance.sort(key=lambda x: x[1], reverse=True)
     return species_abundance, genome_file_path
 

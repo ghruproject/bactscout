@@ -1,7 +1,55 @@
 import subprocess
 from unittest.mock import MagicMock, mock_open, patch
 
-from bactscout.software.run_sylph import get_command, run_command_single
+from bactscout.software.run_sylph import (
+    extract_species_from_report,
+    get_command,
+    run_command_single,
+)
+from bactscout.thread import handle_species_coverage
+
+
+SYLPH_HEADER = "\t".join(
+    [
+        "Sample_file",
+        "Genome_file",
+        "Taxonomic_abundance",
+        "Sequence_abundance",
+        "Adjusted_ANI",
+        "True_cov",
+        "ANI_5-95_percentile",
+        "Eff_lambda",
+        "Lambda_5-95_percentile",
+        "Median_cov",
+        "Mean_cov_geq1",
+        "Containment_ind",
+        "Naive_ANI",
+        "kmers_reassigned",
+        "Contig_name",
+    ]
+)
+
+
+def sylph_row(genome, taxonomic_abundance, sequence_abundance, coverage, contig_name):
+    return "\t".join(
+        [
+            "sample",
+            genome,
+            str(taxonomic_abundance),
+            str(sequence_abundance),
+            "99",
+            str(coverage),
+            "NA-NA",
+            "HIGH",
+            "NA-NA",
+            "0",
+            "0",
+            "0/0",
+            "99",
+            "0",
+            contig_name,
+        ]
+    )
 
 
 def test_get_command_sylph_in_path():
@@ -33,6 +81,78 @@ def test_get_command_returns_list():
     result = get_command()
     assert isinstance(result, list)
     assert len(result) > 0
+
+
+def test_extract_species_collapses_duplicate_reference_rows(tmp_path):
+    report = tmp_path / "sylph_report.txt"
+    report.write_text(
+        "\n".join(
+            [
+                SYLPH_HEADER,
+                sylph_row(
+                    "GCF_001.fna.gz",
+                    39.0,
+                    30.0,
+                    18.0,
+                    "contig1 Escherichia coli strain A",
+                ),
+                sylph_row(
+                    "GCF_002.fna.gz",
+                    58.5,
+                    45.0,
+                    24.0,
+                    "contig2 Escherichia coli strain B",
+                ),
+                sylph_row(
+                    "GCF_003.fna.gz",
+                    2.5,
+                    2.0,
+                    1.0,
+                    "contig3 Klebsiella pneumoniae strain C",
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    species_abundance, genome_file_path = extract_species_from_report(report)
+
+    assert species_abundance == [
+        ("Escherichia coli", 97.5, 24.0),
+        ("Klebsiella pneumoniae", 2.5, 1.0),
+    ]
+    assert genome_file_path == "GCF_001.fna.gz"
+
+    results, species = handle_species_coverage(species_abundance, {}, {})
+
+    assert species == ["Escherichia coli", "Klebsiella pneumoniae"]
+    assert results["contamination_status"] == "PASSED"
+
+
+def test_single_species_uses_taxonomic_abundance_for_contamination(tmp_path):
+    report = tmp_path / "sylph_report.txt"
+    report.write_text(
+        "\n".join(
+            [
+                SYLPH_HEADER,
+                sylph_row(
+                    "GCF_004.fna.gz",
+                    100.0,
+                    80.0,
+                    35.0,
+                    "contig4 Escherichia coli strain D",
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    species_abundance, _genome_file_path = extract_species_from_report(report)
+    results, species = handle_species_coverage(species_abundance, {}, {})
+
+    assert species_abundance == [("Escherichia coli", 100.0, 35.0)]
+    assert species == ["Escherichia coli"]
+    assert results["contamination_status"] == "PASSED"
 
 
 def test_run_command_single_success(tmp_path):
