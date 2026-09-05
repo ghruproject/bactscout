@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.4.1] - 2026-09-05
 - Fixed false contamination failures for clean single-species samples by using Sylph's taxonomic abundance rather than treating unclassified sequence as another species.
 - Collapsed multiple Sylph reference rows for the same species before calculating species purity.
+- Fixed the Docker image build by making BactScout's package metadata available before running preflight checks.
 
 ## [1.3.0] - 2026-06-02
 - Added a new `bactscout long` command group with `qc`, `collect`, `summary`, and `preflight` subcommands.

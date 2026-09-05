@@ -21,8 +21,8 @@ LABEL version="1.4.1"
 WORKDIR /app
 # Create output directory
 RUN mkdir -p /app/bactscout_output
-# Copy pixi configuration and lock file
-COPY pixi.toml pixi.lock* ./
+# Copy dependency and package metadata
+COPY pixi.toml pixi.lock* pyproject.toml README.md ./
 
 # Install dependencies
 RUN pixi install --locked
