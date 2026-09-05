@@ -92,7 +92,7 @@ def extract_species_from_report(sylph_report):
 
     Parses the Sylph output file to extract:
     - Species names (from contig info)
-    - Sequence abundance percentages
+    - Taxonomic abundance percentages
     - Coverage estimates
     - Genome file paths (from Genome_file column)
 
@@ -126,7 +126,11 @@ def extract_species_from_report(sylph_report):
                     if len(words) >= 3:
                         genus_species = f"{words[1]} {words[2]}"
                         try:
-                            abundance = float(parts[3])  # Sequence_abundance column
+                            # Taxonomic_abundance is normalised across detected
+                            # taxa. Sequence_abundance also includes the
+                            # unclassified fraction, so using it as purity can
+                            # falsely mark a single-species sample contaminated.
+                            abundance = float(parts[2])
                         except (ValueError, IndexError):
                             abundance = 0.0
                         try:

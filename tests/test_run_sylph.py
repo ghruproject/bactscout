@@ -30,13 +30,13 @@ SYLPH_HEADER = "\t".join(
 )
 
 
-def sylph_row(genome, abundance, coverage, contig_name):
+def sylph_row(genome, taxonomic_abundance, sequence_abundance, coverage, contig_name):
     return "\t".join(
         [
             "sample",
             genome,
-            "0",
-            str(abundance),
+            str(taxonomic_abundance),
+            str(sequence_abundance),
             "99",
             str(coverage),
             "NA-NA",
@@ -92,18 +92,21 @@ def test_extract_species_collapses_duplicate_reference_rows(tmp_path):
                 sylph_row(
                     "GCF_001.fna.gz",
                     39.0,
+                    30.0,
                     18.0,
                     "contig1 Escherichia coli strain A",
                 ),
                 sylph_row(
                     "GCF_002.fna.gz",
                     58.5,
+                    45.0,
                     24.0,
                     "contig2 Escherichia coli strain B",
                 ),
                 sylph_row(
                     "GCF_003.fna.gz",
                     2.5,
+                    2.0,
                     1.0,
                     "contig3 Klebsiella pneumoniae strain C",
                 ),
@@ -123,6 +126,32 @@ def test_extract_species_collapses_duplicate_reference_rows(tmp_path):
     results, species = handle_species_coverage(species_abundance, {}, {})
 
     assert species == ["Escherichia coli", "Klebsiella pneumoniae"]
+    assert results["contamination_status"] == "PASSED"
+
+
+def test_single_species_uses_taxonomic_abundance_for_contamination(tmp_path):
+    report = tmp_path / "sylph_report.txt"
+    report.write_text(
+        "\n".join(
+            [
+                SYLPH_HEADER,
+                sylph_row(
+                    "GCF_004.fna.gz",
+                    100.0,
+                    80.0,
+                    35.0,
+                    "contig4 Escherichia coli strain D",
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    species_abundance, _genome_file_path = extract_species_from_report(report)
+    results, species = handle_species_coverage(species_abundance, {}, {})
+
+    assert species_abundance == [("Escherichia coli", 100.0, 35.0)]
+    assert species == ["Escherichia coli"]
     assert results["contamination_status"] == "PASSED"
 
 
