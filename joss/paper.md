@@ -16,7 +16,7 @@ authors:
     affiliation: "3,4"
   - name: Natacha Couto
     orcid: 0000-0002-9152-5464
-    affiliation: "1,2,4"
+    affiliation: "5,6"
   - name: GHRU2 Project Contributors
     affiliation: 4
   - name: David M Aanensen
@@ -31,6 +31,10 @@ affiliations:
     name: Central Research Laboratory, KIMS, Bengaluru, India
   - index: 4
     name: NIHR Global Health Research Unit on Genomics and enabling data for the Surveillance of AMR
+  - index: 5
+    name: Instituto de Microbiologia, Faculdade de Medicina, Universidade de Lisboa, Lisbon, PT
+  - index: 6
+    name: Cardiff Metropolitan University, Cardiff, UK
 date: 3 November 2025
 bibliography: paper.bib
 ---
