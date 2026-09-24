@@ -32,17 +32,28 @@ def evaluate_long(stats, cov_calc, cov_sylph, contamination, cfg, platform):
         cfg["contamination_fail_threshold"],
         "max",
     )
-    flag_coverage_sylph = _band(
-        cov_sylph,
-        cfg["coverage_warn_threshold"],
-        cfg["coverage_fail_threshold"],
-        "min",
-    )
+    if cov_sylph is None:
+        flag_coverage_sylph = "FAILED"
+    else:
+        flag_coverage_sylph = _band(
+            cov_sylph,
+            cfg["coverage_warn_threshold"],
+            cfg["coverage_fail_threshold"],
+            "min",
+        )
 
     if cov_calc is None:
         flag_coverage_calc = "WARNING"
-        reasons.append("Expected genome size unavailable; using Sylph coverage only")
-        flag_coverage = "FAILED" if flag_coverage_sylph == "FAILED" else "WARNING"
+        if cov_sylph is None:
+            reasons.append(
+                "No coverage estimate available; expected genome size and Sylph coverage unavailable"
+            )
+            flag_coverage = "FAILED"
+        else:
+            reasons.append(
+                "Expected genome size unavailable; using Sylph coverage only"
+            )
+            flag_coverage = "FAILED" if flag_coverage_sylph == "FAILED" else "WARNING"
     else:
         flag_coverage_calc = _band(
             cov_calc,
@@ -70,7 +81,9 @@ def evaluate_long(stats, cov_calc, cov_sylph, contamination, cfg, platform):
     elif flag_n50 == "FAILED":
         reasons.append("Read N50 below minimum threshold")
 
-    if flag_contam == "WARNING":
+    if contamination is None:
+        reasons.append("Contamination unavailable because no taxon was detected")
+    elif flag_contam == "WARNING":
         reasons.append("Secondary taxa abundance above warning threshold")
     elif flag_contam == "FAILED":
         reasons.append("Secondary taxa abundance above failure threshold")
@@ -80,7 +93,7 @@ def evaluate_long(stats, cov_calc, cov_sylph, contamination, cfg, platform):
             reasons.append("Coverage below recommended threshold")
         elif flag_coverage == "FAILED":
             reasons.append("Coverage below minimum threshold")
-    elif flag_coverage_sylph == "FAILED":
+    elif cov_sylph is not None and flag_coverage_sylph == "FAILED":
         reasons.append("Sylph coverage below minimum threshold")
 
     critical_flags = [flag_quality, flag_n50, flag_coverage, flag_contam]

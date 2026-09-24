@@ -47,9 +47,16 @@ genome sequencing quality control</article-title>
 <surname>Couto</surname>
 <given-names>Natacha</given-names>
 </name>
-<xref ref-type="aff" rid="aff-1"/>
-<xref ref-type="aff" rid="aff-2"/>
+<xref ref-type="aff" rid="aff-5"/>
+<xref ref-type="aff" rid="aff-6"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
+<surname>Gayeta</surname>
+<given-names>June</given-names>
+</name>
 <xref ref-type="aff" rid="aff-4"/>
+<xref ref-type="aff" rid="aff-7"/>
 </contrib>
 <contrib contrib-type="author">
 <name>
@@ -92,6 +99,23 @@ India</institution>
 data for the Surveillance of AMR</institution>
 </institution-wrap>
 </aff>
+<aff id="aff-5">
+<institution-wrap>
+<institution>Instituto de Microbiologia, Faculdade de Medicina,
+Universidade de Lisboa, Lisbon, PT</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-6">
+<institution-wrap>
+<institution>Cardiff Metropolitan University, Cardiff, UK</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-7">
+<institution-wrap>
+<institution>Research Institute for Tropical Medicine, Department of
+Health, Muntinlupa City, Philippines</institution>
+</institution-wrap>
+</aff>
 </contrib-group>
 <pub-date date-type="pub" publication-format="electronic" iso-8601-date="2025-11-03">
 <day>3</day>
@@ -127,15 +151,16 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <sec id="summary">
   <title>Summary</title>
   <p>BactScout is a Python-based pipeline for rapid, standardized
-  quality assessment and taxonomic profiling of sequencing data from
-  cultured bacterial isolates. It integrates tools like Fastp for read
-  quality control, Sylph for species-level taxonomic profiling, and
-  StringMLST for multi-locus sequence typing into a single, reproducible
-  workflow. Designed for microbiologists and bioinformaticians working
-  with large-scale bacterial genome data, BactScout provides
-  interpretable quality metrics across read quality, species purity, GC
-  content, and strain typing. These outputs support downstream
-  applications such as genome assembly, resistance prediction, and
+  quality assessment and taxonomic profiling of raw read data from
+  sequencing cultured bacterial isolates. It integrates tools like Fastp
+  for short-read quality control, Nanoq for long-read quality control,
+  Sylph for species-level taxonomic profiling, and StringMLST for
+  multi-locus sequence typing into a single, reproducible workflow.
+  Designed for scientists working with large-scale bacterial genome
+  data, BactScout provides interpretable quality metrics across read
+  quality, species purity, GC content, long-read yield and N50, and
+  strain typing. These outputs support downstream applications such as
+  genome assembly, resistance prediction, mapping, variant calling, and
   phylogenetic analysis. The pipeline features a modular and extensible
   architecture with configurable quality thresholds, parallel sample
   processing, and detailed per-sample and batch-level reporting.</p>
@@ -150,8 +175,8 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <title>Statement of need</title>
   <p>Quality assessment of bacterial sequencing data is a critical and
   often under-standardized step in genomic analysis pipelines,
-  particularly for applications requiring high-confidence genome
-  assemblies. Common challenges include contamination, low sequencing
+  particularly for applications requiring high-confidence downstream
+  analysis. Common challenges include contamination, low sequencing
   yield, poor read quality, and variable fragment lengths. While
   existing tools can report these metrics, interpreting their biological
   relevance typically requires manual assessment that depends on the
@@ -182,8 +207,8 @@ a Creative Commons Attribution 4.0 International License (CC BY
   automated screening step to identify high-quality samples suitable for
   deeper analyses, complementing more comprehensive assembly evaluation
   pipelines. BactScout was developed to meet the practical needs of
-  bioinformaticians and has been successfully deployed within the Global
-  Health Research Unit (GHRU) on Genomic Surveillance of Antimicrobial
+  scientists and has been successfully deployed within the Global Health
+  Research Unit (GHRU) on Genomic Surveillance of Antimicrobial
   Resistance, demonstrating its robustness and scalability in
   high-throughput laboratory environments.</p>
 </sec>
@@ -192,7 +217,9 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <p>BactScout automates post-sequencing quality control by integrating
   <italic>Fastp</italic>
   (<xref alt="Chen et al., 2018" rid="ref-chen2018fastp" ref-type="bibr">Chen
-  et al., 2018</xref>), <italic>Sylph</italic>
+  et al., 2018</xref>), <italic>Nanoq</italic>
+  (<xref alt="Steinig &amp; Coin, 2022" rid="ref-steinig2022nanoq" ref-type="bibr">Steinig
+  &amp; Coin, 2022</xref>), <italic>Sylph</italic>
   (<xref alt="Unckless et al., 2023" rid="ref-unckless2023sylph" ref-type="bibr">Unckless
   et al., 2023</xref>), and <italic>StringMLST</italic>
   (<xref alt="Datta et al., 2016" rid="ref-datta2016stringmlst" ref-type="bibr">Datta
@@ -215,18 +242,22 @@ a Creative Commons Attribution 4.0 International License (CC BY
   arrays, or GNU Parallel, ensuring consistent execution from laptops to
   HPC environments. The repository includes manifests and container
   recipes to facilitate reproducible builds.</p>
-  <p>Runtime behavior is configured through a single YAML file defining
-  database paths, defaults, and quality thresholds. A consistent
-  two-tier WARN/FAIL model allows users to adjust sensitivity to their
-  context (e.g., stricter for clinical pipelines, relaxed for
-  research).Each run generates per-sample directories containing
-  structured CSV and JSON summaries, tool logs, and reports. The
-  summaries include stable, well-documented field names for easy
-  integration into LIMS or dashboards. A <monospace>summary</monospace>
-  command aggregates all per-sample outputs into a batch-level report
-  (<monospace>final_summary.csv</monospace>). The typical runtime for a
-  2 million read sample is 30-60 seconds with less than 8 GB RAM on one
-  thread, scaling linearly with sample number.</p>
+  <p>Runtime behavior is configured through YAML files defining database
+  paths, defaults, and quality thresholds. A consistent two-tier
+  WARN/FAIL model allows users to adjust sensitivity to their context
+  (e.g., stricter for clinical pipelines, relaxed for research). The
+  short-read and long-read workflows are parallel command paths with
+  separate output schemas, allowing long-read QC to be added without
+  changing the established Illumina interface. Each run generates
+  per-sample directories containing structured CSV summaries, tool logs,
+  and reports. The summaries include stable, well-documented field names
+  for easy integration into LIMS or dashboards.
+  <monospace>summary</monospace> commands aggregate per-sample outputs
+  into batch-level reports (<monospace>final_summary.csv</monospace> for
+  short reads and <monospace>final_summary_long.csv</monospace> for long
+  reads). The typical runtime for a 2 million read short-read sample is
+  30-60 seconds with less than 8 GB RAM on one thread, scaling linearly
+  with sample number.</p>
   <p>The codebase follows a modular structure with distinct submodules
   for I/O, quality assessment, and result aggregation. Automated tests
   (~75% code coverage) validate parsing, schema stability, and
@@ -318,6 +349,22 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <pub-id pub-id-type="doi">10.1093/bioinformatics/bty560</pub-id>
       <fpage>i884</fpage>
       <lpage>i890</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-steinig2022nanoq">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Steinig</surname><given-names>Eike J</given-names></name>
+        <name><surname>Coin</surname><given-names>Lachlan JM</given-names></name>
+      </person-group>
+      <article-title>Nanoq: Ultra-fast quality control for nanopore reads</article-title>
+      <source>Journal of Open Source Software</source>
+      <year iso-8601-date="2022">2022</year>
+      <volume>7</volume>
+      <issue>69</issue>
+      <pub-id pub-id-type="doi">10.21105/joss.02991</pub-id>
+      <fpage>2991</fpage>
+      <lpage></lpage>
     </element-citation>
   </ref>
   <ref id="ref-unckless2023sylph">
