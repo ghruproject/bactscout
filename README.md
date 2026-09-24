@@ -16,7 +16,7 @@ Full user documentation, configuration reference, and examples are available at:
 
 https://ghruproject.github.io/bactscout/
 
-Latest release: `v1.4.1` corrects Sylph-based contamination assessment so unclassified sequence is not mistaken for an additional species.
+Latest release: `v1.4.2` makes long-read QC fail when neither Sylph nor the genome-size calculation can produce a coverage estimate.
 
 ## ✨ Features
 
@@ -28,10 +28,9 @@ Latest release: `v1.4.1` corrects Sylph-based contamination assessment so unclas
   - Two‑tier thresholds (WARN / FAIL) are configurable so borderline samples are flagged for review rather than auto‑rejected
   - Full list of reported fields and per‑sample outputs: https://ghruproject.github.io/bactscout/usage/output-format/
 
-- New in `v1.4.1`
-  - Contamination uses Sylph's taxonomic abundance across detected taxa
-  - Unclassified sequence no longer causes false contamination failures
-  - Duplicate reference rows for the same species are combined before QC
+- New in `v1.4.2`
+  - Long-read samples fail QC when no coverage estimate is available
+  - Missing taxon and coverage results now include explicit diagnostic reasons
 
 - PASS / WARNING / FAIL logic
   - Any critical metric FAILED (Q30, read length, contamination, or GC deviation) → overall FAIL

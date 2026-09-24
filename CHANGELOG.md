@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-09-24
+- Fixed long-read QC so samples fail when neither Sylph nor the expected-genome-size calculation can produce a coverage estimate.
+- Added explicit diagnostic messages when taxon, contamination, or coverage results are unavailable.
+
 ## [1.4.1] - 2026-09-05
 - Fixed false contamination failures for clean single-species samples by using Sylph's taxonomic abundance rather than treating unclassified sequence as another species.
 - Collapsed multiple Sylph reference rows for the same species before calculating species purity.
