@@ -17,6 +17,8 @@ authors:
   - name: Natacha Couto
     orcid: 0000-0002-9152-5464
     affiliation: "5,6"
+  - name: June Gayeta
+    affiliation: "4,7"
   - name: GHRU2 Project Contributors
     affiliation: 4
   - name: David M Aanensen
@@ -35,6 +37,8 @@ affiliations:
     name: Instituto de Microbiologia, Faculdade de Medicina, Universidade de Lisboa, Lisbon, PT
   - index: 6
     name: Cardiff Metropolitan University, Cardiff, UK
+  - index: 7
+    name: Research Institute for Tropical Medicine, Department of Health, Muntinlupa City, Philippines
 date: 3 November 2025
 bibliography: paper.bib
 ---

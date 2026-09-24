@@ -52,6 +52,14 @@ genome sequencing quality control</article-title>
 </contrib>
 <contrib contrib-type="author">
 <name>
+<surname>Gayeta</surname>
+<given-names>June</given-names>
+</name>
+<xref ref-type="aff" rid="aff-4"/>
+<xref ref-type="aff" rid="aff-7"/>
+</contrib>
+<contrib contrib-type="author">
+<name>
 <surname>Contributors</surname>
 <given-names>GHRU2 Project</given-names>
 </name>
@@ -100,6 +108,12 @@ Universidade de Lisboa, Lisbon, PT</institution>
 <aff id="aff-6">
 <institution-wrap>
 <institution>Cardiff Metropolitan University, Cardiff, UK</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-7">
+<institution-wrap>
+<institution>Research Institute for Tropical Medicine, Department of
+Health, Muntinlupa City, Philippines</institution>
 </institution-wrap>
 </aff>
 </contrib-group>
