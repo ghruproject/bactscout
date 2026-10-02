@@ -78,6 +78,8 @@ def test_sylph_real_download(tmp_path):
             print(f"First result line:\n{lines[1]}")
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_cached_files_exist():
     """Test that verifies cached files are available (or can be downloaded)."""
     try:

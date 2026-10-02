@@ -53,19 +53,16 @@ Summary of primary metrics and the configuration keys used by the code:
     - Config keys: `read_length_warn_threshold` and `read_length_fail_threshold` (bp).
 
 - **Contamination (species purity):**
-    - Computed as 100 - (top taxonomic abundance). BactScout uses Sylph's `Taxonomic_abundance`, which is normalised across detected taxa; the unclassified fraction in `Sequence_abundance` is not treated as contamination.
+    - Computed as 100 - (top taxonomic abundance). BactScout uses Sylph's `Taxonomic_abundance`, normalised across detected taxa; the unclassified fraction represented in `Sequence_abundance` is excluded.
     - Status stored in `contamination_status` and messages in `contamination_message`.
-    - Config keys: `contamination_warn_threshold` and `contamination_fail_threshold` (percent secondary species tolerated). The code treats these as percentages of non-top-species allowed; e.g. `contamination_fail_threshold: 10` means top species purity must be >90% to PASS.
-    - The proportion of unassigned reads is included, this means that a sample with 75% Escherichia coli, 15% other species, and 10% unassigned would have 25% contamination.
+    - Config keys: `contamination_warn_threshold` and `contamination_fail_threshold` (percent secondary species tolerated).
+    - For example, if 75% of reads are assigned to *Escherichia coli*, 15% to other species, and 10% are unclassified, contamination is 15/(75+15) = 16.7%; unclassified reads are excluded from this calculation.
 
 - **Duplication, N-content, Adapter detection (fastp-derived):**
     - Keys and statuses: `duplication_rate` → `duplication_status`, `n_content_rate` → `n_content_status`, adapter over-representation → `adapter_detection_status`.
     - Config keys: `duplication_warn_threshold` / `duplication_fail_threshold`, `n_content_threshold` (fraction; compared as percentage in the code), `adapter_overrep_threshold`.
 
-Notes about the two-tier logic:
-
-- The code uses WARN and FAIL thresholds. FAIL thresholds represent the minimum/maximum required for a PASSED metric (e.g. `q30_fail_threshold` is the value at or above which Q30 is considered PASSED). WARN thresholds define a borderline region that yields `WARNING` rather than `PASSED` or `FAILED`.
-- Many configuration values accept either percent (e.g. 80) or fraction (0.80); the code attempts to normalize values where necessary.
+For Q30 specifically, values below `q30_fail_threshold` are `FAILED`, values from the fail threshold up to but not including the warn threshold are `WARNING`, and values at or above `q30_warn_threshold` are `PASSED`. Q30 cutoffs may be given as fractions (such as `0.80`) or percentages (such as `80`). Other metrics have their own comparison direction and boundary rules; see their descriptions above and the current implementation.
 
 !!! note "What does x-fold coverage mean?"
     "x-fold" (or "30x") coverage refers to the average genome coverage. Practically this is computed as the total number of sequenced bases (after filtering) divided by the expected genome size — e.g. 30x means, on average, each genomic position is covered by ~30 bases. BactScout reports both a Sylph-derived coverage estimate (`coverage_estimate_sylph`) and a calculated estimate based on reads/genome size (`coverage_estimate_qualibact`). **This is different to coverage across the genome - i.e some measure of the proportion of the genome covered at a certain depth - which is not directly assessed by BactScout.**

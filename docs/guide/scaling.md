@@ -70,12 +70,24 @@ Considerations:
 
 ## Using Nextflow (recommended for production pipelines)
 
-Nextflow is an excellent choice for running BactScout across many samples. The `nextflow_example` directory (see the [github repo](https://github.com/ghruproject/bactscout)) contains a minimal, documented workflow (`nextflow.nf` + `nextflow.config`) that demonstrates:
+The repository's `nextflow_example/` directory contains a paired-end workflow (`nextflow.nf` and `nextflow.config`) that demonstrates:
 
 - automatic discovery of paired-end FASTQ pairs
 - per-sample `collect` runs in an isolated process
 - publishing per-sample outputs into per-sample directories
 - aggregation of per-sample summaries into a single `final_summary.csv`
+
+Run it from the example directory so Nextflow loads its configuration:
+
+```bash
+cd nextflow_example
+nextflow run nextflow.nf \
+  --input_dir /path/to/paired-fastqs \
+  --output_dir /path/to/results \
+  --threads 4
+```
+
+The checked-in example uses Docker and the `happykhan/bactscout:latest` image. See the repository [Nextflow guide](https://github.com/ghruproject/bactscout/blob/main/NEXTFLOW.md) for requirements and parameters.
 
 How the example workflow works (walkthrough):
 
@@ -95,16 +107,16 @@ Why use Nextflow:
 
 Practical tips for adapting the example:
 
-- Container image: adjust the `container` entry in `nextflow.nf` to a BactScout image you manage or remove container directives to use the system installation.
+- Container image: adjust the `container` entry in `nextflow_example/nextflow.nf` to a BactScout image you manage or remove container directives to use the system installation.
 - Threads and resource hints: set `params.threads` and configure `process` defaults in `nextflow.config` (cpus, memory). Tune per-sample values to match the tools that BactScout invokes on your inputs.
 - Staging and storage: if you're on a shared filesystem, prefer node-local staging (copy) and publish in bulk. If your cluster has a high-performance parallel filesystem, you can choose `stageInMode` accordingly.
 - Failure / retry: Nextflow will retry tasks; set sensible `maxRetries` in process config if desired.
 
 ### Process details: `collect_sample` and `final_summary`
 
-The `nextflow_example/nextflow.nf` workflow contains two main process blocks that implement the per-sample collection and the final aggregation. Below are the relevant excerpts and a short explanation of each directive so you can adapt them for your site.
+The `nextflow_example/nextflow.nf` workflow contains two main process blocks that implement per-sample collection and final aggregation. Below are the relevant excerpts and a short explanation of each directive so you can adapt them for your site.
 
-1) collect_sample (runs `bactscout collect` for a single sample)
+1) `collect_sample` (runs `bactscout collect` for a single sample)
 
 ```nextflow
 process collect_sample {
@@ -142,7 +154,7 @@ Key notes:
 - `publishDir "${params.output_dir}/${sample_name}", mode: 'copy'` ensures each sample's outputs are published into a dedicated directory under your main output dir.
 - `input` and `output` declarations define the files passed into and out of the process; `emit` names allow workflow wiring (e.g., summaries collected by the aggregator).
 
-2) final_summary (aggregates per-sample summaries)
+2) `final_summary` (aggregates per-sample summaries)
 
 ```nextflow
 process final_summary {
@@ -190,7 +202,7 @@ Together these two processes implement the safe, per-sample execution model: ind
 
 ## Example: adapt the `nextflow_example` for your site
 
-1. Fork `nextflow_example` (This is in the [github repo](https://github.com/ghruproject/bactscout))and set `params.input_dir` and `params.output_dir` to your paths.
+1. Copy or fork `nextflow_example/` and set `params.input_dir` and `params.output_dir` to your paths.
 2. Build or choose a container image that bundles BactScout and its runtime dependencies (or install BactScout in the cluster environment and remove the `container` directives).
 3. Tune `process` defaults in `nextflow.config` (cpus, memory) and/or set process-level resource hints for `collect_sample`.
 4. Test with a small set of samples, confirm `final_summary.csv` contents, then scale to the whole cohort.

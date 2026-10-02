@@ -18,8 +18,8 @@
 <article-id pub-id-type="publisher-id">0</article-id>
 <article-id pub-id-type="doi">N/A</article-id>
 <title-group>
-<article-title>BactScout: A reproducible Python pipeline for bacterial
-genome sequencing quality control</article-title>
+<article-title>BactScout: A Python pipeline for quality assessment of
+bacterial sequencing reads</article-title>
 </title-group>
 <contrib-group>
 <contrib contrib-type="author">
@@ -51,6 +51,7 @@ genome sequencing quality control</article-title>
 <xref ref-type="aff" rid="aff-6"/>
 </contrib>
 <contrib contrib-type="author">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0000-0001-6339-2476</contrib-id>
 <name>
 <surname>Gayeta</surname>
 <given-names>June</given-names>
@@ -117,10 +118,10 @@ Health, Muntinlupa City, Philippines</institution>
 </institution-wrap>
 </aff>
 </contrib-group>
-<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2025-11-03">
-<day>3</day>
-<month>11</month>
-<year>2025</year>
+<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2026-10-02">
+<day>2</day>
+<month>10</month>
+<year>2026</year>
 </pub-date>
 <volume>¿VOL?</volume>
 <issue>¿ISSUE?</issue>
@@ -143,193 +144,189 @@ a Creative Commons Attribution 4.0 International License (CC BY
 <kwd>quality control</kwd>
 <kwd>bacterial genomics</kwd>
 <kwd>taxonomic profiling</kwd>
-<kwd>genome assembly</kwd>
+<kwd>genome sequencing</kwd>
 </kwd-group>
 </article-meta>
 </front>
 <body>
 <sec id="summary">
   <title>Summary</title>
-  <p>BactScout is a Python-based pipeline for rapid, standardized
-  quality assessment and taxonomic profiling of raw read data from
-  sequencing cultured bacterial isolates. It integrates tools like Fastp
-  for short-read quality control, Nanoq for long-read quality control,
-  Sylph for species-level taxonomic profiling, and StringMLST for
-  multi-locus sequence typing into a single, reproducible workflow.
-  Designed for scientists working with large-scale bacterial genome
-  data, BactScout provides interpretable quality metrics across read
-  quality, species purity, GC content, long-read yield and N50, and
-  strain typing. These outputs support downstream applications such as
-  genome assembly, resistance prediction, mapping, variant calling, and
-  phylogenetic analysis. The pipeline features a modular and extensible
-  architecture with configurable quality thresholds, parallel sample
-  processing, and detailed per-sample and batch-level reporting.</p>
-  <p>BactScout emphasizes reproducibility and ease of use through
-  deterministic, containerized environments managed by Pixi, ensuring
-  consistent results across platforms. By combining quality control,
-  taxonomic profiling, and strain typing in a unified, automated
-  framework, BactScout reduces manual effort and improves
-  standardization in bacterial genomics workflows.</p>
+  <p>BactScout assesses raw sequencing reads from cultured bacterial
+  isolates before assembly or other downstream analysis. Its short-read
+  workflow combines read-quality metrics from fastp, species-level
+  profiling and coverage estimates from Sylph, and sequence typing with
+  stringMLST when a scheme is configured. Its long-read workflow
+  combines read statistics from Nanoq with Sylph taxonomic and coverage
+  estimates. For both workflows, configurable thresholds classify
+  samples as PASSED, WARNING, or FAILED and report the measurements and
+  reasons behind each result. Users can run one sample or process a
+  directory and aggregate sample summaries as CSV files. BactScout is
+  intended for bacterial genomics and public-health surveillance teams
+  that need a repeatable way to review read quality, taxonomic
+  composition, coverage, and typing results before deciding which
+  samples to analyse further.</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of need</title>
-  <p>Quality assessment of bacterial sequencing data is a critical and
-  often under-standardized step in genomic analysis pipelines,
-  particularly for applications requiring high-confidence downstream
-  analysis. Common challenges include contamination, low sequencing
-  yield, poor read quality, and variable fragment lengths. While
-  existing tools can report these metrics, interpreting their biological
-  relevance typically requires manual assessment that depends on the
-  species and sequencing context. This leads to inconsistent quality
-  decisions and reduced reproducibility across projects and
-  laboratories.</p>
-  <p>Existing tools such as <italic>FastQC</italic>
-  (<xref alt="Andrews, 2010" rid="ref-andrews2010fastqc" ref-type="bibr">Andrews,
-  2010</xref>) provide detailed summaries of read-level sequencing
-  quality but do not assess biological metrics like species purity or
-  strain identity. Similarly, taxonomic profilers such as Kraken2
-  (<xref alt="Lu et al., 2022" rid="ref-lu2022kraken" ref-type="bibr">Lu
-  et al., 2022</xref>) require additional integration and interpretation
-  to be useful in a quality control context, with species-specific
-  decisions often left to the discretion of the operator. BactScout
-  bridges this gap by combining technical and biological quality metrics
-  within a single, reproducible workflow, automatically generating
-  pass/fail assessments informed by species-aware benchmarks defined in
-  <ext-link ext-link-type="uri" xlink:href="https://happykhan.github.io/qualibact/">QualiBact</ext-link>.</p>
-  <p>The pipeline is designed for routine isolate sequencing tasks
-  commonly encountered in public health surveillance and clinical
-  microbiology, where rapid and reproducible assessment of sequencing
-  quality is essential prior to downstream analyses such as genome
-  assembly or antimicrobial resistance prediction. By formalizing
-  quality interpretation and applying species-aware thresholds,
-  BactScout minimizes subjective decision-making and enhances
-  consistency across bacterial genomics workflows. It serves as a rapid,
-  automated screening step to identify high-quality samples suitable for
-  deeper analyses, complementing more comprehensive assembly evaluation
-  pipelines. BactScout was developed to meet the practical needs of
-  scientists and has been successfully deployed within the Global Health
-  Research Unit (GHRU) on Genomic Surveillance of Antimicrobial
-  Resistance, demonstrating its robustness and scalability in
-  high-throughput laboratory environments.</p>
+  <p>Read quality control for cultured bacterial isolates includes both
+  technical measurements, such as read length and quality, and
+  biological checks, such as taxonomic composition and expected
+  sequencing depth. A read-level quality report can show whether a file
+  has unusual quality scores or base composition, but it does not by
+  itself combine those observations with an isolate’s taxon, expected
+  genome size, or typing result. Laboratories often need to interpret
+  reports from several tools and apply local criteria before deciding
+  whether to proceed with assembly or surveillance analysis.</p>
+  <p>BactScout provides that sample-level step. It runs established
+  analysis tools, applies configurable thresholds to their results and
+  produces per-sample and batch summaries with status fields and
+  diagnostic reasons. The target users are researchers and public-health
+  laboratories processing short- or long-read bacterial isolate data. A
+  sample-level warning is intended to prompt review; it does not replace
+  laboratory judgement or downstream assessment of assemblies and
+  genomic analyses.</p>
 </sec>
-<sec id="implementation">
-  <title>Implementation</title>
-  <p>BactScout automates post-sequencing quality control by integrating
-  <italic>Fastp</italic>
-  (<xref alt="Chen et al., 2018" rid="ref-chen2018fastp" ref-type="bibr">Chen
-  et al., 2018</xref>), <italic>Nanoq</italic>
-  (<xref alt="Steinig &amp; Coin, 2022" rid="ref-steinig2022nanoq" ref-type="bibr">Steinig
-  &amp; Coin, 2022</xref>), <italic>Sylph</italic>
-  (<xref alt="Unckless et al., 2023" rid="ref-unckless2023sylph" ref-type="bibr">Unckless
-  et al., 2023</xref>), and <italic>StringMLST</italic>
-  (<xref alt="Datta et al., 2016" rid="ref-datta2016stringmlst" ref-type="bibr">Datta
-  et al., 2016</xref>) to identify problematic samples rapidly. It
-  applies a configurable two-tier threshold system (WARN/FAIL) to
-  classify samples as PASS, WARNING, or FAIL, summarizing results per
-  sample and across batches. By combining standardized thresholds with
-  species-aware criteria, BactScout streamlines decision-making and
-  enhances reproducibility in bacterial WGS analysis.</p>
-  <p>BactScout is implemented in modern Python (3.11+) as a compact,
-  modular pipeline designed for reproducibility and scalability across
-  environments. It follows a CLI-first design (via
-  <italic>Typer</italic>) with distinct modules for tool wrappers,
-  metrics aggregation, and QC decision logic. External tool adapters
-  (for <italic>Fastp</italic>, <italic>Sylph</italic>,
-  <italic>StringMLST</italic>) isolate dependencies, ensuring a stable
-  command-line and output schema. BactScout is packaged with Pixi and
-  container images for reproducible deployment. It supports standalone
-  use or integration within workflow managers such as Nextflow, job
-  arrays, or GNU Parallel, ensuring consistent execution from laptops to
-  HPC environments. The repository includes manifests and container
-  recipes to facilitate reproducible builds.</p>
-  <p>Runtime behavior is configured through YAML files defining database
-  paths, defaults, and quality thresholds. A consistent two-tier
-  WARN/FAIL model allows users to adjust sensitivity to their context
-  (e.g., stricter for clinical pipelines, relaxed for research). The
-  short-read and long-read workflows are parallel command paths with
-  separate output schemas, allowing long-read QC to be added without
-  changing the established Illumina interface. Each run generates
-  per-sample directories containing structured CSV summaries, tool logs,
-  and reports. The summaries include stable, well-documented field names
-  for easy integration into LIMS or dashboards.
-  <monospace>summary</monospace> commands aggregate per-sample outputs
-  into batch-level reports (<monospace>final_summary.csv</monospace> for
-  short reads and <monospace>final_summary_long.csv</monospace> for long
-  reads). The typical runtime for a 2 million read short-read sample is
-  30-60 seconds with less than 8 GB RAM on one thread, scaling linearly
-  with sample number.</p>
-  <p>The codebase follows a modular structure with distinct submodules
-  for I/O, quality assessment, and result aggregation. Automated tests
-  (~75% code coverage) validate parsing, schema stability, and
-  cross-platform compatibility via GitHub Actions. The project includes
-  contribution guidelines, changelog, and code of conduct. New modules
-  follow a simple results-dictionary contract to maintain
-  compatibility.</p>
+<sec id="state-of-the-field">
+  <title>State of the field</title>
+  <p>FastQC reports technical read-quality checks, while fastp supplies
+  read-level metrics and preprocessing functions. Kraken 2 and Sylph
+  provide taxonomic classification or profiling from sequence reads.
+  QualiBact provides species-specific quality criteria for genome
+  assemblies; BactScout uses selected species metrics when assessing
+  reads before assembly. Integrated workflows such as Bactopia and
+  TORMES span read QC, assembly, and downstream bacterial genome
+  analysis
+  (<xref alt="Petit &amp; Read, 2020" rid="ref-petit2020bactopia" ref-type="bibr">Petit
+  &amp; Read, 2020</xref>;
+  <xref alt="Quijada et al., 2019" rid="ref-quijada2019tormes" ref-type="bibr">Quijada
+  et al., 2019</xref>). BactScout has a narrower role: it combines read
+  metrics, taxonomic results, coverage estimates, and optional sequence
+  typing into a sample-level result before downstream analysis. It uses
+  established tools for these analyses and can serve as a separate
+  read-review stage alongside broader workflows.
+  (<xref alt="Andrews, 2010" rid="ref-andrews2010fastqc" ref-type="bibr">Andrews,
+  2010</xref>;
+  <xref alt="Chen et al., 2018" rid="ref-chen2018fastp" ref-type="bibr">Chen
+  et al., 2018</xref>;
+  <xref alt="Gupta et al., 2017" rid="ref-gupta2017stringmlst" ref-type="bibr">Gupta
+  et al., 2017</xref>;
+  <xref alt="QualiBact, 2026" rid="ref-qualibact" ref-type="bibr">QualiBact,
+  2026</xref>;
+  <xref alt="Shaw &amp; Yu, 2025" rid="ref-shaw2025sylph" ref-type="bibr">Shaw
+  &amp; Yu, 2025</xref>;
+  <xref alt="Steinig &amp; Coin, 2022" rid="ref-steinig2022nanoq" ref-type="bibr">Steinig
+  &amp; Coin, 2022</xref>;
+  <xref alt="Wood et al., 2019" rid="ref-wood2019kraken2" ref-type="bibr">Wood
+  et al., 2019</xref>)</p>
+  <p>The contribution is an integration and decision layer for
+  cultured-isolate workflows. Keeping read assessment in a separate
+  package allows laboratories to apply the same criteria while retaining
+  their own assembly and downstream analysis workflows. An
+  implementation confined to one end-to-end pipeline would couple that
+  assessment to a particular workflow environment. BactScout instead
+  exposes commands and CSV summaries that can be used independently, at
+  the cost of maintaining its own tool adapters and configuration. Users
+  can adjust thresholds and inspect the reported metrics and reasons.
+  QualiBact supplies species-aware QC guidance used by the project
+  (<xref alt="QualiBact, 2026" rid="ref-qualibact" ref-type="bibr">QualiBact,
+  2026</xref>).</p>
+</sec>
+<sec id="software-design">
+  <title>Software design</title>
+  <p>BactScout separates tool execution and output parsing from metric
+  aggregation and QC evaluation. This lets the pipeline reuse
+  established tools while applying its own configurable decision rules.
+  The code exposes separate short-read and long-read command paths
+  because the platforms provide different measurements: the short-read
+  path reports fastp metrics and may report MLST, whereas the long-read
+  path reports Nanoq read statistics and platform-specific quality and
+  N50 checks. The paths therefore write distinct summary schemas rather
+  than forcing unlike measurements into the same fields.</p>
+  <p>Coverage can be estimated from Sylph or calculated from total read
+  bases and an expected genome size when that value is available. The QC
+  logic records estimates and flags before deriving the overall status.
+  In long-read runs, the absence of both coverage estimates is a
+  failure; if expected genome size is unavailable but Sylph reports
+  coverage, the calculated estimate is flagged as unavailable and the
+  result is a warning unless another metric fails. Configuration files
+  keep threshold choices and database locations outside the evaluation
+  code. Per-sample CSV records can be combined into a short-read or
+  long-read batch summary, while tool reports and logs remain available
+  for inspection. The repository includes a Pixi lockfile and container
+  recipe for setting up the software environment. These choices make the
+  criteria and reported reasons inspectable, while requiring downstream
+  users to account for the two output schemas when combining short- and
+  long-read results.</p>
+</sec>
+<sec id="research-impact-statement">
+  <title>Research impact statement</title>
+  <p>Within the NIHR Global Health Research Unit, BactScout is used in
+  sentinel surveillance to screen raw reads before assembly QC and
+  downstream Kleborate analysis
+  (<xref alt="Lam et al., 2021" rid="ref-lam2021kleborate" ref-type="bibr">Lam
+  et al., 2021</xref>). During a user-reported long-read QC run, a
+  sample with 38 reads had no coverage estimate but was not classified
+  as FAILED. This use exposed a gap in the decision logic; release 1.4.2
+  changed the long-read evaluation so that absence of both Sylph and
+  calculated coverage estimates yields FAILED
+  (<xref alt="BactScout, 2026" rid="ref-bactscout" ref-type="bibr"><italic>BactScout</italic>,
+  2026</xref>). This case records a specific example of use informing a
+  software change.</p>
+  <p>QualiBact recommends BactScout as a complementary read-level QC
+  tool
+  (<xref alt="QualiBact, 2026" rid="ref-qualibact" ref-type="bibr">QualiBact,
+  2026</xref>). A Galaxy CollaborationFest team reported work to wrap
+  and extend BactScout as a QC subworkflow for public-health pathogen
+  genomics
+  (<xref alt="Galaxy Project, 2026" rid="ref-galaxy2026" ref-type="bibr">Galaxy
+  Project, 2026</xref>). The CoFest report describes this as activity in
+  progress. </p>
 </sec>
 <sec id="availability">
   <title>Availability</title>
   <p>Source code and documentation are available at
   <ext-link ext-link-type="uri" xlink:href="https://github.com/ghruproject/bactscout">https://github.com/ghruproject/bactscout</ext-link>
-  under the GPLv3 license. Installation instructions, usage examples,
-  and container images are provided via the project’s documentation
-  site. Example datasets and expected outputs are included for testing
-  and demonstration purposes in the documentation.</p>
+  under GPL-3.0. The cited release is v1.4.2
+  (<xref alt="BactScout, 2026" rid="ref-bactscout" ref-type="bibr"><italic>BactScout</italic>,
+  2026</xref>). </p>
 </sec>
 <sec id="acknowledgements">
   <title>Acknowledgements</title>
-  <p>This work was supported by National Institute for Health Research
-  (NIHR133307). BactScout builds upon three outstanding open-source
-  tools: <bold>Fastp</bold>
-  (<xref alt="Chen et al., 2018" rid="ref-chen2018fastp" ref-type="bibr">Chen
-  et al., 2018</xref>), <bold>Sylph</bold>
-  (<xref alt="Unckless et al., 2023" rid="ref-unckless2023sylph" ref-type="bibr">Unckless
-  et al., 2023</xref>), and <bold>StringMLST</bold>
-  (<xref alt="Datta et al., 2016" rid="ref-datta2016stringmlst" ref-type="bibr">Datta
-  et al., 2016</xref>).
-  We thank contributors from the <bold>NIHR Global Health Research Unit
-  on Genomics and enabling data for the Surveillance of AMR</bold> for
-  feedback during design and testing, and the open-source community for
-  providing the foundational libraries and infrastructure enabling this
-  work.</p>
+  <p>This work was supported by the National Institute for Health
+  Research (NIHR133307). We thank contributors from the NIHR Global
+  Health Research Unit on Genomics and enabling data for the
+  Surveillance of AMR for feedback during design and testing. </p>
+</sec>
+<sec id="competing-interests">
+  <title>Competing interests</title>
+  <p>The authors declare no competing interests.</p>
+</sec>
+<sec id="ai-usage-disclosure">
+  <title>AI usage disclosure</title>
+  <p><bold>Draft, pending author confirmation:</bold> During this JOSS
+  preparation, Codex using GPT-6 and delegated agents using GPT-6 Luna
+  assisted with repository review, manuscript and documentation
+  drafting, reference checks, a Q30 threshold correction and regression
+  tests. GitHub Copilot and Codex were also used during earlier
+  development; the historical model versions and scope remain to be
+  confirmed. Automated checks were run during preparation. Before
+  submission, the authors must complete the tool-use inventory and
+  confirm their own review, editing and validation of AI-assisted
+  outputs and responsibility for the core design decisions. The authors
+  remain responsible for the final paper and software.</p>
 </sec>
 </body>
 <back>
 <ref-list>
   <title></title>
   <ref id="ref-andrews2010fastqc">
-    <element-citation publication-type="article-journal">
+    <element-citation publication-type="software">
       <person-group person-group-type="author">
         <name><surname>Andrews</surname><given-names>Simon</given-names></name>
       </person-group>
       <article-title>FastQC: A quality control tool for high throughput sequence data</article-title>
-      <publisher-name>http://www.bioinformatics.babraham.ac.uk/projects/fastqc/</publisher-name>
       <year iso-8601-date="2010">2010</year>
-    </element-citation>
-  </ref>
-  <ref id="ref-lu2022kraken">
-    <element-citation publication-type="article-journal">
-      <person-group person-group-type="author">
-        <name><surname>Lu</surname><given-names>Jennifer</given-names></name>
-        <name><surname>Rincon</surname><given-names>Natalia</given-names></name>
-        <name><surname>Wood</surname><given-names>Derrick E.</given-names></name>
-        <name><surname>Breitwieser</surname><given-names>Florian P.</given-names></name>
-        <name><surname>Pockrandt</surname><given-names>Christopher</given-names></name>
-        <name><surname>Langmead</surname><given-names>Ben</given-names></name>
-        <name><surname>Salzberg</surname><given-names>Steven L.</given-names></name>
-        <name><surname>Steinegger</surname><given-names>Martin</given-names></name>
-      </person-group>
-      <article-title>Metagenome analysis using the kraken software suite</article-title>
-      <source>Nature Protocols</source>
-      <publisher-name>Springer Nature Limited</publisher-name>
-      <year iso-8601-date="2022-12">2022</year><month>12</month>
-      <volume>17</volume>
-      <issue>12</issue>
-      <issn>1750-2799</issn>
-      <uri>https://doi.org/10.1038/s41596-022-00738-y</uri>
-      <pub-id pub-id-type="doi">10.1038/s41596-022-00738-y</pub-id>
-      <pub-id pub-id-type="pmid">36171387</pub-id>
-      <fpage>2815</fpage>
-      <lpage>2839</lpage>
+      <uri>https://www.bioinformatics.babraham.ac.uk/projects/fastqc/</uri>
     </element-citation>
   </ref>
   <ref id="ref-chen2018fastp">
@@ -342,7 +339,6 @@ a Creative Commons Attribution 4.0 International License (CC BY
       </person-group>
       <article-title>Fastp: An ultra-fast all-in-one FASTQ preprocessor</article-title>
       <source>Bioinformatics</source>
-      <publisher-name>Oxford University Press</publisher-name>
       <year iso-8601-date="2018">2018</year>
       <volume>34</volume>
       <issue>17</issue>
@@ -351,11 +347,27 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage>i890</lpage>
     </element-citation>
   </ref>
+  <ref id="ref-wood2019kraken2">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Wood</surname><given-names>Derrick E.</given-names></name>
+        <name><surname>Lu</surname><given-names>Jennifer</given-names></name>
+        <name><surname>Langmead</surname><given-names>Ben</given-names></name>
+      </person-group>
+      <article-title>Improved metagenomic analysis with kraken 2</article-title>
+      <source>Genome Biology</source>
+      <year iso-8601-date="2019">2019</year>
+      <volume>20</volume>
+      <pub-id pub-id-type="doi">10.1186/s13059-019-1891-0</pub-id>
+      <fpage>257</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
   <ref id="ref-steinig2022nanoq">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
-        <name><surname>Steinig</surname><given-names>Eike J</given-names></name>
-        <name><surname>Coin</surname><given-names>Lachlan JM</given-names></name>
+        <name><surname>Steinig</surname><given-names>Eike</given-names></name>
+        <name><surname>Coin</surname><given-names>Lachlan</given-names></name>
       </person-group>
       <article-title>Nanoq: Ultra-fast quality control for nanopore reads</article-title>
       <source>Journal of Open Source Software</source>
@@ -367,42 +379,116 @@ a Creative Commons Attribution 4.0 International License (CC BY
       <lpage></lpage>
     </element-citation>
   </ref>
-  <ref id="ref-unckless2023sylph">
+  <ref id="ref-shaw2025sylph">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
-        <name><surname>Unckless</surname><given-names>R. L.</given-names></name>
-        <name><surname>Garcia</surname><given-names>S. L.</given-names></name>
-        <name><surname>Schatz</surname><given-names>M. C.</given-names></name>
+        <name><surname>Shaw</surname><given-names>Jim</given-names></name>
+        <name><surname>Yu</surname><given-names>Yun William</given-names></name>
       </person-group>
-      <article-title>Sylph: Fast whole-genome average nucleotide identity (ANI) calculation using spaced k-mers</article-title>
-      <source>bioRxiv</source>
-      <publisher-name>Cold Spring Harbor Laboratory</publisher-name>
-      <year iso-8601-date="2023">2023</year>
-      <pub-id pub-id-type="doi">10.1101/2023.06.16.545235</pub-id>
+      <article-title>Rapid species-level metagenome profiling and containment estimation with sylph</article-title>
+      <source>Nature Biotechnology</source>
+      <year iso-8601-date="2025">2025</year>
+      <volume>43</volume>
+      <pub-id pub-id-type="doi">10.1038/s41587-024-02412-y</pub-id>
+      <fpage>1348</fpage>
+      <lpage>1359</lpage>
     </element-citation>
   </ref>
-  <ref id="ref-datta2016stringmlst">
+  <ref id="ref-gupta2017stringmlst">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
-        <name><surname>Datta</surname><given-names>Vikram</given-names></name>
-        <name><surname>Oneš</surname><given-names>Igor</given-names></name>
-        <name><surname>Lima</surname><given-names>Leandro</given-names></name>
-        <name><surname>Santos</surname><given-names>Tamires</given-names></name>
-        <name><surname>Diaz</surname><given-names>Gabriel Antonio</given-names></name>
-        <name><surname>Rossi</surname><given-names>Paula</given-names></name>
-        <name><surname>Costa</surname><given-names>Carolina</given-names></name>
-        <name><surname>Blom</surname><given-names>Joost</given-names></name>
-        <name><surname>Pereira</surname><given-names>Paulo Manuel</given-names></name>
+        <name><surname>Gupta</surname><given-names>Anuj</given-names></name>
+        <name><surname>Jordan</surname><given-names>I. King</given-names></name>
+        <name><surname>Rishishwar</surname><given-names>Lavanya</given-names></name>
       </person-group>
-      <article-title>stringMLST: String distance based MLST allele calling and core genome MLST strain typing</article-title>
+      <article-title>stringMLST: A fast k-mer based tool for multilocus sequence typing</article-title>
       <source>Bioinformatics</source>
-      <publisher-name>Oxford University Press</publisher-name>
-      <year iso-8601-date="2016">2016</year>
-      <volume>32</volume>
-      <issue>11</issue>
-      <pub-id pub-id-type="doi">10.1093/bioinformatics/btw055</pub-id>
-      <fpage>1640</fpage>
-      <lpage>1642</lpage>
+      <year iso-8601-date="2017">2017</year>
+      <volume>33</volume>
+      <issue>1</issue>
+      <pub-id pub-id-type="doi">10.1093/bioinformatics/btw586</pub-id>
+      <fpage>119</fpage>
+      <lpage>121</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-petit2020bactopia">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Petit</surname><given-names>Robert A.</given-names></name>
+        <name><surname>Read</surname><given-names>Timothy D.</given-names></name>
+      </person-group>
+      <article-title>Bactopia: A flexible pipeline for complete analysis of bacterial genomes</article-title>
+      <source>mSystems</source>
+      <year iso-8601-date="2020">2020</year>
+      <volume>5</volume>
+      <issue>4</issue>
+      <pub-id pub-id-type="doi">10.1128/mSystems.00190-20</pub-id>
+      <fpage>e00190</fpage>
+      <lpage>20</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-quijada2019tormes">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Quijada</surname><given-names>Narciso M.</given-names></name>
+        <name><surname>Rodríguez-Lázaro</surname><given-names>David</given-names></name>
+        <name><surname>Eiros</surname><given-names>Jose Maria</given-names></name>
+        <name><surname>Hernández</surname><given-names>Marta</given-names></name>
+      </person-group>
+      <article-title>TORMES: An automated pipeline for whole bacterial genome analysis</article-title>
+      <source>Bioinformatics</source>
+      <year iso-8601-date="2019">2019</year>
+      <volume>35</volume>
+      <issue>21</issue>
+      <pub-id pub-id-type="doi">10.1093/bioinformatics/btz220</pub-id>
+      <fpage>4207</fpage>
+      <lpage>4212</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-lam2021kleborate">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Lam</surname><given-names>Margaret M. C.</given-names></name>
+        <name><surname>Wick</surname><given-names>Ryan R.</given-names></name>
+        <name><surname>Watts</surname><given-names>Stephen C.</given-names></name>
+        <name><surname>Cerdeira</surname><given-names>Louise T.</given-names></name>
+        <name><surname>Wyres</surname><given-names>Kelly L.</given-names></name>
+        <name><surname>Holt</surname><given-names>Kathryn E.</given-names></name>
+      </person-group>
+      <article-title>A genomic surveillance framework and genotyping tool for Klebsiella pneumoniae and its related species complex</article-title>
+      <source>Nature Communications</source>
+      <year iso-8601-date="2021">2021</year>
+      <volume>12</volume>
+      <pub-id pub-id-type="doi">10.1038/s41467-021-24448-3</pub-id>
+      <fpage>4188</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-qualibact">
+    <element-citation>
+      <person-group person-group-type="author">
+        <string-name>QualiBact</string-name>
+      </person-group>
+      <article-title>Frequently asked questions</article-title>
+      <year iso-8601-date="2026">2026</year>
+      <uri>https://qualibact.org/faq/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-galaxy2026">
+    <element-citation>
+      <person-group person-group-type="author">
+        <string-name>Galaxy Project</string-name>
+      </person-group>
+      <article-title>GCC2026 CollaborationFest (CoFest!): Outcomes and highlights</article-title>
+      <year iso-8601-date="2026">2026</year>
+      <uri>https://galaxyproject.org/news/2026-07-20-gcc2026-cofest-outcomes/</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-bactscout">
+    <element-citation publication-type="software">
+      <article-title>BactScout</article-title>
+      <year iso-8601-date="2026">2026</year>
+      <uri>https://github.com/ghruproject/bactscout/releases/tag/v1.4.2</uri>
     </element-citation>
   </ref>
 </ref-list>

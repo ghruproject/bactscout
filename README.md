@@ -16,6 +16,8 @@ Full user documentation, configuration reference, and examples are available at:
 
 https://ghruproject.github.io/bactscout/
 
+For reviewers, the repository includes a concise [reviewer guide](docs/reviewer-guide.md) with representative short-read, long-read, and missing-coverage checks.
+
 Latest release: `v1.4.2` makes long-read QC fail when neither Sylph nor the genome-size calculation can produce a coverage estimate.
 
 ## ✨ Features

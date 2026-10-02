@@ -1,562 +1,80 @@
-# Configuration Reference
+# Configuration reference
 
-Complete reference for all BactScout configuration options.
+BactScout ships separate YAML files for short-read and long-read workflows:
 
-## Configuration File Location
+- Short reads: `bactscout/config/bactscout_config.yml`
+- Long reads: `bactscout/config/bactscout_long_config.yml`
 
-BactScout looks for configuration in this order:
-
-1. File specified with `-c` flag: `pixi run bactscout qc data/ -c /path/to/config.yml`
-2. `bactscout/config/bactscout_config.yml`
-
-## Complete Configuration Example
-
-```yaml
-# Database Configuration
-# Optional: override the auto-selected database directory
-# bactscout_dbs_path: '/path/to/bactscout-db'
-sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
-sylph_db_url: 'https://example.com/database.syldb'
-
-# Quality Control Thresholds
-coverage_threshold: 30                # Minimum coverage (x-fold)
-contamination_threshold: 10           # Maximum contamination (%)
-q30_pass_threshold: 0.80              # Minimum Q30% (0.0-1.0)
-read_length_pass_threshold: 100       # Minimum read length (bp)
-
-# MLST Species Configuration
-mlst_species:
-  escherichia_coli: 'Escherichia coli#1'
-  salmonella_enterica: 'Salmonella enterica'
-  klebsiella_pneumoniae: 'Klebsiella pneumoniae'
-  acinetobacter_baumannii: 'Acinetobacter baumannii#1'
-  pseudomonas_aeruginosa: 'Pseudomonas aeruginosa'
-
-# System Resources
-system_resources:
-  cpus: 2
-  memory: 4.GB
-```
-
-## Configuration Parameters
-
-### Database Settings
-
-#### `bactscout_dbs_path`
-- **Type**: string
-- **Default**: auto-selected
-- **Description**: Optional directory path for storing reference databases
-- **Example**: `'./databases'` or `'/opt/bactscout_dbs'`
-
-#### `sylph_db`
-- **Type**: string
-- **Default**: `'gtdb-r226-c1000-dbv1.syldb'`
-- **Description**: Filename of Sylph GTDB database
-- **Note**: Must exist in the selected database directory
-
-#### `metrics_file`
-- **Type**: string
-- **Default**: `bactscout/config/filtered_metrics.csv`
-- **Description**: CSV file with species genome metrics (size, GC%)
-- **Location**: `bactscout/config/filtered_metrics.csv`
-
-#### `sylph_db_url`
-- **Type**: string
-- **Default**: `'https://...sylph.syldb'` (built-in)
-- **Description**: URL to download Sylph database if not found
-- **Note**: Optional, databases auto-download on first run
-
-### Quality Control Thresholds
-
-#### `coverage_threshold`
-- **Type**: integer
-- **Default**: `30`
-- **Range**: 1-1000
-- **Unit**: x-fold depth
-- **Description**: Minimum required sequencing coverage
-- **Impact on PASS/FAIL**: Sample fails if `coverage < threshold`
-
-**Recommendations**:
-- `20` - Lenient, exploratory studies
-- `30` - Standard, most applications
-- `50+` - Strict, critical applications
-
-#### `q30_pass_threshold`
-- **Type**: float
-- **Default**: `0.80`
-- **Range**: 0.0-1.0
-- **Unit**: Fraction (0.80 = 80%)
-- **Description**: Minimum fraction of bases with Phred quality ≥30
-- **Impact on PASS/FAIL**: Sample fails if `q30_percent < threshold`
-
-**Recommendations**:
-- `0.70` - Lenient (70% bases Q≥30)
-- `0.80` - Standard (80% bases Q≥30)
-- `0.90` - Strict (90% bases Q≥30)
-
-#### `read_length_pass_threshold`
-- **Type**: integer
-- **Default**: `100`
-- **Range**: 1-1000
-- **Unit**: Base pairs
-- **Description**: Minimum average read length
-- **Impact on PASS/FAIL**: Sample fails if `mean_read_length < threshold`
-
-**Recommendations**:
-- `50` - Short-read platforms with trimming
-- `100` - Standard Illumina
-- `120+` - Extended reads
-
-#### `contamination_threshold`
-- **Type**: float
-- **Default**: `10`
-- **Range**: 0-100
-- **Unit**: Percentage
-- **Description**: Maximum allowed contamination from other species
-- **Impact on PASS/FAIL**: Sample fails if `contamination_pct > threshold`
-
-**Recommendations**:
-- `5` - Strict, pure culture expected
-- `10` - Standard, minor contamination acceptable
-- `15+` - Lenient, some contamination tolerated
-
-### Advanced QC Thresholds (TIER 1 & TIER 2)
-
-These thresholds control evaluation of additional sequencing quality metrics extracted from fastp reports.
-
-#### `duplication_warn_threshold`
-- **Type**: float
-- **Default**: `0.20`
-- **Range**: 0.0-1.0
-- **Unit**: Fraction (0.20 = 20% duplicate reads)
-- **Description**: Threshold for warning about PCR bias
-- **Status**: WARNING if duplicates exceed this, FAILED if above `duplication_fail_threshold`
-
-**Interpretation**:
-- Duplicate reads indicate PCR amplification bias
-- High values suggest library quality or coverage issues
-- **Typical values**: 0.15-0.25 for well-constructed libraries
-
-#### `duplication_fail_threshold`
-- **Type**: float
-- **Default**: `0.30`
-- **Range**: 0.0-1.0
-- **Unit**: Fraction (0.30 = 30% duplicate reads)
-- **Description**: Threshold for failing sample due to excessive PCR bias
-- **Impact**: Sample status = FAILED if `duplication_rate > threshold`
-
-#### `insert_size_min_threshold`
-- **Type**: integer
-- **Default**: `200`
-- **Range**: 50-1000
-- **Unit**: Base pairs
-- **Description**: Minimum expected insert size
-- **Status**: WARNING if insert size peak < threshold
-
-**Interpretation**:
-- Insert size = distance between paired-end reads
-- Too short may indicate DNA fragmentation
-- Too long may indicate library preparation issues
-
-#### `insert_size_max_threshold`
-- **Type**: integer
-- **Default**: `600`
-- **Range**: 100-2000
-- **Unit**: Base pairs
-- **Description**: Maximum expected insert size
-- **Status**: WARNING if insert size peak > threshold
-
-#### `filtering_pass_rate_threshold`
-- **Type**: float
-- **Default**: `0.95`
-- **Range**: 0.0-1.0
-- **Unit**: Fraction (0.95 = 95% reads pass)
-- **Description**: Minimum percentage of reads passing quality filters
-- **Status**: WARNING if pass rate < threshold
-
-**Interpretation**:
-- Fastp removes reads failing quality checks
-- Low pass rates indicate poor sample quality
-- Typical range: 0.90-0.98
-
-#### `n_content_threshold`
-- **Type**: float
-- **Default**: `0.001`
-- **Range**: 0.0-0.01
-- **Unit**: Fraction (0.001 = 0.1% ambiguous bases)
-- **Description**: Maximum allowed fraction of ambiguous (N) bases
-- **Status**: WARNING if N-content > threshold
-
-**Interpretation**:
-- N bases indicate uncertain base calls
-- High N-content suggests poor base-calling confidence
-- Usually < 0.1% in high-quality sequencing
-
-#### `quality_end_drop_threshold`
-- **Type**: integer
-- **Default**: `5`
-- **Range**: 1-20
-- **Unit**: Phred quality points
-- **Description**: Maximum acceptable quality drop in final 20 cycles
-- **Status**: WARNING if quality end-drop exceeds threshold
-
-**Interpretation**:
-- Quality often decreases toward read ends
-- Large drops indicate sequencer degradation
-- Typical drop: 0-5 quality points
-
-### Configuration Example with All Thresholds
-
-```yaml
-# Standard QC thresholds
-coverage_threshold: 30
-contamination_threshold: 10
-q30_pass_threshold: 0.80
-read_length_pass_threshold: 100
-
-# TIER 1 QC thresholds (duplication, insert size, filtering, N-content)
-duplication_warn_threshold: 0.20
-duplication_fail_threshold: 0.30
-insert_size_min_threshold: 200
-insert_size_max_threshold: 600
-filtering_pass_rate_threshold: 0.95
-n_content_threshold: 0.001
-
-# TIER 2 QC thresholds (quality trends, adapters)
-quality_end_drop_threshold: 5
-```
-
-
-#### `mlst_species`
-- **Type**: dictionary (key-value pairs)
-- **Default**: Includes 5 species
-- **Description**: Species with available MLST schemes
-
-**Format**:
-```yaml
-mlst_species:
-  species_key: 'Genus species name'
-```
-
-**Key requirements**:
-- `species_key`: Used as database directory name (must match `bactscout_dbs/{species_key}/`)
-- `value`: Scientific name used for species matching
-
-**Default species**:
-
-```yaml
-mlst_species:
-  escherichia_coli: 'Escherichia coli#1'
-  salmonella_enterica: 'Salmonella enterica'
-  klebsiella_pneumoniae: 'Klebsiella pneumoniae'
-  acinetobacter_baumannii: 'Acinetobacter baumannii#1'
-  pseudomonas_aeruginosa: 'Pseudomonas aeruginosa'
-```
-
-**Adding new species**:
-
-1. Prepare MLST database in ARIBA format
-2. Place in `bactscout_dbs/{species_key}/`
-3. Add to config:
-   ```yaml
-   mlst_species:
-     my_species: 'Genus species'
-   ```
-4. Update species name in `filtered_metrics.csv` if needed
-
-### System Resources
-
-#### `system_resources.cpus`
-- **Type**: integer
-- **Default**: `2`
-- **Description**: Minimum CPUs required (informational)
-- **Note**: Actual thread count controlled by `-t` flag
-
-#### `system_resources.memory`
-- **Type**: string
-- **Default**: `'4.GB'`
-- **Format**: `'{number}.{unit}'` where unit is KB, MB, GB, TB
-- **Description**: Minimum RAM required (informational)
-
-## Configuration Use Cases
-
-### Lenient QC (More Samples PASS)
-
-For exploratory studies, low-throughput, or difficult samples:
-
-```yaml
-coverage_threshold: 20
-q30_pass_threshold: 0.70
-read_length_pass_threshold: 80
-contamination_threshold: 15
-```
-
-### Standard QC (Recommended)
-
-For typical quality control and research:
-
-```yaml
-coverage_threshold: 30
-q30_pass_threshold: 0.80
-read_length_pass_threshold: 100
-contamination_threshold: 10
-```
-
-### Strict QC (Fewer Samples PASS)
-
-For critical applications requiring high confidence:
-
-```yaml
-coverage_threshold: 50
-q30_pass_threshold: 0.90
-read_length_pass_threshold: 120
-contamination_threshold: 5
-```
-
-### Diagnostic Lab QC
-
-For clinical/diagnostic samples:
-
-```yaml
-coverage_threshold: 100
-q30_pass_threshold: 0.90
-read_length_pass_threshold: 100
-contamination_threshold: 2
-```
-
-### Epidemiology Focus
-
-For outbreak investigations prioritizing species ID:
-
-```yaml
-coverage_threshold: 20
-q30_pass_threshold: 0.75
-read_length_pass_threshold: 80
-contamination_threshold: 10
-mlst_species:
-  # Include all relevant species
-```
-
-## Using Custom Configurations
-
-### Create and Use Custom Config
+Use `--config` (`-c`) to select a copy or an alternate file. Use `--database` to select where external Sylph and MLST databases are stored. These are the configuration options exposed by the current CLI; it does not provide per-threshold command-line or environment-variable overrides.
 
 ```bash
-# Create custom config
-cp bactscout/config/bactscout_config.yml my_lenient_config.yml
-
-# Edit thresholds
-nano my_lenient_config.yml
-
-# Use in analysis
-pixi run bactscout qc data/ -c my_lenient_config.yml
+pixi run bactscout qc reads/ --config short.yml --database /data/bactscout-db
+pixi run bactscout long qc long_reads/ --platform ont_r10 \
+  --config long.yml --database /data/bactscout-db
 ```
 
-### Per-Batch Configuration
+## Short-read settings
 
-```bash
-# Batch 1: Strict QC
-pixi run bactscout qc batch1/ -c strict_config.yml -o batch1_results/
+The following table lists the values in the checked-in default short-read configuration. For the QC decision rules and output fields, see the [quality-control guide](../guide/quality-control.md) and [output-format reference](../usage/output-format.md).
 
-# Batch 2: Lenient QC
-pixi run bactscout qc batch2/ -c lenient_config.yml -o batch2_results/
+| Key | Default | Purpose |
+|---|---:|---|
+| `sylph_db` | `gtdb-r226-c1000-dbv1.syldb` | Sylph database filename |
+| `sylph_db_url` | Configured Sylph download URL | URL used when that file is missing |
+| `coverage_warn_threshold` | `30` | Coverage decision cutoff |
+| `coverage_fail_threshold` | `20` | Coverage decision cutoff |
+| `contamination_warn_threshold` | `10` | Secondary-species abundance cutoff (%) |
+| `contamination_fail_threshold` | `20` | Secondary-species abundance cutoff (%) |
+| `q30_warn_threshold` | `0.80` | Q30 fraction cutoff |
+| `q30_fail_threshold` | `0.70` | Q30 fraction cutoff |
+| `read_length_warn_threshold` | `80` | Mean read length cutoff (bp) |
+| `read_length_fail_threshold` | `100` | Mean read length cutoff (bp) |
+| `duplication_warn_threshold` | `0.20` | Duplicate-read fraction cutoff |
+| `duplication_fail_threshold` | `0.30` | Duplicate-read fraction cutoff |
+| `gc_fail_percentage` | `5` | Tolerance used with species GC bounds (%) |
+| `n_content_threshold` | `0.001` | N-content fraction cutoff |
+| `adapter_overrep_threshold` | `5` | Overrepresented adapter count cutoff |
 
-# Generate reports with different thresholds
-pixi run bactscout summary batch1_results/
-pixi run bactscout summary batch2_results/
-```
+`mlst_species` maps a database directory key to the species name passed to StringMLST. The default file lists *Escherichia coli*, *Salmonella enterica*, *Klebsiella pneumoniae*, *Acinetobacter baumannii*, and *Pseudomonas aeruginosa*. For database files and adding a scheme, see the [MLST species guide](../getting-started/mlst-species.md).
 
-### Override at Command Line
+`metrics_file` may be set to a CSV with species genome-size and GC metrics. By default, BactScout uses its bundled `bactscout/config/filtered_metrics.csv`. `system_resources.cpus` and `system_resources.memory` describe the configured resource requirements checked by preflight; runtime threads are selected with `--threads`.
 
-While command-line threshold overrides aren't supported, you can:
+The older single-cutoff keys `coverage_threshold` and `contamination_threshold` remain as compatibility fallbacks when their two named cutoffs are absent. New configurations should copy the shipped two-cutoff keys. Other historical names such as `q30_pass_threshold` and `read_length_pass_threshold` are not current settings.
 
-1. Create config file with desired values
-2. Pass with `-c` flag
-3. Or modify the config file before running
+## Long-read settings
 
-## Database Management
+The default long-read file has its own coverage, contamination, N50, and platform quality settings:
 
-### Database Locations
+| Key | Default | Purpose |
+|---|---:|---|
+| `sylph_db`, `sylph_db_url` | Same default database as short reads | Sylph reference database and download URL |
+| `coverage_warn_threshold` | `30` | Coverage decision cutoff |
+| `coverage_fail_threshold` | `20` | Coverage decision cutoff |
+| `contamination_warn_threshold` | `10` | Secondary-species abundance cutoff (%) |
+| `contamination_fail_threshold` | `20` | Secondary-species abundance cutoff (%) |
+| `n50_warn` | `8000` | Read N50 cutoff (bp) |
+| `n50_fail` | `4000` | Read N50 cutoff (bp) |
 
-```
+`platforms` defines `q_warn` and `q_fail` values for `ont_r9`, `ont_r10`, and `pacbio_hifi`. The selected key is required with `--platform`; see the [long-read QC guide](../usage/long-read-qc.md). `system_resources` has the same meaning as in the short-read config.
+
+## Database storage
+
+The database directory is selected automatically unless `--database` or `bactscout_dbs_path` in the configuration supplies a location. Pixi/source checkouts use `bactscout_dbs/` when it exists; otherwise the platform's user-data location is used. Sylph downloads on preflight if missing. The default Sylph database is approximately 4 GB; StringMLST scheme files add to the storage requirement.
+
+An example database directory contains the Sylph index and one subdirectory per configured MLST scheme:
+
+```text
 bactscout_dbs/
-├── gtdb-r226-c1000-dbv1.syldb      # Sylph GTDB database
-├── bactscout/config/filtered_metrics.csv  # Genome metrics
-├── escherichia_coli/                # MLST database
-│   └── [ARIBA database files]
+├── gtdb-r226-c1000-dbv1.syldb
+├── escherichia_coli/
 ├── salmonella_enterica/
-│   └── [ARIBA database files]
 ├── klebsiella_pneumoniae/
-│   └── [ARIBA database files]
 ├── acinetobacter_baumannii/
-│   └── [ARIBA database files]
 └── pseudomonas_aeruginosa/
-    └── [ARIBA database files]
 ```
 
-### Updating Databases
+The species metrics CSV is bundled with BactScout under `bactscout/config/`; it is not part of `bactscout_dbs/`.
 
-Update GTDB in config:
-```yaml
-# Old database
-sylph_db: 'gtdb-r226-c1000-dbv1.syldb'
+## Editing a configuration
 
-# New database (after downloading)
-sylph_db: 'gtdb-r227-c1000-dbv1.syldb'
-```
-
-### Custom Reference Database
-
-To use a custom reference database:
-
-1. Create Sylph index from your genomes
-2. Place in `bactscout_dbs/`
-3. Update config with filename:
-   ```yaml
-   sylph_db: 'my_custom_ref.syldb'
-   ```
-
-## Validation
-
-### Configuration Validation
-
-BactScout validates configuration on startup:
-
-```bash
-pixi run bactscout qc data/ -c config.yml
-```
-
-**Checked**:
-- File exists and is readable
-- YAML syntax valid
-- Required keys present
-- Threshold values in valid ranges
-- Database files accessible
-
-**Example error**:
-```
-Error: Configuration validation failed
-  - coverage_threshold must be > 0
-  - q30_pass_threshold must be 0.0-1.0
-  - Database file not found: gtdb-r226.syldb
-```
-
-### Threshold Validation
-
-Values are checked for reasonableness:
-
-| Parameter | Min | Max |
-|-----------|-----|-----|
-| `coverage_threshold` | 1 | 10000 |
-| `q30_pass_threshold` | 0.0 | 1.0 |
-| `read_length_pass_threshold` | 1 | 10000 |
-| `contamination_threshold` | 0 | 100 |
-
-## Configuration Environment Variables
-
-Set configuration via environment variables:
-
-```bash
-export BACTSCOUT_COVERAGE_THRESHOLD=20
-export BACTSCOUT_Q30_THRESHOLD=0.75
-export BACTSCOUT_CONTAMINATION_THRESHOLD=15
-
-pixi run bactscout qc data/
-```
-
-Not yet implemented but planned for future release.
-
-## Example Configurations
-
-### Single-Species MLST Study
-
-```yaml
-coverage_threshold: 30
-q30_pass_threshold: 0.80
-read_length_pass_threshold: 100
-contamination_threshold: 5
-
-mlst_species:
-  escherichia_coli: 'Escherichia coli#1'
-```
-
-### Multi-Species Surveillance
-
-```yaml
-coverage_threshold: 20
-q30_pass_threshold: 0.75
-read_length_pass_threshold: 80
-contamination_threshold: 10
-
-mlst_species:
-  escherichia_coli: 'Escherichia coli#1'
-  salmonella_enterica: 'Salmonella enterica'
-  klebsiella_pneumoniae: 'Klebsiella pneumoniae'
-  acinetobacter_baumannii: 'Acinetobacter baumannii#1'
-  pseudomonas_aeruginosa: 'Pseudomonas aeruginosa'
-```
-
-### High-Throughput Screening
-
-```yaml
-coverage_threshold: 15
-q30_pass_threshold: 0.70
-read_length_pass_threshold: 75
-contamination_threshold: 20
-```
-
-### Clinical Testing
-
-```yaml
-coverage_threshold: 100
-q30_pass_threshold: 0.95
-read_length_pass_threshold: 100
-contamination_threshold: 1
-
-system_resources:
-  cpus: 8
-  memory: 16.GB
-```
-
-## Troubleshooting Configuration
-
-### "Configuration file not found"
-
-```bash
-# Check if file exists
-ls -la bactscout/config/bactscout_config.yml
-
-# Use full path
-pixi run bactscout qc data/ -c /full/path/to/config.yml
-```
-
-### "Invalid YAML syntax"
-
-Check file with YAML validator:
-```bash
-python -c "import yaml; yaml.safe_load(open('bactscout/config/bactscout_config.yml'))"
-```
-
-### "Database not found"
-
-Ensure database files exist:
-```bash
-ls -la bactscout_dbs/
-
-# Should show:
-# gtdb-r226-c1000-dbv1.syldb
-# bactscout/config/filtered_metrics.csv
-# [species folders]
-```
-
-### "Threshold values ignored"
-
-Thresholds from config file are always used. To override:
-1. Create new config file with desired values
-2. Pass with `-c` flag
-
-## See Also
-
-- [Configuration Getting Started](../getting-started/configuration.md) - Quick config guide
-- [Quality Control Guide](../guide/quality-control.md) - Understanding thresholds
-- [Troubleshooting Guide](../guide/troubleshooting.md) - Common issues
+Copy the relevant default file, keep the supported key names, edit the values, and pass the copy with `--config`. A QC run reads thresholds when it processes samples. The `summary` command only combines per-sample summaries; it does not re-evaluate results with a new configuration.

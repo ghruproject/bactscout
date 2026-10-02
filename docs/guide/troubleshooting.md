@@ -197,7 +197,7 @@ zcat data/sample_R1.fastq.gz | wc -l  # Divide by 4 for read count
 
 ### Sample fails QC with low Q30%
 
-**Problem**: `q30_percent` < 80% threshold.
+**Problem**: `read_q30_rate` is below the configured Q30 cutoffs. Values below `q30_fail_threshold` are `FAILED`; values from the fail cutoff up to but not including `q30_warn_threshold` are `WARNING`; values at or above the warn cutoff are `PASSED`.
 
 **Solution**:
 ```bash
@@ -545,7 +545,7 @@ mv bactscout_output/Sample_unknown/ bactscout_output/Sample_correct_name/
    - Use smaller test files if possible
 
 4. **Check GitHub**:
-   - [BactScout Issues](https://github.com/nfareed/bactscout/issues)
+   - [BactScout Issues](https://github.com/ghruproject/bactscout/issues)
    - Search for similar issues
    - Include error output and system info
 

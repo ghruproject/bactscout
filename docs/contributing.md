@@ -12,7 +12,7 @@ We are committed to providing a welcoming and inclusive environment. All contrib
 
 Found a bug or have a feature request?
 
-1. **Check existing issues**: Search [GitHub Issues](https://github.com/nfareed/bactscout/issues) first
+1. **Check existing issues**: Search [GitHub Issues](https://github.com/ghruproject/bactscout/issues) first
 2. **Create new issue** with:
    - Clear title and description
    - Steps to reproduce (for bugs)
@@ -30,7 +30,7 @@ git clone https://github.com/YOUR_USERNAME/bactscout.git
 cd bactscout
 
 # Add upstream remote
-git remote add upstream https://github.com/nfareed/bactscout.git
+git remote add upstream https://github.com/ghruproject/bactscout.git
 ```
 
 #### 2. Create Feature Branch
@@ -155,7 +155,7 @@ Once approved:
 
 ```bash
 # Clone repository
-git clone https://github.com/nfareed/bactscout.git
+git clone https://github.com/ghruproject/bactscout.git
 cd bactscout
 
 # Install all dependencies
@@ -440,8 +440,8 @@ Releases are tagged and published to GitHub.
 
 ### Resources
 
-- **Documentation**: [https://bactscout.readthedocs.io/](./index.md)
-- **Issues**: [GitHub Issues](https://github.com/nfareed/bactscout/issues)
+- **Documentation**: [BactScout documentation](https://ghruproject.github.io/bactscout/)
+- **Issues**: [GitHub Issues](https://github.com/ghruproject/bactscout/issues)
 - **Discussions**: GitHub Discussions (if enabled)
 
 ### Ask Questions
