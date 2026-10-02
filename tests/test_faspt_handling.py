@@ -15,7 +15,7 @@ def test_handle_fastp_results_q30_and_length_thresholds():
     assert res["read_q30_status"] == "FAILED"
     assert res["read_length_status"] == "FAILED"
 
-    # Q30 as decimal above fail threshold -> PASSED
+    # Q30 as decimal above warn threshold -> PASSED
     fr = {
         "read_total_reads": 1000,
         "read_q30_rate": 0.8,
@@ -26,12 +26,11 @@ def test_handle_fastp_results_q30_and_length_thresholds():
     assert res["read_q30_status"] == "PASSED"
     assert res["read_length_status"] == "PASSED"
 
-    # Q30 given as percentage thresholds (legacy >1 values) should be handled
+    # Legacy percentage thresholds are converted to decimals and use all tiers.
     cfg = {"q30_fail_threshold": 60, "q30_warn_threshold": 70}
     fr = {"read_total_reads": 100, "read_q30_rate": 0.65}
     res = handle_fastp_results(fr.copy(), cfg)
-    # Note: implementation marks PASSED when >= fail threshold (after conversion)
-    assert res["read_q30_status"] == "PASSED"
+    assert res["read_q30_status"] == "WARNING"
 
     # Read lengths borderline: warn vs fail
     cfg = {"read_length_fail_threshold": 150, "read_length_warn_threshold": 120}
@@ -39,6 +38,24 @@ def test_handle_fastp_results_q30_and_length_thresholds():
     res = handle_fastp_results(fr.copy(), cfg)
     # with both at 130, which is >= warn(120) but < fail(150) => WARNING
     assert res["read_length_status"] == "WARNING"
+
+
+@pytest.mark.parametrize(
+    "q30_rate, expected",
+    [
+        (0.69, "FAILED"),  # Below fail threshold.
+        (0.70, "WARNING"),  # Fail threshold is inclusive for WARNING.
+        (0.79, "WARNING"),  # Below warn threshold.
+        (0.80, "PASSED"),  # Warn threshold is inclusive for PASSED.
+    ],
+)
+def test_handle_fastp_results_q30_threshold_boundaries(q30_rate, expected):
+    cfg = {"q30_fail_threshold": 0.70, "q30_warn_threshold": 0.80}
+    fr = {"read_total_reads": 100, "read_q30_rate": q30_rate}
+
+    res = handle_fastp_results(fr.copy(), cfg)
+
+    assert res["read_q30_status"] == expected
 
 
 @pytest.mark.parametrize(

@@ -8,8 +8,10 @@ are the names you should use as the `mlst_species` keys in
 - [Raw machine-readable list (copy)](./mlst_species.txt)
 
 If you want to add MLST support for a species, create a directory in
-`bactscout_dbs/` named exactly as the key below and place the PUBMLST/ARIBA
-formatted MLST database files there.
+`bactscout_dbs/` named exactly as the key below and place the StringMLST
+database files there. StringMLST expects a matching `<prefix>_config.txt` and
+`<prefix>_profile.txt` pair; the configured directory and prefix must match the
+`mlst_species` key.
 
 For more information about these species see [https://pubmlst.org/organisms](https://pubmlst.org/organisms).
 

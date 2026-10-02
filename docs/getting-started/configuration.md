@@ -20,8 +20,8 @@ coverage_warn_threshold: 30
 coverage_fail_threshold: 20
 
 # Contamination thresholds (% of top species, lower is more contaminated)
-contamination_warn_threshold: 5
-contamination_fail_threshold: 10
+contamination_warn_threshold: 10
+contamination_fail_threshold: 20
 
 # Q30 thresholds (fraction of bases >= Q30)
 q30_warn_threshold: 0.80
@@ -116,10 +116,10 @@ separately to produce PASS/WARNING/FAIL decisions.
 |-----------|---------|-------------|
 | `coverage_warn_threshold` | 30 | Coverage (×) above which samples are considered OK (warning threshold) |
 | `coverage_fail_threshold` | 20 | Coverage (×) below which samples are considered FAIL |
-| `contamination_warn_threshold` | 5 | Contamination (%) warning threshold (percent of reads not from dominant species) |
-| `contamination_fail_threshold` | 10 | Contamination (%) fail threshold |
-| `q30_warn_threshold` | 0.80 | Fraction of bases with Q ≥ 30 for WARN |
-| `q30_fail_threshold` | 0.70 | Fraction of bases with Q ≥ 30 for FAIL |
+| `contamination_warn_threshold` | 10 | Contamination (%) warning threshold (percent of reads not from dominant species) |
+| `contamination_fail_threshold` | 20 | Contamination (%) fail threshold |
+| `q30_warn_threshold` | 0.80 | Q30 rates at or above this value are `PASSED` |
+| `q30_fail_threshold` | 0.70 | Q30 rates below this value are `FAILED`; rates between fail and warn are `WARNING` |
 | `read_length_warn_threshold` | 80 | Mean read length (bp) WARN threshold |
 | `read_length_fail_threshold` | 100 | Mean read length (bp) FAIL threshold |
 | `duplication_warn_threshold` | 0.20 | Fraction duplicate reads WARN |
@@ -181,12 +181,15 @@ system_resources:
 
 ## Adjusting Thresholds
 
-Example: Lower coverage threshold for low-depth studies
+Example: Configure different coverage and read-quality cutoffs for a study. Choose values appropriate to your data and downstream use.
 
 ```yaml
-coverage_threshold: 20  # Instead of 30x
-q30_pass_threshold: 0.75  # Instead of 0.80 (75% instead of 80%)
-read_length_pass_threshold: 80  # Instead of 100 bp
+coverage_warn_threshold: 25
+coverage_fail_threshold: 15
+q30_warn_threshold: 0.80
+q30_fail_threshold: 0.70
+read_length_warn_threshold: 80
+read_length_fail_threshold: 100
 ```
 
 

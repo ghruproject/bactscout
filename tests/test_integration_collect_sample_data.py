@@ -127,6 +127,8 @@ def test_collect_sample_with_cache_data(tmp_path):
     print(f"Generated {len(output_files)} output files in {output_dir}")
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_cached_files_exist():
     """Test that verifies cached files are available (or can be downloaded)."""
     try:

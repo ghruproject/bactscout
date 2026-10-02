@@ -80,6 +80,8 @@ def test_stringmlst_real_download(tmp_path):
         pytest.fail("MLST output file not created and no error reported")
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_cached_files_exist():
     """Test that verifies cached files are available (or can be downloaded)."""
     try:

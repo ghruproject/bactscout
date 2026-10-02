@@ -479,10 +479,10 @@ def handle_fastp_results(fastp_results, config):
             - read_length_status (str): "PASSED", "WARNING", or "FAILED"
             - read_length_message (str): Descriptive message with length and thresholds
 
-    Status Logic:
-        - PASSED: Metric >= FAIL threshold (meets minimum quality)
-        - WARNING: FAIL threshold > metric >= WARN threshold (borderline quality)
-        - FAILED: Metric < WARN threshold OR total_reads == 0 (unacceptable quality)
+    Q30 Status Logic:
+        - PASSED: Metric >= WARN threshold
+        - WARNING: WARN threshold > metric >= FAIL threshold
+        - FAILED: Metric < FAIL threshold OR total_reads == 0
 
     Notes:
         - Handles percentage values (>1) by converting to decimals for Q30
@@ -511,12 +511,12 @@ def handle_fastp_results(fastp_results, config):
         fastp_results["read_q30_message"] = (
             "No reads processed. Cannot determine quality metrics."
         )
-    elif q30_rate >= q30_fail_threshold:
+    elif q30_rate >= q30_warn_threshold:
         fastp_results["read_q30_status"] = "PASSED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {q30_rate:.2f} meets threshold ({q30_fail_threshold})."
+            f"Q30 rate {q30_rate:.2f} meets warning threshold ({q30_warn_threshold})."
         )
-    elif q30_rate >= q30_warn_threshold:
+    elif q30_rate >= q30_fail_threshold:
         fastp_results["read_q30_status"] = "WARNING"
         fastp_results["read_q30_message"] = (
             f"Q30 rate {q30_rate:.2f} falls between warning ({q30_warn_threshold}) and fail ({q30_fail_threshold}) thresholds."
@@ -524,7 +524,7 @@ def handle_fastp_results(fastp_results, config):
     else:
         fastp_results["read_q30_status"] = "FAILED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {q30_rate:.2f} below warning threshold ({q30_warn_threshold})."
+            f"Q30 rate {q30_rate:.2f} below fail threshold ({q30_fail_threshold})."
         )
 
     # Read length status and message

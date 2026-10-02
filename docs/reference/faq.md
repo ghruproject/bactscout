@@ -3,7 +3,7 @@
 ## Installation & Setup
 
 ### Q: Do I need to install all the dependencies myself?
-**A:** No! Pixi handles this automatically. Just install Pixi, run `pixi install`, and all dependencies (fastp, Sylph, ARIBA, etc.) are installed in an isolated environment.
+**A:** Pixi installs the runtime dependencies, including fastp, nanoq, Sylph, and StringMLST. BactScout also needs reference databases; preflight downloads the configured Sylph and MLST databases when they are missing.
 
 ### Q: Can I use BactScout with conda or pip?
 **A:** While it's technically possible, we strongly recommend Pixi for:
@@ -12,10 +12,10 @@
 - Automatic package downloads
 - CI/CD compatibility
 
-If you prefer conda/pip, you'll need to manually install: Python 3.10-3.14, fastp, sylph, ariba, stringmlst, and required Python packages.
+For other installation routes, install the supported Python dependencies and command-line tools listed in `pixi.toml` and `pyproject.toml`, then provide the same databases configured for BactScout.
 
 ### Q: Can I run BactScout on Windows?
-**A:** Not directly - BactScout uses Unix-based tools (fastp, Sylph, ARIBA). Options:
+**A:** Not directly. BactScout's command-line tools target Unix-like environments. Options:
 - Use **WSL2** (Windows Subsystem for Linux 2)
 - Use **Docker** for Windows
 - Run on a Linux system
@@ -23,9 +23,10 @@ If you prefer conda/pip, you'll need to manually install: Python 3.10-3.14, fast
 ### Q: How much disk space do I need?
 **A:** 
 - BactScout installation: ~2-3 GB (with dependencies)
-- Reference databases: ~20-30 GB
-- Per sample output: ~500 MB - 2 GB (varies with read depth)
-- Typical batch (100 samples): ~100-200 GB including databases
+- Default Sylph database: approximately 4 GB, plus the MLST databases used by your configuration.
+- Input FASTQ and output sizes depend on the sequencing run and read depth; allow additional working space for intermediate and result files.
+
+The default Sylph database is downloaded on first preflight if it is not already present. See the [installation guide](../getting-started/installation.md) for database setup and storage options.
 
 ## Running BactScout
 
@@ -61,32 +62,32 @@ pixi run bactscout qc data/ -t $(nproc)  # Use all CPUs
 
 More threads = faster but higher memory usage. Balance with available RAM.
 
-### Q: Can I skip quality checks?
-**A:** Yes, use `--skip-preflight`:
+### Q: Can I skip the preflight checks?
+**A:** Yes, use `--skip-preflight` to skip prerequisite checks:
 ```bash
 pixi run bactscout qc data/ --skip-preflight
 ```
 
-This skips FASTQ format validation. Use only if you trust your input data.
+This does not skip the QC analysis; it skips the preflight checks for tools, resources and databases. Use it only when those prerequisites are already available.
 
 ## Results & Quality Control
 
-### Q: What does "FAIL" in quality_pass mean?
-**A:** A sample fails when any metric doesn't meet thresholds:
-- Coverage < 30x
-- Q30% < 80%
-- Read length < 100 bp
-- Contamination > 10%
+### Q: What does `FAILED` in `a_final_status` mean?
+**A:** The overall status combines the configured QC checks. The default configuration uses WARN and FAIL thresholds for coverage, Q30, read length, and contamination, alongside other checks. See the [quality control guide](../guide/quality-control.md) and [configuration guide](../getting-started/configuration.md) for the current rules and values.
 
 Check which metric failed and see [Quality Control Guide](../guide/quality-control.md).
 
 ### Q: Can I adjust quality thresholds?
-**A:** Yes, edit `bactscout/config/bactscout_config.yml`:
+**A:** Yes, copy `bactscout/config/bactscout_config.yml` and edit the threshold values:
 ```yaml
-coverage_threshold: 20           # Stricter or more lenient
-q30_pass_threshold: 0.75         # Lower for relaxed QC
-read_length_pass_threshold: 80
-contamination_threshold: 15
+coverage_warn_threshold: 30
+coverage_fail_threshold: 20
+q30_warn_threshold: 0.80
+q30_fail_threshold: 0.70
+read_length_warn_threshold: 80
+read_length_fail_threshold: 100
+contamination_warn_threshold: 10
+contamination_fail_threshold: 20
 ```
 
 Then run: `pixi run bactscout qc data/ -c my_config.yml`
@@ -121,10 +122,7 @@ Solutions:
 - May need specialized metagenomics tools for detailed analysis
 
 ### Q: Can I reprocess samples with different thresholds?
-**A:** Sort of:
-- Re-running BactScout: It overwrites previous results
-- Using `summary` with different config: Changes only `quality_pass` determination
-- Better approach: Run once, then filter results in analysis script
+**A:** Yes. Run QC again with a copied configuration containing your chosen thresholds and a separate output directory. The `summary` command merges existing per-sample summaries; it does not re-evaluate them with a new configuration.
 
 ## MLST & Strain Typing
 
@@ -136,7 +134,7 @@ Solutions:
 - *Acinetobacter baumannii*
 - *Pseudomonas aeruginosa*
 
-To add more, install additional ARIBA databases.
+To add another scheme, obtain compatible StringMLST database files and add the species key to the `mlst_species` configuration. See the [MLST species guide](../getting-started/mlst-species.md).
 
 ### Q: What does sequence type (ST) mean?
 **A:** ST is a unique number assigned based on alleles at 7 housekeeping genes:
@@ -240,7 +238,7 @@ pixi run bactscout qc data/ -c lenient_config.yml
 1. Format as FASTA files
 2. Place in `bactscout_dbs/species_name/`
 3. Update Sylph GTDB index
-4. Update ARIBA if adding MLST/resistance
+4. Update the StringMLST database and `mlst_species` configuration if adding an MLST scheme
 
 See [Configuration Guide](../getting-started/configuration.md#mlst-species).
 
@@ -277,7 +275,7 @@ See [Configuration Guide](../getting-started/configuration.md#mlst-species).
 
 ### Q: How do I report a bug?
 **A:** 
-1. Check [GitHub Issues](https://github.com/nfareed/bactscout/issues)
+1. Check [GitHub Issues](https://github.com/ghruproject/bactscout/issues)
 2. Provide:
    - BactScout version: `pixi run bactscout --version`
    - Command used
@@ -328,6 +326,6 @@ See [Configuration Guide](../getting-started/configuration.md#mlst-species).
 - Read [Quality Control Guide](../guide/quality-control.md) for QC interpretation
 - Review [Output Format](../usage/output-format.md) for column descriptions
 - Check configuration [Examples](../getting-started/configuration.md)
-- Search [GitHub Issues](https://github.com/nfareed/bactscout/issues)
+- Search [GitHub Issues](https://github.com/ghruproject/bactscout/issues)
 
 If your question isn't answered here, please open an issue on GitHub!

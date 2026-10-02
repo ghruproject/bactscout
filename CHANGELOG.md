@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+- Corrected short-read Q30 classification so values between the fail and warning cutoffs yield `WARNING`, with boundary and legacy-percentage regression tests.
+- Updated the JOSS manuscript, references and author metadata, and added reviewer instructions and a submission checklist.
+- Reconciled documentation with the current CLI, configuration and summary fields, and marked download-dependent cache checks as integration tests.
+
 ## [1.4.2] - 2026-09-24
 - Fixed long-read QC so samples fail when neither Sylph nor the expected-genome-size calculation can produce a coverage estimate.
 - Added explicit diagnostic messages when taxon, contamination, or coverage results are unavailable.
