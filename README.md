@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> **Development has moved to GitLab.**
+> The maintained repository is [cgps/ghru/bactscout](https://gitlab.com/cgps/ghru/bactscout). Please use GitLab for the latest code, issues, and merge requests.
+> This GitHub copy is retained for existing links and migration checks.
+
 
 # 🧬 BactScout
 
