@@ -39,7 +39,7 @@ Latest release: `v1.4.2` makes long-read QC fail when neither Sylph nor the geno
 
 - PASS / WARNING / FAIL logic
   - Any critical metric FAILED (Q30, read length, contamination, or GC deviation) → overall FAIL
-  - Both coverage estimates FAILED → overall FAIL; one coverage FAILED → overall WARNING
+  - Both coverage estimates FAILED → overall FAIL; one coverage FAILED or any individual WARNING → overall WARNING
   - Non‑critical issues (duplication, adapters, missing MLST) generally produce WARNINGs rather than immediate FAILs
   - All thresholds are configurable in `bactscout/config/bactscout_config.yml`; remediation and examples: https://ghruproject.github.io/bactscout/getting-started/configuration
   - See Quality Control Guide for full details: https://ghruproject.github.io/bactscout/guide/quality-control/

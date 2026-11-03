@@ -20,16 +20,16 @@ coverage_warn_threshold: 30
 coverage_fail_threshold: 20
 
 # Contamination thresholds (% of top species, lower is more contaminated)
-contamination_warn_threshold: 5
-contamination_fail_threshold: 10
+contamination_warn_threshold: 10
+contamination_fail_threshold: 20
 
 # Q30 thresholds (fraction of bases >= Q30)
 q30_warn_threshold: 0.80
 q30_fail_threshold: 0.70
 
 # Read length thresholds (mean read length in bp)
-read_length_warn_threshold: 80
-read_length_fail_threshold: 100
+read_length_warn_threshold: 100
+read_length_fail_threshold: 80
 
 # Duplication rate thresholds (fraction of duplicate reads)
 duplication_warn_threshold: 0.20
@@ -116,12 +116,12 @@ separately to produce PASS/WARNING/FAIL decisions.
 |-----------|---------|-------------|
 | `coverage_warn_threshold` | 30 | Coverage (×) above which samples are considered OK (warning threshold) |
 | `coverage_fail_threshold` | 20 | Coverage (×) below which samples are considered FAIL |
-| `contamination_warn_threshold` | 5 | Contamination (%) warning threshold (percent of reads not from dominant species) |
-| `contamination_fail_threshold` | 10 | Contamination (%) fail threshold |
+| `contamination_warn_threshold` | 10 | Contamination (%) warning threshold (percent of reads not from dominant species) |
+| `contamination_fail_threshold` | 20 | Contamination (%) fail threshold |
 | `q30_warn_threshold` | 0.80 | Fraction of bases with Q ≥ 30 for WARN |
 | `q30_fail_threshold` | 0.70 | Fraction of bases with Q ≥ 30 for FAIL |
-| `read_length_warn_threshold` | 80 | Mean read length (bp) WARN threshold |
-| `read_length_fail_threshold` | 100 | Mean read length (bp) FAIL threshold |
+| `read_length_warn_threshold` | 100 | Mean read length (bp) WARN threshold |
+| `read_length_fail_threshold` | 80 | Mean read length (bp) FAIL threshold |
 | `duplication_warn_threshold` | 0.20 | Fraction duplicate reads WARN |
 | `duplication_fail_threshold` | 0.30 | Fraction duplicate reads FAIL |
 | `gc_fail_percentage` | 5 | The GC ranges are determined via [Qualibact](https://happykhan.github.io/qualibact/) for a known species. These values are used to WARN. This option controlls the adjustment to the cutoff percent with unexpected GC content that triggers FAIL |

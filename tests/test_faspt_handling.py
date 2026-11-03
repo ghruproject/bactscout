@@ -30,8 +30,8 @@ def test_handle_fastp_results_q30_and_length_thresholds():
     cfg = {"q30_fail_threshold": 60, "q30_warn_threshold": 70}
     fr = {"read_total_reads": 100, "read_q30_rate": 0.65}
     res = handle_fastp_results(fr.copy(), cfg)
-    # Note: implementation marks PASSED when >= fail threshold (after conversion)
-    assert res["read_q30_status"] == "PASSED"
+    # Between the minimum and recommended thresholds should warn.
+    assert res["read_q30_status"] == "WARNING"
 
     # Read lengths borderline: warn vs fail
     cfg = {"read_length_fail_threshold": 150, "read_length_warn_threshold": 120}

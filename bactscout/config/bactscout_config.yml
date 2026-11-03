@@ -15,8 +15,8 @@ q30_warn_threshold: 0.80
 q30_fail_threshold: 0.70
 
 # Read length thresholds (mean read length in bp)
-read_length_warn_threshold: 80
-read_length_fail_threshold: 100
+read_length_warn_threshold: 100
+read_length_fail_threshold: 80
 
 # Duplication rate thresholds (fraction of duplicate reads)
 duplication_warn_threshold: 0.20
