@@ -42,6 +42,7 @@ Dependencies:
     - bactscout.util: Formatting and output utilities
 """
 
+import csv
 import json
 import os
 
@@ -395,7 +396,7 @@ def write_summary_file(
                 # If value isn't numeric, leave it as-is
                 pass
 
-    with open(final_output_file, "w", encoding="utf-8") as f:
+    with open(final_output_file, "w", newline="", encoding="utf-8") as f:
         # Initial header check (based on blank sample + resource headers)
         resource_headers = [
             "resource_threads_peak",
@@ -434,7 +435,8 @@ def write_summary_file(
             else len(pref_header_list),
         )
 
-        f.write(",".join(headers) + "\n")
+        writer = csv.writer(f, lineterminator="\n")
+        writer.writerow(headers)
         # Write values row (convert None to empty string)
         values = [
             str(final_results_to_write.get(h))
@@ -442,7 +444,7 @@ def write_summary_file(
             else ""
             for h in headers
         ]
-        f.write(",".join(values) + "\n")
+        writer.writerow(values)
 
     # Optionally write a JSON copy of the summary for downstream tools
     if write_json:

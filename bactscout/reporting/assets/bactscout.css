@@ -1,0 +1,40 @@
+/* BactScout-specific controls; colours and report composition come from SpecCheck. */
+.report-controls { align-items: end; }
+.report-controls label { display: grid; gap: 4px; }
+input, select, button { font: inherit; }
+select, input[type="search"] { padding: 7px 9px; border: 1px solid var(--line-strong); color: var(--ink); background: var(--surface); border-radius: 0; max-width: 100%; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, .table-container:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+::selection { background: var(--accent-muted); color: var(--ink); }
+.table-container { max-height: 560px; overflow: auto; scrollbar-color: var(--line-strong) var(--surface-muted); }
+.table { width: 100%; }
+.sample-table { min-width: 900px; }
+.sample-table th { white-space: normal; }
+.sample-table td { max-width: 210px; overflow-wrap: anywhere; }
+.table th button { padding: 0; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.sample-open { padding: 0; border: 0; color: var(--accent); background: transparent; font: inherit; font-weight: 650; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.field-note { color: var(--muted); font-size: .86rem; }
+.sample-detail-content .metric-table { width: 100%; min-width: 0; }
+.metric-table th, .metric-table td { padding: 7px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.metric-table .metric-message { display: block; margin-top: 4px; color: var(--muted); font-size: .85rem; }
+.sample-detail-content .raw-fields { grid-column: 1 / -1; }
+.sample-detail-content dt, .sample-detail-content dd { overflow-wrap: anywhere; }
+.status-badge { white-space: nowrap; }
+.report-footer, .report-intro, .alert-list { overflow-wrap: anywhere; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+#download-data { padding: 8px 10px; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-muted); cursor: pointer; }
+@media (max-width: 640px) {
+  .page-shell { padding: 12px 10px 24px; }
+  .report-header { padding: 16px; }
+  .panel { padding: 12px; }
+  .report-controls { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .table-filter { width: 100%; }
+  .sample-detail-dialog { width: calc(100% - 20px); max-width: calc(100% - 20px); padding: 12px; }
+  .sample-detail-content { display: block; }
+  .sample-detail-content section { margin-bottom: 12px; }
+  .metric-table th, .metric-table td { padding: 5px; font-size: .85rem; }
+  .report-sidebar { position: static; }
+}
+@media print {
+  .report-controls, .status-tabs, .table-pagination, #download-data { display: none; }
+  .table-container { max-height: none; }
+}

@@ -111,4 +111,7 @@ def main_long(
     print_message(f"Failed: {len(failed_samples)}", "error" if failed_samples else "info")
     if failed_samples:
         print_message(f"Failed samples: {', '.join(failed_samples)}", "warning")
-    summary_dir_long(output_dir, os.path.join(output_dir, "final_summary_long.csv"))
+    summary_path = summary_dir_long(
+        output_dir, os.path.join(output_dir, "final_summary_long.csv")
+    )
+    return summary_path if successful_samples and not failed_samples else None

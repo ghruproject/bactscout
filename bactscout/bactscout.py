@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
@@ -12,12 +13,49 @@ from bactscout.long.preflight import preflight_check_long
 from bactscout.long.summary import summary_dir_long
 from bactscout.main import main
 from bactscout.preflight import apply_database_destination, load_config, preflight_check
+from bactscout.reporting import generate_report
 from bactscout.summary import summary_dir
 from bactscout.util import print_header, print_message
 
 app = typer.Typer(rich_markup_mode="rich")
 long_app = typer.Typer(rich_markup_mode="rich", help="Long-read (ONT/PacBio) QC")
 app.add_typer(long_app, name="long")
+
+
+def _finish_html_report(result_path: Path | None, destination: Path | None) -> None:
+    """Render only the CSV written by the command that just completed."""
+    if destination is None:
+        return
+    if result_path is None:
+        print_message(
+            "HTML report not generated: the command did not complete successfully. "
+            "Check the preceding messages; existing CSV files were not used.",
+            "error",
+        )
+        raise typer.Exit(code=1)
+    _generate_html_report(result_path, destination)
+
+
+def _generate_html_report(input_path: Path, output_path: Path) -> None:
+    try:
+        report_path = generate_report(input_path, output_path)
+    except (OSError, ValueError) as exc:
+        print_message(f"Could not generate HTML report: {exc}", "error")
+        raise typer.Exit(code=1) from exc
+    print_message(f"HTML report generated: {report_path}", "success")
+
+
+@app.command()
+def report(
+    input_path: Path = typer.Argument(
+        ..., help="Existing BactScout summary CSV or output directory"
+    ),
+    output_path: Path = typer.Option(
+        Path("report.html"), "--output", "-o", help="Path to the HTML report"
+    ),
+):
+    """Generate an offline HTML report from existing results without rerunning tools."""
+    _generate_html_report(input_path, output_path)
 
 
 @app.command()
@@ -43,9 +81,15 @@ def qc(
         "--report-resources",
         help="Track and report thread and memory usage per sample",
     ),
+    html_report: Annotated[
+        Path | None,
+        typer.Option(
+            "--html-report", help="Also write an offline HTML report to this path"
+        ),
+    ] = None,
 ):
     """Main QC command"""
-    main(
+    result_path = main(
         input_dir,
         output_dir,
         threads,
@@ -54,6 +98,8 @@ def qc(
         report_resources=report_resources,
         database=database,
     )
+
+    _finish_html_report(result_path, html_report)
 
 
 @app.command()
@@ -85,9 +131,15 @@ def collect(
         "--write-json",
         help="Also write a JSON copy of the sample summary alongside the CSV",
     ),
+    html_report: Annotated[
+        Path | None,
+        typer.Option(
+            "--html-report", help="Also write an offline HTML report to this path"
+        ),
+    ] = None,
 ):
     """Process a single sample with paired-end reads"""
-    collect_sample(
+    result_path = collect_sample(
         read1_file,
         read2_file,
         output_dir,
@@ -99,6 +151,8 @@ def collect(
         database=database,
     )
 
+    _finish_html_report(result_path, html_report)
+
 
 @app.command()
 def summary(
@@ -108,6 +162,12 @@ def summary(
     output_dir: str = typer.Option(
         "bactscout_output", "--output", "-o", help="Path to the output directory"
     ),
+    html_report: Annotated[
+        Path | None,
+        typer.Option(
+            "--html-report", help="Also write an offline HTML report to this path"
+        ),
+    ] = None,
 ):
     """Generate a consolidated summary of all samples"""
     print_header("BactScout Summary Generator")
@@ -118,9 +178,11 @@ def summary(
 
     # Generate the merged summary file
     output_file = output_path / "final_summary.csv"
-    summary_dir(input_dir, str(output_file))
+    result_path = summary_dir(input_dir, str(output_file))
 
-    print_message(f"Summary report generated: {output_file}", "success")
+    if result_path is not None or html_report is None:
+        print_message(f"Summary report generated: {output_file}", "success")
+    _finish_html_report(result_path, html_report)
 
 
 @app.command()
@@ -189,9 +251,15 @@ def long_qc(
         "--report-resources",
         help="Track and report thread and memory usage per sample",
     ),
+    html_report: Annotated[
+        Path | None,
+        typer.Option(
+            "--html-report", help="Also write an offline HTML report to this path"
+        ),
+    ] = None,
 ):
     """Main long-read QC command."""
-    main_long(
+    result_path = main_long(
         input_dir,
         output_dir,
         threads,
@@ -201,6 +269,8 @@ def long_qc(
         report_resources=report_resources,
         database=database,
     )
+
+    _finish_html_report(result_path, html_report)
 
 
 @long_app.command("collect")
@@ -232,9 +302,15 @@ def long_collect(
         "--report-resources",
         help="Track and report thread and memory usage for the sample",
     ),
+    html_report: Annotated[
+        Path | None,
+        typer.Option(
+            "--html-report", help="Also write an offline HTML report to this path"
+        ),
+    ] = None,
 ):
     """Process a single long-read sample."""
-    collect_sample_long(
+    result_path = collect_sample_long(
         reads_file,
         output_dir,
         threads,
@@ -245,6 +321,8 @@ def long_collect(
         database=database,
     )
 
+    _finish_html_report(result_path, html_report)
+
 
 @long_app.command("summary")
 def long_summary(
@@ -254,14 +332,22 @@ def long_summary(
     output_dir: str = typer.Option(
         "bactscout_long_output", "--output", "-o", help="Path to the output directory"
     ),
+    html_report: Annotated[
+        Path | None,
+        typer.Option(
+            "--html-report", help="Also write an offline HTML report to this path"
+        ),
+    ] = None,
 ):
     """Generate a consolidated summary of all long-read samples."""
     print_header("BactScout Long-Read Summary Generator")
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     output_file = output_path / "final_summary_long.csv"
-    summary_dir_long(input_dir, str(output_file))
-    print_message(f"Summary report generated: {output_file}", "success")
+    result_path = summary_dir_long(input_dir, str(output_file))
+    if result_path is not None or html_report is None:
+        print_message(f"Summary report generated: {output_file}", "success")
+    _finish_html_report(result_path, html_report)
 
 
 @long_app.command("preflight")

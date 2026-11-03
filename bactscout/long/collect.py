@@ -2,6 +2,7 @@
 
 import csv
 import os
+from pathlib import Path
 
 from bactscout.long.evaluate import evaluate_long
 from bactscout.long.nanoq import run_nanoq
@@ -166,8 +167,8 @@ def collect_sample_long(
     skip_preflight: bool,
     report_resources: bool = False,
     database: str | None = None,
-) -> None:
-    """Process a single long-read sample."""
+) -> Path | None:
+    """Process a sample and return its newly written summary, or None on failure."""
     config_dict = apply_database_destination(load_config(config), database)
     all_ok = preflight_check_long(skip_preflight, config_dict)
     if not all_ok:
@@ -199,5 +200,6 @@ def collect_sample_long(
         print_header("Long-Read Sample Processing Complete")
         print_message(f"Sample {sample_id} processed successfully", "success")
         print_message(f"Results saved to {output_dir}/{sample_id}/", "info")
+        return Path(output_dir) / sample_id / f"{sample_id}_long_summary.csv"
     else:
         print_message(f"Sample {sample_id} processing failed", "error")

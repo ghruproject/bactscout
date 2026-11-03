@@ -1,0 +1,9 @@
+The accompanying report.css is copied from SpecCheck, copyright its authors,
+distributed under GNU GPL version 3, as is this adaptation of its report layout.
+Source: https://gitlab.com/cgps/tools/speccheck
+Source commit: 2948c042 (main, inspected 3 November 2026).
+See the BactScout repository LICENSE for the GPL text.
+
+The BactScout-specific CSV adapters, template and table controls render recorded
+BactScout results. They do not run SpecCheck, reuse its assembly QC criteria,
+or recalculate BactScout QC decisions.

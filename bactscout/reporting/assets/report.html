@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BactScout QC report</title>
+  <style>@@STYLE@@
+@@EXTRA_STYLE@@</style>
+</head>
+<body>
+<div class="page-shell">
+  <header id="overview" class="report-header">
+    <h1>QC Report <span>BactScout @@VERSION@@</span></h1>
+    <p class="report-intro">Read quality, taxonomic profiling, coverage and typing results. Statuses and explanations are taken from the recorded BactScout output.</p>
+    <div class="hero-card hero-kpis">@@KPIS@@</div>
+  </header>
+  <div class="report-layout" id="report-layout">
+    <aside class="report-sidebar">
+      <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-expanded="true" aria-label="Collapse report navigation"><span aria-hidden="true">←</span><span class="sidebar-toggle-label">Collapse</span></button>
+      <nav class="report-nav" aria-label="Report sections">
+        <a href="#overview">Overview</a>
+        <a href="#sample-review"><span>Review queue</span><strong>@@REVIEW_COUNT@@</strong></a>
+        <a href="#review-reasons">Review reasons</a>
+        <a href="#provenance">Data and provenance</a>
+      </nav>
+    </aside>
+    <main class="report-main">
+      <section id="sample-review" class="panel prose">
+        <div class="section-heading"><h2>Review queue</h2></div>
+        <p><strong>@@REVIEW_COUNT@@ of @@SAMPLE_COUNT@@ samples require review.</strong> Open a sample to inspect measurements, individual flags and diagnostic messages.</p>
+        <div class="status-tabs" role="group" aria-label="Filter samples by overall QC">
+          <button type="button" data-filter="REVIEW">Needs review</button>
+          <button type="button" data-filter="FAILED">Failed</button>
+          <button type="button" data-filter="WARNING">Warning</button>
+          <button type="button" data-filter="Unavailable">Unavailable status</button>
+          <button type="button" data-filter="PASSED">Passed</button>
+          <button type="button" data-filter="ALL">All</button>
+        </div>
+        <div class="table-tools report-controls">
+          <label for="sample-search">Search <input id="sample-search" class="table-filter" type="search" placeholder="Sample, species or diagnostic"></label>
+          <label for="species-filter">Species <select id="species-filter"><option value="">All species</option></select></label>
+          <label for="type-filter">Read type <select id="type-filter"><option value="">Both read types</option><option>Short reads</option><option>Long reads</option></select></label>
+          <label for="page-size">Rows <select id="page-size"><option>10</option><option>25</option><option>50</option><option>100</option></select></label>
+        </div>
+        <p id="filter-summary" class="review-filter-summary" role="status" aria-live="polite"></p>
+        <div class="table-container" tabindex="0" role="region" aria-label="Scrollable sample results">
+          <table class="table sample-table" id="sample-table">
+            <caption class="sr-only">Recorded BactScout results. Column heading buttons sort the current selection.</caption>
+            <thead><tr>
+              <th scope="col" aria-sort="ascending"><button data-sort="id">Sample</button></th>
+              <th scope="col"><button data-sort="status">Overall QC</button></th>
+              <th scope="col"><button data-sort="read_type">Read type</button></th>
+              <th scope="col"><button data-sort="species">Species</button></th>
+              <th scope="col"><button data-sort="quality">Q30 / median Q</button></th>
+              <th scope="col"><button data-sort="sylph_coverage">Sylph coverage</button></th>
+              <th scope="col"><button data-sort="calculated_coverage">Genome-size coverage</button></th>
+              <th scope="col"><button data-sort="mlst">MLST ST</button></th>
+            </tr></thead>
+            <tbody id="sample-rows"></tbody>
+          </table>
+        </div>
+        <div class="table-pagination">
+          <button type="button" id="previous-page">Previous</button>
+          <span id="page-summary" aria-live="polite"></span>
+          <button type="button" id="next-page">Next</button>
+        </div>
+        <p class="field-note">Short-read quality is the percentage of bases at Q30; long-read quality is median Phred Q. Unavailable measurements are shown explicitly; zero remains a measured zero.</p>
+        <noscript><p>Enable JavaScript to explore the embedded results. The original CSV files retain all measurements and decisions.</p></noscript>
+      </section>
+      <section id="review-reasons" class="panel prose">
+        <div class="section-heading"><h2>Review reasons</h2></div>
+        <ul class="alert-list">@@REASONS@@</ul>
+      </section>
+      <section id="provenance" class="panel prose">
+        <div class="section-heading"><h2>Data and provenance</h2></div>
+        <p>This report displays existing CSV measurements and flags. It does not run sequencing tools or recalculate QC. The HTML, styles and controls work offline. Links to fastp reports require those original HTML files to remain at their recorded relative locations.</p>
+        <button type="button" id="download-data">Download report data (JSON)</button>
+        <p class="field-note">Generated by BactScout @@VERSION@@. Reporting style adapted from <a href="https://gitlab.com/cgps/tools/speccheck">SpecCheck</a> (GPLv3; source commit 2948c042). No assembly-specific SpecCheck checks are applied.</p>
+      </section>
+    </main>
+  </div>
+</div>
+<dialog id="sample-detail-dialog" class="sample-detail-dialog" aria-labelledby="sample-detail-title">
+  <div class="sample-detail-header"><h2 id="sample-detail-title"></h2><form method="dialog"><button type="submit" class="dialog-close">Close</button></form></div>
+  <div id="sample-detail-content" class="sample-detail-content"></div>
+</dialog>
+<script id="report-data" type="application/json">@@DATA@@</script>
+<script>@@SCRIPT@@</script>
+</body>
+</html>

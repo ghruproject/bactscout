@@ -95,3 +95,5 @@ def summary_dir(data_dir, output_file):
     except OSError as e:
         print(f"Error writing merged file {output_file}: {e}")
         raise
+
+    return output_path if header and all_rows else None
