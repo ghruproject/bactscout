@@ -61,6 +61,14 @@ Summary of primary metrics and the configuration keys used by the code:
     - Keys and statuses: `duplication_rate` → `duplication_status`, `n_content_rate` → `n_content_status`, adapter over-representation → `adapter_detection_status`.
     - Config keys: `duplication_warn_threshold` / `duplication_fail_threshold`, `n_content_threshold` (fraction; compared as percentage in the code), `adapter_overrep_threshold`.
 
+### Availability of N-content and overrepresented-sequence measurements
+
+Standard fastp reports do not provide an aggregate N-base count. BactScout therefore leaves `n_content_rate` empty in CSV output (`null` in JSON) and sets `n_content_status` to `WARNING`; rejected-read counts are not an N-base percentage. Per-cycle proportions do not supply the cycle-specific base counts needed to calculate this percentage for variable-length reads.
+
+The default fastp invocation does not enable overrepresented-sequence analysis. Empty report fields from that invocation mean the analysis is unavailable, so `adapter_detection_status` becomes `WARNING`. When analysis was explicitly enabled, reported results are evaluated across read ends. Overrepresentation is nonspecific: neither an empty result nor a nonempty result establishes adapter absence or presence.
+
+These availability warnings also make the overall short-read result `WARNING` unless another metric already causes `FAILED`. They replace unsupported clean results; they do not establish poor read quality. No additional analysis or FASTQ pass is enabled by this change.
+
 Notes about the two-tier logic:
 
 - For Q30, read length and coverage, values at or above the WARN threshold pass, values at or above FAIL but below WARN warn, and values below FAIL fail. Packaged pass/minimum pairs are Q30 0.80/0.70, read length 100/80 bp and coverage 30/20x. Older reversed read-length threshold names retain the same effective bands. Legacy single coverage thresholds retain pass at the configured value and warning from 67% of that value.

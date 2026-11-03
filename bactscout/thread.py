@@ -641,7 +641,7 @@ def handle_n_content_results(fastp_results, config):
 
     Args:
         fastp_results (dict): FastP metrics containing:
-            - n_content_rate (float): Percentage of N bases in reads
+            - n_content_rate (float or None): Percentage of N bases, if measured
             - read_total_reads (int): Total reads processed
         config (dict): Configuration with threshold:
             - n_content_threshold (float): Maximum acceptable N-content as fraction (default: 0.001 = 0.1%)
@@ -653,7 +653,7 @@ def handle_n_content_results(fastp_results, config):
 
     Status Logic:
         - PASSED: n_content_rate <= threshold * 100 (acceptable N-content)
-        - WARNING: n_content_rate > threshold * 100 (elevated N-content, quality concerns)
+        - WARNING: N-content unavailable or above threshold * 100
         - FAILED: total_reads == 0 (no data to evaluate)
 
     Notes:
@@ -663,13 +663,20 @@ def handle_n_content_results(fastp_results, config):
     """
     n_content_threshold = config.get("n_content_threshold", 0.001)
 
-    n_content_rate = fastp_results.get("n_content_rate", 0.0)
+    n_content_rate = fastp_results.get("n_content_rate")
     total_reads = fastp_results.get("read_total_reads", 0)
 
     if total_reads == 0:
         fastp_results["n_content_status"] = "FAILED"
         fastp_results["n_content_message"] = (
             "No reads processed. Cannot determine N-content."
+        )
+    elif n_content_rate is None:
+        fastp_results["n_content_rate"] = None
+        fastp_results["n_content_status"] = "WARNING"
+        fastp_results["n_content_message"] = (
+            "N-content unavailable: fastp does not report an aggregate N-base count. "
+            "Rejected-read counts and per-cycle proportions are not an N-base percentage."
         )
     elif n_content_rate <= (n_content_threshold * 100):
         fastp_results["n_content_status"] = "PASSED"
@@ -688,10 +695,10 @@ def handle_n_content_results(fastp_results, config):
 
 def handle_adapter_detection(fastp_results, config):
     """
-    Updates fastp_results with adapter contamination status based on overrepresented sequences.
+    Evaluate the overrepresented-sequence proxy without claiming adapter identification.
 
-    Checks for presence of overrepresented sequences which may indicate adapter contamination
-    or other contaminants that weren't properly removed.
+    This nonspecific check cannot establish adapter presence or absence. Missing
+    or disabled analysis produces WARNING rather than an unsupported clean result.
 
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with composition_data.
@@ -704,32 +711,47 @@ def handle_adapter_detection(fastp_results, config):
     adapter_overrep_threshold = config.get("adapter_overrep_threshold", 5)
     total_reads = fastp_results.get("read_total_reads", 0)
 
-    # Get overrepresented sequences from composition_data
-    composition_data = fastp_results.get("read1_before_filtering", {})
-    overrep_sequences = composition_data.get("overrepresented_sequences", [])
-    overrep_count = len(overrep_sequences) if overrep_sequences else 0
+    # Parser metadata distinguishes disabled analysis from an assessed empty result.
+    # Consume it here so it is never written as an extra summary column.
+    if "_fastp_overrepresentation_count" in fastp_results:
+        overrep_count = fastp_results.pop("_fastp_overrepresentation_count")
+    else:
+        counts = [
+            len(composition["overrepresented_sequences"])
+            for key in ("read1_before_filtering", "read2_before_filtering")
+            if isinstance(composition := fastp_results.get(key), dict)
+            and isinstance(composition.get("overrepresented_sequences"), (dict, list))
+        ]
+        overrep_count = sum(counts) if counts else None
 
     if total_reads == 0:
         fastp_results["adapter_detection_status"] = "FAILED"
         fastp_results["adapter_detection_message"] = (
             "No reads processed. Cannot check for adapter contamination."
         )
+    elif overrep_count is None:
+        fastp_results["adapter_detection_status"] = "WARNING"
+        fastp_results["adapter_detection_message"] = (
+            "Overrepresented-sequence analysis unavailable or disabled. "
+            "Adapter contamination has not been assessed by this check."
+        )
     elif overrep_count == 0:
         fastp_results["adapter_detection_status"] = "PASSED"
         fastp_results["adapter_detection_message"] = (
-            "No overrepresented sequences detected."
+            "No overrepresented sequences detected; this does not establish adapter absence."
         )
     elif overrep_count <= adapter_overrep_threshold:
         fastp_results["adapter_detection_status"] = "WARNING"
         fastp_results["adapter_detection_message"] = (
-            f"{overrep_count} overrepresented sequence(s) detected. "
-            f"May indicate minor adapter contamination or repetitive sequences."
+            f"{overrep_count} overrepresented sequence entries detected across read ends. "
+            "Overrepresentation is nonspecific and does not identify adapter contamination."
         )
     else:
         fastp_results["adapter_detection_status"] = "FAILED"
         fastp_results["adapter_detection_message"] = (
-            f"{overrep_count} overrepresented sequences detected (threshold: {adapter_overrep_threshold}). "
-            f"Indicates significant adapter contamination or other contaminants."
+            f"{overrep_count} overrepresented sequence entries detected across read ends "
+            f"(threshold: {adapter_overrep_threshold}). "
+            "Overrepresentation is nonspecific and does not identify adapter contamination."
         )
 
     return fastp_results
@@ -1200,13 +1222,36 @@ def get_fastp_results(fastp_results):
         duplication_rate = data["duplication"].get("rate", 0.0)
     after_filtering_rename["duplication_rate"] = duplication_rate
 
-    n_content_rate = 0.0
-    filtering_result = data.get("filtering_result", {})
-    if filtering_result.get("total_reads", 0) > 0:
-        too_many_n = filtering_result.get("too_many_N", 0)
-        total_reads = filtering_result.get("total_reads", 0)
-        n_content_rate = (too_many_n / total_reads) * 100.0
-    after_filtering_rename["n_content_rate"] = n_content_rate
+    # fastp's filtering_result counts rejected reads, not N bases. Per-cycle
+    # content curves lack the cycle-specific base counts needed to recover an
+    # aggregate rate for variable-length reads. Do not substitute either metric.
+    after_filtering_rename["n_content_rate"] = None
+
+    # Empty overrepresentation fields are present even when analysis is disabled.
+    # Only an explicit enabled command or actual nonempty results establishes
+    # that this analysis was performed. Preserve only a count, not the large raw
+    # report sections, because these metrics are later merged into CSV output.
+    import shlex
+
+    try:
+        command = shlex.split(data.get("command") or "")
+    except ValueError:
+        command = []
+    enabled = any(arg in ("-p", "--overrepresentation_analysis") for arg in command)
+    counts = []
+    expected_sections = ["read1_before_filtering"]
+    if after_filtering_rename["read2_mean_length"] > 0:
+        expected_sections.append("read2_before_filtering")
+    for key in expected_sections:
+        composition = data.get(key, {})
+        sequences = composition.get("overrepresented_sequences")
+        if isinstance(sequences, (dict, list)) and (enabled or sequences):
+            counts.append(len(sequences))
+    after_filtering_rename["_fastp_overrepresentation_count"] = (
+        sum(counts)
+        if counts and (sum(counts) > 0 or len(counts) == len(expected_sections))
+        else None
+    )
 
     return after_filtering_rename
 
