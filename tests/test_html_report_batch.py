@@ -151,11 +151,8 @@ assert.equal(element("sample-rows").children[0].children[0].textContent,"No samp
 assert.equal(element("next-page").disabled,true);
 """
     result = subprocess.run(
-        [
-            shutil.which("node"),
-            "-e",
-            harness.replace("DATA", json.dumps(data), 1).replace("SCRIPT", script, 1),
-        ],
+        [shutil.which("node"), "-"],
+        input=harness.replace("DATA", json.dumps(data), 1).replace("SCRIPT", script, 1),
         capture_output=True,
         text=True,
     )
