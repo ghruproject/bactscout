@@ -19,7 +19,7 @@ sylph_db_url: 'http://faust.compbio.cs.cmu.edu/sylph-stuff/gtdb-r226-c1000-dbv1.
 coverage_warn_threshold: 30
 coverage_fail_threshold: 20
 
-# Contamination thresholds (% of top species, lower is more contaminated)
+# Contamination thresholds (% not assigned to the dominant detected species)
 contamination_warn_threshold: 10
 contamination_fail_threshold: 20
 
@@ -114,10 +114,10 @@ separately to produce PASS/WARNING/FAIL decisions.
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `coverage_warn_threshold` | 30 | Coverage (×) above which samples are considered OK (warning threshold) |
+| `coverage_warn_threshold` | 30 | Coverage (×) at or above which samples pass |
 | `coverage_fail_threshold` | 20 | Coverage (×) below which samples are considered FAIL |
-| `contamination_warn_threshold` | 10 | Contamination (%) warning threshold (percent of reads not from dominant species) |
-| `contamination_fail_threshold` | 20 | Contamination (%) fail threshold |
+| `contamination_warn_threshold` | 10 | Secondary-species taxonomic abundance (%) above which samples warn |
+| `contamination_fail_threshold` | 20 | Secondary-species taxonomic abundance (%) above which samples fail |
 | `q30_warn_threshold` | 0.80 | Fraction of bases with Q ≥ 30 for WARN |
 | `q30_fail_threshold` | 0.70 | Fraction of bases with Q ≥ 30 for FAIL |
 | `read_length_warn_threshold` | 100 | Mean read length (bp) WARN threshold |
