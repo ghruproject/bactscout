@@ -55,16 +55,23 @@ Summary of primary metrics and the configuration keys used by the code:
 - **Contamination (species purity):**
     - Computed as 100 - (top taxonomic abundance). BactScout uses Sylph's `Taxonomic_abundance`, which is normalised across detected taxa; the unclassified fraction in `Sequence_abundance` is not treated as contamination.
     - Status stored in `contamination_status` and messages in `contamination_message`.
-    - Config keys: `contamination_warn_threshold` and `contamination_fail_threshold` (percent secondary species tolerated). The code treats these as percentages of non-top-species allowed; e.g. `contamination_fail_threshold: 10` means top species purity must be >90% to PASS.
-    - The proportion of unassigned reads is included, this means that a sample with 75% Escherichia coli, 15% other species, and 10% unassigned would have 25% contamination.
+    - Config keys: `contamination_warn_threshold` and `contamination_fail_threshold` (percent secondary species tolerated). Contamination at or below the warning threshold passes; above it and at or below the failure threshold warns; above the failure threshold fails. The packaged defaults are 10% and 20%, respectively.
 
 - **Duplication, N-content, Adapter detection (fastp-derived):**
     - Keys and statuses: `duplication_rate` → `duplication_status`, `n_content_rate` → `n_content_status`, adapter over-representation → `adapter_detection_status`.
     - Config keys: `duplication_warn_threshold` / `duplication_fail_threshold`, `n_content_threshold` (fraction; compared as percentage in the code), `adapter_overrep_threshold`.
 
+### Availability of N-content and overrepresented-sequence measurements
+
+Standard fastp reports do not provide an aggregate N-base count. BactScout therefore leaves `n_content_rate` empty in CSV output (`null` in JSON) and sets `n_content_status` to `WARNING`; rejected-read counts are not an N-base percentage. Per-cycle proportions do not supply the cycle-specific base counts needed to calculate this percentage for variable-length reads.
+
+The default fastp invocation does not enable overrepresented-sequence analysis. Empty report fields from that invocation mean the analysis is unavailable, so `adapter_detection_status` becomes `WARNING`. When analysis was explicitly enabled, reported results are evaluated across read ends. Overrepresentation is nonspecific: neither an empty result nor a nonempty result establishes adapter absence or presence.
+
+These availability warnings also make the overall short-read result `WARNING` unless another metric already causes `FAILED`. They replace unsupported clean results; they do not establish poor read quality. No additional analysis or FASTQ pass is enabled by this change.
+
 Notes about the two-tier logic:
 
-- The code uses WARN and FAIL thresholds. FAIL thresholds represent the minimum/maximum required for a PASSED metric (e.g. `q30_fail_threshold` is the value at or above which Q30 is considered PASSED). WARN thresholds define a borderline region that yields `WARNING` rather than `PASSED` or `FAILED`.
+- For Q30, read length and coverage, values at or above the WARN threshold pass, values at or above FAIL but below WARN warn, and values below FAIL fail. Packaged pass/minimum pairs are Q30 0.80/0.70, read length 100/80 bp and coverage 30/20x. Older reversed read-length threshold names retain the same effective bands. Legacy single coverage thresholds retain pass at the configured value and warning from 67% of that value.
 - Many configuration values accept either percent (e.g. 80) or fraction (0.80); the code attempts to normalize values where necessary.
 
 !!! note "What does x-fold coverage mean?"
@@ -79,11 +86,11 @@ Key points of the algorithm (exact behavior in code):
 
 - Critical failures cause immediate FAIL:
     - The following metric statuses are treated as critical: `read_length_status`, `read_q30_status`, `contamination_status`, `gc_content_status`.
-    - If any of these is `FAILED`, the final status becomes `FAILED`.
+    - If any of these is `FAILED`, the final status becomes `FAILED`. Any `WARNING` produces overall `WARNING` unless a failure takes precedence.
 
 - Coverage handling (both Sylph and qualibact coverage are considered):
     - The pipeline computes two coverage estimates: `coverage_status` (Sylph) and `coverage_estimate_qualibact_status` (calculated from read bases and expected genome size).
-    - If both coverage statuses are `FAILED`, final status is `FAILED`.
+    - If both coverage statuses are `FAILED`, final status is `FAILED`. Any coverage `WARNING` produces overall `WARNING` unless a failure takes precedence.
     - If exactly one of the two coverage statuses is `FAILED` (the other is `PASSED` or `WARNING`), final status becomes `WARNING` (unless already `FAILED` due to a critical metric).
 
 - Non-critical metrics turn PASS → WARNING but do not alone cause FAIL:
@@ -94,7 +101,7 @@ In short:
 
 - Any critical `FAILED` → overall `FAILED`.
 - Both coverage methods `FAILED` → overall `FAILED`.
-- One coverage `FAILED` (but not critical failures) → overall `WARNING`.
+- Any critical or coverage `WARNING`, or one coverage `FAILED` (without a failing rule above) → overall `WARNING`.
 - Any non-critical `WARNING`/`FAILED` (and no critical `FAILED`) → overall `WARNING`.
 - Otherwise no problems → overall `PASSED`.
 
@@ -125,12 +132,12 @@ Suggested example sets:
 Lenient (more samples will PASS/WARNING rather than FAIL):
 
 ```yaml
-coverage_fail_threshold: 20
-coverage_warn_threshold: 13
-q30_fail_threshold: 0.70
-q30_warn_threshold: 0.60
-read_length_fail_threshold: 80
-read_length_warn_threshold: 60
+coverage_fail_threshold: 13
+coverage_warn_threshold: 20
+q30_fail_threshold: 0.60
+q30_warn_threshold: 0.70
+read_length_fail_threshold: 60
+read_length_warn_threshold: 80
 contamination_fail_threshold: 15
 contamination_warn_threshold: 8
 ```
@@ -138,12 +145,12 @@ contamination_warn_threshold: 8
 Strict (fewer samples PASS):
 
 ```yaml
-coverage_fail_threshold: 50
-coverage_warn_threshold: 33
-q30_fail_threshold: 0.90
-q30_warn_threshold: 0.85
-read_length_fail_threshold: 120
-read_length_warn_threshold: 100
+coverage_fail_threshold: 33
+coverage_warn_threshold: 50
+q30_fail_threshold: 0.85
+q30_warn_threshold: 0.90
+read_length_fail_threshold: 100
+read_length_warn_threshold: 120
 contamination_fail_threshold: 5
 contamination_warn_threshold: 2
 ```
@@ -225,7 +232,7 @@ Contamination is evaluated from Sylph species abundance. The pipeline computes t
 
 **Symptoms**:
 
-- Top species purity (`top_species_pct`) is below `100 - contamination_warn_threshold` (warning) or below `100 - contamination_fail_threshold` (fail). Practically, with `contamination_fail_threshold: 10`, your top species must be >90% for a PASS.
+- Contamination exceeds `contamination_warn_threshold` (warning) or `contamination_fail_threshold` (failure). At the packaged defaults, top-species purity of at least 90% passes; 80% up to but below 90% warns; below 80% fails.
 - Multiple species reported by Sylph with non-trivial abundance.
 
 **Causes**:

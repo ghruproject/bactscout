@@ -21,12 +21,12 @@ def test_handle_species_coverage_various_cases():
     assert updated["coverage_status"] == "PASSED"
     assert updated["contamination_status"] == "PASSED"
 
-    # Single species, moderate coverage -> WARNING coverage
+    # Single species, moderate coverage and 8% contamination -> WARNINGs
     sp = [("SppA", 92.0, 25.0)]
     final = {}
     updated, species = handle_species_coverage(sp, final.copy(), cfg)
     assert updated["coverage_status"] == "WARNING"
-    assert updated["contamination_status"] == "PASSED"
+    assert updated["contamination_status"] == "WARNING"
 
     # Multiple species -> species_status WARNING and possible contamination FAIL
     sp = [("A", 85.0, 10.0), ("B", 10.0, 1.0)]

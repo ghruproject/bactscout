@@ -470,7 +470,7 @@ def handle_fastp_results(fastp_results, config):
             - q30_warn_threshold (float): Q30 rate below which WARNING is triggered (default: 0.70)
             - q30_fail_threshold (float): Q30 rate below which FAILED is triggered (default: 0.60)
             - read_length_warn_threshold (int): Read length below which WARNING is triggered (default: 100)
-            - read_length_fail_threshold (int): Read length below which FAILED is triggered (default: 75)
+            - read_length_fail_threshold (int): Read length below which FAILED is triggered (default: 80)
 
     Returns:
         dict: Updated fastp_results dictionary with added fields:
@@ -480,9 +480,9 @@ def handle_fastp_results(fastp_results, config):
             - read_length_message (str): Descriptive message with length and thresholds
 
     Status Logic:
-        - PASSED: Metric >= FAIL threshold (meets minimum quality)
-        - WARNING: FAIL threshold > metric >= WARN threshold (borderline quality)
-        - FAILED: Metric < WARN threshold OR total_reads == 0 (unacceptable quality)
+        - PASSED: Metric >= WARN threshold (recommended quality)
+        - WARNING: FAIL threshold <= metric < WARN threshold
+        - FAILED: Metric < FAIL threshold OR total_reads == 0
 
     Notes:
         - Handles percentage values (>1) by converting to decimals for Q30
@@ -499,8 +499,13 @@ def handle_fastp_results(fastp_results, config):
         q30_warn_threshold /= 100
 
     # Handle read length thresholds with backward compatibility
-    read_length_fail_threshold = config.get("read_length_fail_threshold", 75)
-    read_length_warn_threshold = config.get("read_length_warn_threshold", 100)
+    read_length_thresholds = (
+        config.get("read_length_fail_threshold", 80),
+        config.get("read_length_warn_threshold", 100),
+    )
+    # Older configurations named these two thresholds in reverse order.
+    read_length_fail_threshold = min(read_length_thresholds)
+    read_length_warn_threshold = max(read_length_thresholds)
 
     # Q30 status and message
     total_reads = fastp_results.get("read_total_reads", 0)
@@ -511,12 +516,12 @@ def handle_fastp_results(fastp_results, config):
         fastp_results["read_q30_message"] = (
             "No reads processed. Cannot determine quality metrics."
         )
-    elif q30_rate >= q30_fail_threshold:
+    elif q30_rate >= q30_warn_threshold:
         fastp_results["read_q30_status"] = "PASSED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {q30_rate:.2f} meets threshold ({q30_fail_threshold})."
+            f"Q30 rate {q30_rate:.2f} meets threshold ({q30_warn_threshold})."
         )
-    elif q30_rate >= q30_warn_threshold:
+    elif q30_rate >= q30_fail_threshold:
         fastp_results["read_q30_status"] = "WARNING"
         fastp_results["read_q30_message"] = (
             f"Q30 rate {q30_rate:.2f} falls between warning ({q30_warn_threshold}) and fail ({q30_fail_threshold}) thresholds."
@@ -524,7 +529,7 @@ def handle_fastp_results(fastp_results, config):
     else:
         fastp_results["read_q30_status"] = "FAILED"
         fastp_results["read_q30_message"] = (
-            f"Q30 rate {q30_rate:.2f} below warning threshold ({q30_warn_threshold})."
+            f"Q30 rate {q30_rate:.2f} below fail threshold ({q30_fail_threshold})."
         )
 
     # Read length status and message
@@ -537,25 +542,25 @@ def handle_fastp_results(fastp_results, config):
             "No reads processed. Cannot determine read lengths."
         )
     elif (
-        read1_len >= read_length_fail_threshold
-        and read2_len >= read_length_fail_threshold
-    ):
-        fastp_results["read_length_status"] = "PASSED"
-        fastp_results["read_length_message"] = (
-            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} meet threshold (>{read_length_fail_threshold})."
-        )
-    elif (
         read1_len >= read_length_warn_threshold
         and read2_len >= read_length_warn_threshold
     ):
+        fastp_results["read_length_status"] = "PASSED"
+        fastp_results["read_length_message"] = (
+            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} meet threshold (>={read_length_warn_threshold})."
+        )
+    elif (
+        read1_len >= read_length_fail_threshold
+        and read2_len >= read_length_fail_threshold
+    ):
         fastp_results["read_length_status"] = "WARNING"
         fastp_results["read_length_message"] = (
-            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} falls between warning (>{read_length_warn_threshold}) and fail (>{read_length_fail_threshold}) thresholds."
+            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} falls between warning ({read_length_warn_threshold}) and fail ({read_length_fail_threshold}) thresholds."
         )
     else:
         fastp_results["read_length_status"] = "FAILED"
         fastp_results["read_length_message"] = (
-            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} below warning threshold (>{read_length_warn_threshold})."
+            f"Read1 mean length {read1_len}; Read2 mean length {read2_len} below fail threshold ({read_length_fail_threshold})."
         )
 
     return fastp_results
@@ -636,7 +641,7 @@ def handle_n_content_results(fastp_results, config):
 
     Args:
         fastp_results (dict): FastP metrics containing:
-            - n_content_rate (float): Percentage of N bases in reads
+            - n_content_rate (float or None): Percentage of N bases, if measured
             - read_total_reads (int): Total reads processed
         config (dict): Configuration with threshold:
             - n_content_threshold (float): Maximum acceptable N-content as fraction (default: 0.001 = 0.1%)
@@ -648,7 +653,7 @@ def handle_n_content_results(fastp_results, config):
 
     Status Logic:
         - PASSED: n_content_rate <= threshold * 100 (acceptable N-content)
-        - WARNING: n_content_rate > threshold * 100 (elevated N-content, quality concerns)
+        - WARNING: N-content unavailable or above threshold * 100
         - FAILED: total_reads == 0 (no data to evaluate)
 
     Notes:
@@ -658,13 +663,20 @@ def handle_n_content_results(fastp_results, config):
     """
     n_content_threshold = config.get("n_content_threshold", 0.001)
 
-    n_content_rate = fastp_results.get("n_content_rate", 0.0)
+    n_content_rate = fastp_results.get("n_content_rate")
     total_reads = fastp_results.get("read_total_reads", 0)
 
     if total_reads == 0:
         fastp_results["n_content_status"] = "FAILED"
         fastp_results["n_content_message"] = (
             "No reads processed. Cannot determine N-content."
+        )
+    elif n_content_rate is None:
+        fastp_results["n_content_rate"] = None
+        fastp_results["n_content_status"] = "WARNING"
+        fastp_results["n_content_message"] = (
+            "N-content unavailable: fastp does not report an aggregate N-base count. "
+            "Rejected-read counts and per-cycle proportions are not an N-base percentage."
         )
     elif n_content_rate <= (n_content_threshold * 100):
         fastp_results["n_content_status"] = "PASSED"
@@ -683,10 +695,10 @@ def handle_n_content_results(fastp_results, config):
 
 def handle_adapter_detection(fastp_results, config):
     """
-    Updates fastp_results with adapter contamination status based on overrepresented sequences.
+    Evaluate the overrepresented-sequence proxy without claiming adapter identification.
 
-    Checks for presence of overrepresented sequences which may indicate adapter contamination
-    or other contaminants that weren't properly removed.
+    This nonspecific check cannot establish adapter presence or absence. Missing
+    or disabled analysis produces WARNING rather than an unsupported clean result.
 
     Args:
         fastp_results (dict): Dictionary containing fastp metrics with composition_data.
@@ -699,32 +711,47 @@ def handle_adapter_detection(fastp_results, config):
     adapter_overrep_threshold = config.get("adapter_overrep_threshold", 5)
     total_reads = fastp_results.get("read_total_reads", 0)
 
-    # Get overrepresented sequences from composition_data
-    composition_data = fastp_results.get("read1_before_filtering", {})
-    overrep_sequences = composition_data.get("overrepresented_sequences", [])
-    overrep_count = len(overrep_sequences) if overrep_sequences else 0
+    # Parser metadata distinguishes disabled analysis from an assessed empty result.
+    # Consume it here so it is never written as an extra summary column.
+    if "_fastp_overrepresentation_count" in fastp_results:
+        overrep_count = fastp_results.pop("_fastp_overrepresentation_count")
+    else:
+        counts = [
+            len(composition["overrepresented_sequences"])
+            for key in ("read1_before_filtering", "read2_before_filtering")
+            if isinstance(composition := fastp_results.get(key), dict)
+            and isinstance(composition.get("overrepresented_sequences"), (dict, list))
+        ]
+        overrep_count = sum(counts) if counts else None
 
     if total_reads == 0:
         fastp_results["adapter_detection_status"] = "FAILED"
         fastp_results["adapter_detection_message"] = (
             "No reads processed. Cannot check for adapter contamination."
         )
+    elif overrep_count is None:
+        fastp_results["adapter_detection_status"] = "WARNING"
+        fastp_results["adapter_detection_message"] = (
+            "Overrepresented-sequence analysis unavailable or disabled. "
+            "Adapter contamination has not been assessed by this check."
+        )
     elif overrep_count == 0:
         fastp_results["adapter_detection_status"] = "PASSED"
         fastp_results["adapter_detection_message"] = (
-            "No overrepresented sequences detected."
+            "No overrepresented sequences detected; this does not establish adapter absence."
         )
     elif overrep_count <= adapter_overrep_threshold:
         fastp_results["adapter_detection_status"] = "WARNING"
         fastp_results["adapter_detection_message"] = (
-            f"{overrep_count} overrepresented sequence(s) detected. "
-            f"May indicate minor adapter contamination or repetitive sequences."
+            f"{overrep_count} overrepresented sequence entries detected across read ends. "
+            "Overrepresentation is nonspecific and does not identify adapter contamination."
         )
     else:
         fastp_results["adapter_detection_status"] = "FAILED"
         fastp_results["adapter_detection_message"] = (
-            f"{overrep_count} overrepresented sequences detected (threshold: {adapter_overrep_threshold}). "
-            f"Indicates significant adapter contamination or other contaminants."
+            f"{overrep_count} overrepresented sequence entries detected across read ends "
+            f"(threshold: {adapter_overrep_threshold}). "
+            "Overrepresentation is nonspecific and does not identify adapter contamination."
         )
 
     return fastp_results
@@ -764,9 +791,9 @@ def handle_species_coverage(species_abundance, final_results, config):
             - species_list (list): Names of all detected species (empty if none)
 
     Status Logic - Coverage:
-        - PASSED: coverage >= FAIL threshold
-        - WARNING: WARN <= coverage < FAIL threshold
-        - FAILED: coverage < WARN threshold OR no species detected
+        - PASSED: coverage >= WARN threshold
+        - WARNING: FAIL <= coverage < WARN threshold
+        - FAILED: coverage < FAIL threshold OR no species detected
 
     Status Logic - Contamination:
         - PASSED: (100 - top_species_pct) <= WARN threshold (minimal secondary species)
@@ -785,11 +812,9 @@ def handle_species_coverage(species_abundance, final_results, config):
     coverage_warn_threshold = config.get("coverage_warn_threshold")
 
     if coverage_fail_threshold is None:
-        # Legacy mode: use threshold as fail_threshold
-        coverage_fail_threshold = config.get("coverage_threshold", 30)
-        coverage_warn_threshold = (
-            coverage_fail_threshold * 0.67
-        )  # Default warn at ~67% of fail
+        # Preserve legacy pass at the single threshold, warn from 67% of it.
+        coverage_warn_threshold = config.get("coverage_threshold", 30)
+        coverage_fail_threshold = coverage_warn_threshold * 0.67
 
     # Handle contamination thresholds with backward compatibility
     contamination_fail_threshold = config.get("contamination_fail_threshold")
@@ -834,13 +859,13 @@ def handle_species_coverage(species_abundance, final_results, config):
     top_species = species_abundance[0] if species_abundance else None
 
     # Evaluate coverage with WARNING and FAIL thresholds
-    if top_species and top_species[2] >= coverage_fail_threshold:
+    if top_species and top_species[2] >= coverage_warn_threshold:
         final_results["coverage_status"] = "PASSED"
         final_results["coverage_estimate_sylph"] = round(top_species[2], 2)
         final_results["coverage_estimate_sylph_message"] = (
-            f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x meets the threshold of {coverage_fail_threshold}x."
+            f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x meets the threshold of {coverage_warn_threshold}x."
         )
-    elif top_species and top_species[2] >= coverage_warn_threshold:
+    elif top_species and top_species[2] >= coverage_fail_threshold:
         final_results["coverage_status"] = "WARNING"
         final_results["coverage_estimate_sylph"] = round(top_species[2], 2)
         final_results["coverage_estimate_sylph_message"] = (
@@ -856,17 +881,17 @@ def handle_species_coverage(species_abundance, final_results, config):
             )
         else:
             final_results["coverage_estimate_sylph_message"] = (
-                f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls below warning threshold ({coverage_warn_threshold}x)."
+                f"Top species {top_species[0]} with coverage {top_species[2]:.2f}x falls below fail threshold ({coverage_fail_threshold}x)."
             )
         final_results["coverage_status"] = "FAILED"
 
     # Evaluate contamination with WARNING and FAIL thresholds
     # Contamination is calculated as (100 - top_species_percentage)
     # Lower top species percentage = higher contamination
-    if top_species and top_species[1] > (100 - contamination_fail_threshold):
+    if top_species and top_species[1] >= (100 - contamination_warn_threshold):
         final_results["contamination_status"] = "PASSED"
         final_results["contamination_message"] = "OK"
-    elif top_species and top_species[1] > (100 - contamination_warn_threshold):
+    elif top_species and top_species[1] >= (100 - contamination_fail_threshold):
         final_results["contamination_status"] = "WARNING"
         final_results["contamination_message"] = (
             f"Top species purity {top_species[1]:.2f}% falls between warning ({100 - contamination_warn_threshold}%) and fail ({100 - contamination_fail_threshold}%) thresholds."
@@ -878,7 +903,7 @@ def handle_species_coverage(species_abundance, final_results, config):
             )
         else:
             final_results["contamination_message"] = (
-                f"Top species purity {top_species[1]:.2f}% falls below warning threshold ({100 - contamination_warn_threshold}%)."
+                f"Top species purity {top_species[1]:.2f}% falls below fail threshold ({100 - contamination_fail_threshold}%)."
             )
         final_results["contamination_status"] = "FAILED"
     return final_results, species
@@ -1051,13 +1076,12 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
     -----
     - Calls :func:`get_expected_genome_size` to obtain expected genome size and GC bounds.
     - Coverage is computed as ``read_total_bases / expected_genome_size`` when values are available
-      and stored (rounded) in ``coverage_alt_estimate``; ``coverage_alt_status`` is set to
-      "PASSED" when the estimate meets ``coverage_threshold`` otherwise "FAILED".
+      and stored (rounded) in ``coverage_estimate_qualibact``. The corresponding status
+      uses the same warning/failure bands as Sylph coverage.
     - GC bounds are stored in ``gc_content_lower`` and ``gc_content_upper``. When both bounds
       are > 0 the function will set ``gc_content_status`` to "PASSED" or "WARNING" when the
       GC content is within the exact bounds or within the expanded tolerance, respectively.
-      If the GC content is outside the tolerance range the function sets ``gc_content_message``
-      but does not change an existing ``gc_content_status`` (it is left as-initialised).
+      GC content outside the tolerance range is marked "FAILED".
 
     Returns
     -------
@@ -1071,9 +1095,9 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
     coverage_warn_threshold = config.get("coverage_warn_threshold")
 
     if coverage_fail_threshold is None:
-        # Legacy single-threshold mode
-        coverage_fail_threshold = config.get("coverage_threshold", 30)
-        coverage_warn_threshold = coverage_fail_threshold * 0.67
+        # Preserve legacy pass at the single threshold, warn from 67% of it.
+        coverage_warn_threshold = config.get("coverage_threshold", 30)
+        coverage_fail_threshold = coverage_warn_threshold * 0.67
     species = species_list[0]  # Use the top species only
     warning = ""
     if len(species_list) > 1:
@@ -1087,22 +1111,22 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
     final_results["coverage_estimate_qualibact"] = round(estimated_coverage, 2)
     final_results["genome_size_expected"] = expected_genome_size
     # Evaluate alternate coverage using WARN/FAIL thresholds
-    if estimated_coverage >= coverage_fail_threshold:
+    if estimated_coverage >= coverage_warn_threshold:
         final_results["coverage_estimate_qualibact_status"] = "PASSED"
         final_results["coverage_estimate_qualibact_message"] = (
-            f"Estimated coverage {estimated_coverage:.2f}x meets the threshold of {coverage_fail_threshold}x."
+            f"Estimated coverage {estimated_coverage:.2f}x meets the threshold of {coverage_warn_threshold}x."
             + warning
         )
-    elif estimated_coverage >= coverage_warn_threshold:
+    elif estimated_coverage >= coverage_fail_threshold:
         final_results["coverage_estimate_qualibact_status"] = "WARNING"
         final_results["coverage_estimate_qualibact_message"] = (
-            f"Estimated coverage {estimated_coverage:.2f}x falls between warning ({coverage_warn_threshold}x) and pass ({coverage_fail_threshold}x) thresholds."
+            f"Estimated coverage {estimated_coverage:.2f}x falls between warning ({coverage_warn_threshold}x) and fail ({coverage_fail_threshold}x) thresholds."
             + warning
         )
     else:
         final_results["coverage_estimate_qualibact_status"] = "FAILED"
         final_results["coverage_estimate_qualibact_message"] = (
-            f"Estimated coverage {estimated_coverage:.2f}x below the warning threshold ({coverage_warn_threshold}x)."
+            f"Estimated coverage {estimated_coverage:.2f}x below the fail threshold ({coverage_fail_threshold}x)."
             + warning
         )
     final_results["gc_content_lower"] = gc_lower
@@ -1126,6 +1150,7 @@ def handle_genome_size(species_list, fastp_stats, final_results, config):
                 f"GC content {fastp_stats.get('gc_content', 0)}% near expected range ({gc_lower}-{gc_upper}%)"
             )
         else:
+            final_results["gc_content_status"] = "FAILED"
             final_results["gc_content_message"] = (
                 f"GC content {fastp_stats.get('gc_content', 0)}% outside expected range ({gc_lower}-{gc_upper}%)"
             )
@@ -1197,13 +1222,36 @@ def get_fastp_results(fastp_results):
         duplication_rate = data["duplication"].get("rate", 0.0)
     after_filtering_rename["duplication_rate"] = duplication_rate
 
-    n_content_rate = 0.0
-    filtering_result = data.get("filtering_result", {})
-    if filtering_result.get("total_reads", 0) > 0:
-        too_many_n = filtering_result.get("too_many_N", 0)
-        total_reads = filtering_result.get("total_reads", 0)
-        n_content_rate = (too_many_n / total_reads) * 100.0
-    after_filtering_rename["n_content_rate"] = n_content_rate
+    # fastp's filtering_result counts rejected reads, not N bases. Per-cycle
+    # content curves lack the cycle-specific base counts needed to recover an
+    # aggregate rate for variable-length reads. Do not substitute either metric.
+    after_filtering_rename["n_content_rate"] = None
+
+    # Empty overrepresentation fields are present even when analysis is disabled.
+    # Only an explicit enabled command or actual nonempty results establishes
+    # that this analysis was performed. Preserve only a count, not the large raw
+    # report sections, because these metrics are later merged into CSV output.
+    import shlex
+
+    try:
+        command = shlex.split(data.get("command") or "")
+    except ValueError:
+        command = []
+    enabled = any(arg in ("-p", "--overrepresentation_analysis") for arg in command)
+    counts = []
+    expected_sections = ["read1_before_filtering"]
+    if after_filtering_rename["read2_mean_length"] > 0:
+        expected_sections.append("read2_before_filtering")
+    for key in expected_sections:
+        composition = data.get(key, {})
+        sequences = composition.get("overrepresented_sequences")
+        if isinstance(sequences, (dict, list)) and (enabled or sequences):
+            counts.append(len(sequences))
+    after_filtering_rename["_fastp_overrepresentation_count"] = (
+        sum(counts)
+        if counts and (sum(counts) > 0 or len(counts) == len(expected_sections))
+        else None
+    )
 
     return after_filtering_rename
 
@@ -1258,10 +1306,8 @@ def final_status_pass(final_results):
     result in FAILED status. Any individual FAILED status in critical metrics causes FAILED.
     WARNINGs accumulate to overall WARNING status if no critical failures.
 
-    Note: MLST status is informational only and does not affect final QC pass/fail determination.
-    Species WARNING status can contribute to overall WARNING but not FAILED.
-
-    Metrics are only evaluated if data is available (i.e., read_total_reads > 0).
+    Species, MLST and other non-critical flags can produce an overall WARNING.
+    Critical or coverage warnings also produce WARNING unless a failure takes precedence.
     """
     # get all keys that end with _status
     final_status = "PASSED"
@@ -1278,6 +1324,8 @@ def final_status_pass(final_results):
         if statuses.get(metric) == "FAILED":
             final_status = "FAILED"
             break
+        if statuses.get(metric) == "WARNING":
+            final_status = "WARNING"
 
     # If final status not already FAILED, check coverage
     if final_status != "FAILED":
@@ -1287,10 +1335,12 @@ def final_status_pass(final_results):
             and statuses.get("coverage_estimate_qualibact_status") == "FAILED"
         ):
             final_status = "FAILED"
-        # If one coverage metric failed, it's a warning
+        # Any coverage warning, or one failed estimate, produces a warning
         elif (
             statuses.get("coverage_status") == "FAILED"
             or statuses.get("coverage_estimate_qualibact_status") == "FAILED"
+            or statuses.get("coverage_status") == "WARNING"
+            or statuses.get("coverage_estimate_qualibact_status") == "WARNING"
         ):
             final_status = "WARNING"
 
@@ -1299,7 +1349,7 @@ def final_status_pass(final_results):
         # Always-evaluable warning metrics
         warning_metrics = [
             "species_status",  # Species identification issues
-            "mlst_status",  # MLST issues are informational only
+            "mlst_status",  # MLST issues contribute warnings
             "adapter_detection_status",  # Adapter contamination warnings
             "duplication_status",  # Duplication warnings
             "n_content_status",  # N-content warnings
