@@ -17,7 +17,6 @@ cov-report="pixi run -e dev python -m coverage html && pixi run -e dev python -m
 # Docs tasks now automatically run inside the `docs` environment
 docs="pixi run -e docs -- mkdocs serve --livereload"
 docs-build="pixi run -e docs -- mkdocs build --strict"
-build-paper="docker run --rm --volume $PWD/joss:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara"
 
 [feature.dev.tasks]
 build-conda="conda-build conda"
