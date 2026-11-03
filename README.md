@@ -90,6 +90,22 @@ Run long-read QC on single-end ONT or PacBio FASTQ files:
 pixi run bactscout long qc /path/to/fastq/files --platform ont_r10
 ```
 
+### Optional HTML report
+
+Generate a combined, offline HTML report from existing short-read or long-read
+results without rerunning analysis:
+
+```bash
+pixi run bactscout report results/ -o results/report.html
+```
+
+Add `--html-report results/report.html` to `qc`, `collect` or `summary` (including
+`long` variants) to write it after successful processing. CSV output remains the
+default. The report shows existing QC flags, measurements and diagnostic messages,
+with searchable sample details and links to available fastp reports.
+
+See the [HTML report guide](docs/reporting.md) for sharing and input requirements.
+
 ### `version` - Print version
 
 Print the installed BactScout version string:

@@ -87,7 +87,7 @@ def main(
             Defaults to False.
 
     Returns:
-        None: Results are written to output_dir and printed to console.
+        Path or None: Newly written merged CSV on successful processing; otherwise None.
 
     Raises:
         ValueError: If config file is invalid or database paths are incorrect.
@@ -178,7 +178,10 @@ def main(
 
         if failed_samples:
             print_message(f"Failed samples: {', '.join(failed_samples)}", "warning")
-        summary_dir(output_dir, os.path.join(output_dir, "final_summary.csv"))
+        summary_path = summary_dir(
+            output_dir, os.path.join(output_dir, "final_summary.csv")
+        )
+        return summary_path if successful_samples and not failed_samples else None
 
 
 def locate_read_file_pairs(directory):

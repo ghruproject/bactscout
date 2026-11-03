@@ -45,4 +45,8 @@ def summary_dir_long(data_dir, output_file):
             writer.writerow(header)
         writer.writerows(all_rows)
 
-    print_message(f"Merged {len(all_rows)} long-read samples into {output_file}", "success")
+    print_message(
+        f"Merged {len(all_rows)} long-read samples into {output_file}", "success"
+    )
+
+    return output_path if header and all_rows else None

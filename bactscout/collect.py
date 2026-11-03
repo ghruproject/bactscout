@@ -1,5 +1,8 @@
 """Single sample collection and processing module."""
 
+import os
+from pathlib import Path
+
 from bactscout.preflight import (
     apply_database_destination,
     load_config,
@@ -19,7 +22,7 @@ def collect_sample(
     report_resources: bool = False,
     write_json: bool = False,
     database: str | None = None,
-) -> None:
+) -> Path | None:
     """
     Process a single sample with paired-end reads.
 
@@ -35,7 +38,7 @@ def collect_sample(
         k_mer_size: K-mer size for KAT analysis (overrides config)
 
     Returns:
-        None
+        Path or None: Newly written summary CSV, or None if processing failed.
     """
     config_dict = apply_database_destination(load_config(config), database)
     all_ok = preflight_check(skip_preflight, config_dict)
@@ -73,6 +76,8 @@ def collect_sample(
             print_header("Sample Processing Complete")
             print_message(f"✅ Sample {sample_id} processed successfully", "success")
             print_message(f"Results saved to {output_dir}/{sample_id}/", "info")
+            output_root = Path(os.environ.get("NXF_TASK_WORKDIR") or output_dir)
+            return output_root / sample_id / f"{sample_id}_summary.csv"
         else:
             print_message(f"❌ Sample {sample_id} processing failed", "error")
 
