@@ -10,7 +10,7 @@
 <body>
 <div class="page-shell">
   <header id="overview" class="report-header">
-    <h1>QC Report <span>BactScout @@VERSION@@</span></h1>
+    <h1>Batch QC Report <span>BactScout @@VERSION@@</span></h1>
     <p class="report-intro">Read quality, taxonomic profiling, coverage and typing results. Statuses and explanations are taken from the recorded BactScout output.</p>
     <div class="hero-card hero-kpis">@@KPIS@@</div>
   </header>
@@ -19,15 +19,15 @@
       <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-expanded="true" aria-label="Collapse report navigation"><span aria-hidden="true">←</span><span class="sidebar-toggle-label">Collapse</span></button>
       <nav class="report-nav" aria-label="Report sections">
         <a href="#overview">Overview</a>
-        <a href="#sample-review"><span>Review queue</span><strong>@@REVIEW_COUNT@@</strong></a>
+        <a href="#sample-review"><span>Samples</span><strong>@@SAMPLE_COUNT@@</strong></a>
         <a href="#review-reasons">Review reasons</a>
         <a href="#provenance">Data and provenance</a>
       </nav>
     </aside>
     <main class="report-main">
       <section id="sample-review" class="panel prose">
-        <div class="section-heading"><h2>Review queue</h2></div>
-        <p><strong>@@REVIEW_COUNT@@ of @@SAMPLE_COUNT@@ samples require review.</strong> Open a sample to inspect measurements, individual flags and diagnostic messages.</p>
+        <div class="section-heading"><h2>Batch overview</h2></div>
+        <p><strong>@@REVIEW_COUNT@@ of @@SAMPLE_COUNT@@ samples require review.</strong> Scan the batch, filter checks needing review, or open a sample for full measurements and diagnostic messages.</p>
         <div class="status-tabs" role="group" aria-label="Filter samples by overall QC">
           <button type="button" data-filter="REVIEW">Needs review</button>
           <button type="button" data-filter="FAILED">Failed</button>
@@ -40,7 +40,7 @@
           <label for="sample-search">Search <input id="sample-search" class="table-filter" type="search" placeholder="Sample, species or diagnostic"></label>
           <label for="species-filter">Species <select id="species-filter"><option value="">All species</option></select></label>
           <label for="type-filter">Read type <select id="type-filter"><option value="">Both read types</option><option>Short reads</option><option>Long reads</option></select></label>
-          <label for="page-size">Rows <select id="page-size"><option>10</option><option>25</option><option>50</option><option>100</option></select></label>
+          <label for="page-size">Rows <select id="page-size"><option selected>10</option><option>25</option><option>50</option><option>100</option></select></label>
         </div>
         <p id="filter-summary" class="review-filter-summary" role="status" aria-live="polite"></p>
         <div class="table-container" tabindex="0" role="region" aria-label="Scrollable sample results">
@@ -49,12 +49,13 @@
             <thead><tr>
               <th scope="col" aria-sort="ascending"><button data-sort="id">Sample</button></th>
               <th scope="col"><button data-sort="status">Overall QC</button></th>
-              <th scope="col"><button data-sort="read_type">Read type</button></th>
+              <th scope="col"><span>Review checks</span></th>
+              <th scope="col" data-column="read_type"><button data-sort="read_type">Read type</button></th>
               <th scope="col"><button data-sort="species">Species</button></th>
               <th scope="col"><button data-sort="quality">Q30 / median Q</button></th>
               <th scope="col"><button data-sort="sylph_coverage">Sylph coverage</button></th>
               <th scope="col"><button data-sort="calculated_coverage">Genome-size coverage</button></th>
-              <th scope="col"><button data-sort="mlst">MLST ST</button></th>
+              <th scope="col" data-column="mlst"><button data-sort="mlst">MLST ST</button></th>
             </tr></thead>
             <tbody id="sample-rows"></tbody>
           </table>

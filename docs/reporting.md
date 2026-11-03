@@ -42,8 +42,10 @@ HTML report is generated from old results. Existing files are retained.
 ## Read and share the report
 
 Open the HTML file in a browser. Its styles and table controls work
-offline. Search and filter the sample table, then open a sample to inspect its
-measurements and warning or failure messages. Missing measurements appear as
+offline. The table shows 10 rows per page by default, with options for 25, 50 or
+100. Search, sorting and filters apply across the full dataset, including samples
+on other pages. Samples needing review are shown first when present. Open a sample
+for its complete measurements and diagnostic messages. Missing measurements appear as
 unavailable; zero values remain zero. Short-read Q30 fractions are displayed as
 percentages, while GC and taxonomic abundance are already percentages in CSV.
 

@@ -102,7 +102,9 @@ pixi run bactscout report results/ -o results/report.html
 Add `--html-report results/report.html` to `qc`, `collect` or `summary` (including
 `long` variants) to write it after successful processing. CSV output remains the
 default. The report shows existing QC flags, measurements and diagnostic messages,
-with searchable sample details and links to available fastp reports.
+with searchable sample details and links to available fastp reports. The paginated
+table starts with 10 rows per page and supports search, filters and sorting across
+the full dataset.
 
 See the [HTML report guide](docs/reporting.md) for sharing and input requirements.
 

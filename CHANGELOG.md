@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Improved batch HTML review with compact rows, recorded review checks and responsive controls, retaining the existing pagination.
 - Added optional offline combined HTML reports with SpecCheck styling for existing short- and long-read results, available through `bactscout report` and `--html-report` on analysis/summary commands. CSV output and QC decisions are unchanged.
 - Fixed short-read Q30, coverage and contamination warning bands and propagation of individual warnings to overall QC status.
 - Stopped reporting unavailable N-content and disabled overrepresented-sequence analysis as clean results. Standard fastp runs now produce explicit availability warnings, including an overall `WARNING` when otherwise acceptable. N-content is left empty rather than inferred from rejected-read counts.

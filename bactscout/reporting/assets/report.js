@@ -6,6 +6,12 @@
   const $ = (id) => document.getElementById(id);
   const knownStatuses = new Set(["PASSED", "WARNING", "FAILED"]);
   let statusFilter = data.needs_review ? "REVIEW" : "ALL";
+  const mixedReadTypes = new Set(samples.map((sample) => sample.read_type)).size > 1;
+  const hasShortReads = samples.some((sample) => sample.read_type === "Short reads");
+  const valueColumns = ["read_type", "species", "quality", "sylph_coverage", "calculated_coverage", "mlst"]
+    .filter((key) => (key !== "read_type" || mixedReadTypes) && (key !== "mlst" || hasShortReads));
+  document.querySelector('[data-column="read_type"]').hidden = !mixedReadTypes;
+  document.querySelector('[data-column="mlst"]').hidden = !hasShortReads;
   let sortKey = "id";
   let direction = 1;
   let page = 0;
@@ -127,16 +133,28 @@
       const sampleCell = textElement("td");
       const button = textElement("button", sample.id, "sample-open"); button.type = "button";
       button.setAttribute("aria-label", `Open details for ${sample.id}`);
+      button.title = sample.id;
       button.addEventListener("click", () => openSample(sample, button));
       sampleCell.append(button); row.append(sampleCell);
       const status = textElement("td"); status.append(badge(sample.status)); row.append(status);
-      ["read_type", "species", "quality", "sylph_coverage", "calculated_coverage", "mlst"]
-        .forEach((key) => row.append(textElement("td", sample[key])));
+      const checks = textElement("td", undefined, "review-checks");
+      const checkText = sample.review_checks.map((check) => check.label).join(", ");
+      const checkSummary = textElement("span", checkText || (sample.status === "PASSED" ? "—" : "See details"));
+      checkSummary.title = sample.review_checks.map((check) =>
+        `${check.label}: ${check.status}${check.message === "Unavailable" ? "" : ` — ${check.message}`}`
+      ).join("\n") || (sample.review.join("\n") || "No individual warning or failure flags recorded.");
+      if (sample.review_checks.length) {
+        checkSummary.classList.add(sample.review_checks.some((check) => check.status === "FAILED") ? "check-failed" : "check-warning");
+      }
+      checks.append(checkSummary); row.append(checks);
+      valueColumns.forEach((key) => {
+        const cell = textElement("td", sample[key]); cell.title = sample[key]; row.append(cell);
+      });
       tbody.append(row);
     });
     if (!rows.length) {
       const row = textElement("tr"), cell = textElement("td", "No samples match these filters.");
-      cell.colSpan = 8; row.append(cell); tbody.append(row);
+      cell.colSpan = 3 + valueColumns.length; row.append(cell); tbody.append(row);
     }
     $("filter-summary").textContent = `Showing ${rows.length ? page * size + 1 : 0}–${Math.min((page + 1) * size, rows.length)} of ${rows.length} matching samples (${samples.length} total).`;
     $("page-summary").textContent = `Page ${page + 1} of ${totalPages}`;

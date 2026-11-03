@@ -135,6 +135,60 @@ def _metric(row, label, key, status=None, message=None, **formatting):
     }
 
 
+def _review_checks(row, short, metrics):
+    """Summarise recorded individual flags without deriving any new decisions."""
+    if short:
+        fields = {
+            "read_q30_status": ("Q30", "read_q30_message"),
+            "read_length_status": ("Read length", "read_length_message"),
+            "gc_content_status": ("GC", "gc_content_message"),
+            "filtering_status": ("Filtering", "filtering_message"),
+            "insert_size_status": ("Insert size", "insert_size_message"),
+            "quality_trend_status": ("Quality trend", "quality_trend_message"),
+            "coverage_status": ("Sylph coverage", "coverage_estimate_sylph_message"),
+            "coverage_estimate_qualibact_status": (
+                "Genome-size coverage",
+                "coverage_estimate_qualibact_message",
+            ),
+            "contamination_status": ("Contamination", "contamination_message"),
+            "duplication_status": ("Duplication", "duplication_message"),
+            "n_content_status": ("N-content", "n_content_message"),
+            "adapter_detection_status": (
+                "Overrepresentation",
+                "adapter_detection_message",
+            ),
+            "species_status": ("Species", "species_message"),
+            "mlst_status": ("MLST", "mlst_message"),
+        }
+    else:
+        fields = {
+            "flag_quality": ("Median Q", "reasons"),
+            "flag_n50": ("N50", "reasons"),
+            "flag_coverage": ("Coverage", "reasons"),
+            "flag_coverage_sylph": ("Sylph coverage", "reasons"),
+            "flag_coverage_calc": ("Genome-size coverage", "reasons"),
+            "flag_contam": ("Contamination", "reasons"),
+        }
+    unavailable = {
+        "N-content": "N-content",
+        "Overrepresentation": "Overrepresented-sequence check",
+    }
+    missing = {
+        metric["label"] for metric in metrics if metric["value"] == "Unavailable"
+    }
+    checks = []
+    for key, (label, message_key) in fields.items():
+        flag = row.get(key)
+        if flag not in {"WARNING", "FAILED"}:
+            continue
+        if unavailable.get(label) in missing:
+            label += " unavailable"
+        checks.append(
+            {"label": label, "status": flag, "message": display(row.get(message_key))}
+        )
+    return checks
+
+
 def adapt_record(mode, row, source, root, output):
     original_row = row
     short = mode == "Short reads"
@@ -325,6 +379,7 @@ def adapt_record(mode, row, source, root, output):
         "mlst": display(row.get("mlst_st")) if short else "Not applicable",
         "metrics": metrics,
         "review": review,
+        "review_checks": _review_checks(row, short, metrics),
         "diagnostics": diagnostics,
         "resources": resources,
         "raw": original_row,
